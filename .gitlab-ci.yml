@@ -1,0 +1,13 @@
+build:
+  stage: build
+  image: docker:stable
+  variables:
+    IMAGE_REPO: hamravesh/rawfile-csi
+  script:
+    - mkdir -p ~/.docker/; echo $DOCKER_AUTH_CONFIG >~/.docker/config.json
+    - export IMAGE="$REGISTRY/$IMAGE_REPO"
+    - docker build -t $IMAGE:$CI_COMMIT_SHORT_SHA -t $IMAGE:$CI_COMMIT_REF_SLUG .
+    - docker push $IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $IMAGE:$CI_COMMIT_REF_SLUG
+  tags:
+    - docker
