@@ -1,0 +1,86 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: rawfile-csi-node
+spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: "100%"
+  selector:
+    matchLabels:
+      app: rawfile-csi-node
+  template:
+    metadata:
+      labels:
+        app: rawfile-csi-node
+    spec:
+      serviceAccount: rawfile-csi-controller
+      hostNetwork: true
+      hostIPC: true
+      priorityClassName: system-node-critical
+      tolerations:
+        - operator: "Exists"
+      volumes:
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/rawfile-csi
+            type: DirectoryOrCreate
+        - name: mountpoint-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: DirectoryOrCreate
+        - name: data-dir
+          hostPath:
+            path: /var/csi/rawfile
+            type: DirectoryOrCreate
+      containers:
+        - name: csi-driver
+          image: registry.hamdocker.ir/hamravesh/rawfile-csi:master
+          imagePullPolicy: Always
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: mountpoint-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+            - name: data-dir
+              mountPath: /data
+        - name: node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    rm -rf /registration/rawfile-csi /csi/csi.sock
+          args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/rawfile-csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
