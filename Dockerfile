@@ -10,3 +10,4 @@ ADD ./ ./
 
 ENTRYPOINT ["/usr/bin/env", "python3", "/app/rawfile.py"]
 CMD ["csi-driver"]
+ENV PYTHONUNBUFFERED 1
