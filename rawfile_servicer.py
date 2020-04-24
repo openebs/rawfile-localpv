@@ -1,13 +1,11 @@
 import grpc
-from pathlib import Path
-
 from google.protobuf.wrappers_pb2 import BoolValue
 
-from consts import DATA_DIR
+import rawfile_util
 from csi import csi_pb2, csi_pb2_grpc
 from orchestrator.k8s import volume_to_node, run_on_node
-from util import log_grpc_request, run
 from remote import init_rawfile, scrub
+from util import log_grpc_request, run
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
 
@@ -49,9 +47,7 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     @log_grpc_request
     def NodePublishVolume(self, request, context):
         mount_path = request.target_path
-        img_dir = Path(f"{DATA_DIR}/{request.volume_id}")
-        img_file = Path(f"{img_dir}/raw.img")
-
+        img_file = rawfile_util.img_file(request.volume_id)
         run(f"mount {img_file} {mount_path}")
         return csi_pb2.NodePublishVolumeResponse()
 
@@ -112,7 +108,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
 
         size = request.capacity_range.required_bytes
-        size = min(size, 10 * 1024 * 1024)  # At least 10MB
+        size = max(size, 10 * 1024 * 1024)  # At least 10MB
 
         try:
             node_name = request.accessibility_requirements.preferred[0].segments[
