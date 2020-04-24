@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {name}
+  namespace: {namespace}
+spec:
+  # FIXME: hardcoded
+  serviceAccount: rawfile-csi-controller
+  restartPolicy: Never
+  terminationGracePeriodSeconds: 0
+  tolerations:
+    - operator: Exists
+  volumes:
+    - name: data-dir
+      hostPath:
+        path: /var/csi/rawfile
+        type: DirectoryOrCreate
+  nodeSelector: {nodeSelector}
+  containers:
+    - name: task
+      # FIXME: use immutable tag
+      image: registry.hamdocker.ir/hamravesh/rawfile-csi:master
+      # FIXME: change to IfNotPresent
+      imagePullPolicy: Always
+      volumeMounts:
+        - name: data-dir
+          mountPath: /data
+      resources:
+        requests: &rsc
+          cpu: 100m
+          memory: 100Mi
+        limit: *rsc
+      command:
+        - /bin/sh
+        - -c
+      args:
+        - {cmd}

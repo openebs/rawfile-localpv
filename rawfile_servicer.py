@@ -4,7 +4,9 @@ from google.protobuf.wrappers_pb2 import BoolValue
 
 from consts import DATA_DIR
 from csi import csi_pb2, csi_pb2_grpc
+from orchestrator.k8s import volume_to_node, run_on_node
 from util import log_grpc_request, run
+from remote import init_rawfile, scrub
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
 
@@ -48,10 +50,7 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         mount_path = request.target_path
         img_dir = Path(f"{DATA_DIR}/{request.volume_id}")
         img_file = Path(f"{img_dir}/raw.img")
-        img_dir.mkdir(parents=False, exist_ok=True)
-        if not img_file.exists():
-            run(f"truncate -s1G {img_file}")
-            run(f"mkfs.ext4 {img_file}")
+
         run(f"mount {img_file} {mount_path}")
         return csi_pb2.NodePublishVolumeResponse()
 
@@ -81,16 +80,20 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
 
     @log_grpc_request
     def CreateVolume(self, request, context):
-        # TODO: capacity_range
         # TODO: volume_capabilities
-
+        size = request.capacity_range.required_bytes
         node_name = request.accessibility_requirements.preferred[0].segments[
             NODE_NAME_TOPOLOGY_KEY
         ]
+
+        run_on_node(
+            init_rawfile.as_cmd(volume_id=request.name, size=size), node=node_name
+        )
+
         return csi_pb2.CreateVolumeResponse(
             volume=csi_pb2.Volume(
                 volume_id=request.name,
-                capacity_bytes=0,
+                capacity_bytes=size,
                 accessible_topology=[
                     csi_pb2.Topology(segments={NODE_NAME_TOPOLOGY_KEY: node_name})
                 ],
@@ -99,6 +102,6 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
 
     @log_grpc_request
     def DeleteVolume(self, request, context):
-        pv_name = request.volume_id
-        # TODO: Run a pod on that node to scrub the data
+        node_name = volume_to_node(request.volume_id)
+        run_on_node(scrub.as_cmd(volume_id=request.volume_id), node=node_name)
         return csi_pb2.DeleteVolumeResponse()
