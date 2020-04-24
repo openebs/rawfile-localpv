@@ -63,3 +63,4 @@ def run_on_node(fn, node):
     wait_for(is_finished, "task to finish")
     if task_pod.obj["status"]["phase"] != "Succeeded":
         raise Exception(f"Task {name} failed")
+    task_pod.delete()
