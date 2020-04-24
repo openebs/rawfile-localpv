@@ -12,15 +12,25 @@ def indent(obj, lvl):
 def log_grpc_request(func):
     @functools.wraps(func)
     def wrap(self, request, context):
-        res = func(self, request, context)
-        print(
-            f"""{func.__name__}({{
+        try:
+            res = func(self, request, context)
+            print(
+                f"""{func.__name__}({{
 {indent(request, 2)}
 }}) = {{
 {indent(res, 2)}
 }}"""
-        )
-        return res
+            )
+            return res
+        except Exception as exc:
+            ret = (str(context._state.code), context._state.details)
+            print(
+                f"""{func.__name__}({{
+{indent(request, 2)}
+}}) = {ret}
+"""
+            )
+            raise exc
 
     return wrap
 

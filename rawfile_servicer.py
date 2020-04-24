@@ -1,3 +1,4 @@
+import grpc
 from pathlib import Path
 
 from google.protobuf.wrappers_pb2 import BoolValue
@@ -81,10 +82,51 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
     @log_grpc_request
     def CreateVolume(self, request, context):
         # TODO: volume_capabilities
+
+        if len(request.volume_capabilities) != 1:
+            context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT, "Exactly one cap is supported"
+            )
+
+        volume_capability = request.volume_capabilities[0]
+
+        AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
+        if volume_capability.access_mode.mode not in [
+            AccessModeEnum.SINGLE_NODE_WRITER
+        ]:
+            context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT,
+                f"Unsupported access mode: {AccessModeEnum.Name(volume_capability.access_mode.mode)}",
+            )
+
+        access_type = volume_capability.WhichOneof("access_type")
+        if access_type == "mount":
+            pass
+        elif access_type == "block":
+            context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT, "Block mode not supported (yet)"
+            )
+        else:
+            context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT, f"Unknown access type: {access_type}"
+            )
+
         size = request.capacity_range.required_bytes
-        node_name = request.accessibility_requirements.preferred[0].segments[
-            NODE_NAME_TOPOLOGY_KEY
-        ]
+        size = min(size, 10 * 1024 * 1024)  # At least 10MB
+
+        try:
+            node_name = request.accessibility_requirements.preferred[0].segments[
+                NODE_NAME_TOPOLOGY_KEY
+            ]
+        except IndexError:
+            context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT,
+                "No preferred topology set. Is external-provisioner running in strict-topology mode?",
+            )
+        except KeyError:
+            context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT, "Topology key not found... why?"
+            )
 
         run_on_node(
             init_rawfile.as_cmd(volume_id=request.name, size=size), node=node_name
