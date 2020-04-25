@@ -6,7 +6,7 @@ Kubernetes LocalPVs on Steroids
 Features
 ---
 
-- [x] Near-zero disk performance overhead
+- [x] Direct I/O: Near-zero disk performance overhead
 - [x] Dynamic provisioning
 - [x] Enforced volume size limit
 - [x] Thin provisioned

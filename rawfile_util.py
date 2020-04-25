@@ -52,4 +52,4 @@ def attach_loop(file) -> str:
         if len(devs) > 0:
             return devs[0]
         next_loop()
-        run(f"losetup -f {file}")
+        run(f"losetup --direct-io=on -f {file}")
