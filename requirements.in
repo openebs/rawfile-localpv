@@ -4,3 +4,4 @@ click
 pyyaml
 pykube-ng
 munch
+prometheus_client

@@ -7,6 +7,7 @@ import grpc
 
 import rawfile_servicer
 from csi import csi_pb2_grpc
+from metrics import expose_metrics
 
 
 @click.group()
@@ -17,7 +18,10 @@ def cli():
 @cli.command()
 @click.option("--endpoint", envvar="CSI_ENDPOINT", default="0.0.0.0:5000")
 @click.option("--nodeid", envvar="NODE_ID")
-def csi_driver(endpoint, nodeid):
+@click.option("--enable-metrics/--disable-metrics", default=True)
+def csi_driver(endpoint, nodeid, enable_metrics):
+    if enable_metrics:
+        expose_metrics()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     csi_pb2_grpc.add_IdentityServicer_to_server(
         rawfile_servicer.RawFileIdentityServicer(), server

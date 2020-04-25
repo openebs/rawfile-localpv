@@ -17,7 +17,7 @@ Features
 - [ ] Volume modes
     - [x] `Filesystem` mode
     - [ ] `Block` mode
-- [ ] Volume metrics
+- [x] Volume metrics
 - [ ] Supports fsTypes
 - [ ] Online expansion: If fs supports it (e.g. ext4, btrfs)
 - [ ] Online shrinking: If fs supports it (e.g. btrfs)

@@ -11,6 +11,7 @@ grpcio-tools==1.28.1      # via -r requirements.in
 grpcio==1.28.1            # via -r requirements.in, grpcio-tools
 idna==2.9                 # via requests
 munch==2.5.0              # via -r requirements.in
+prometheus-client==0.7.1  # via -r requirements.in
 protobuf==3.11.3          # via grpcio-tools
 pykube-ng==20.4.1         # via -r requirements.in
 pyyaml==5.3.1             # via -r requirements.in, pykube-ng

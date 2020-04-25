@@ -1,4 +1,6 @@
+import glob
 import json
+from os.path import basename, dirname
 from pathlib import Path
 
 from consts import DATA_DIR
@@ -53,3 +55,8 @@ def attach_loop(file) -> str:
             return devs[0]
         next_loop()
         run(f"losetup --direct-io=on -f {file}")
+
+
+def list_all_volumes():
+    metas = glob.glob(f"{DATA_DIR}/*/disk.meta")
+    return [basename(dirname(meta)) for meta in metas]
