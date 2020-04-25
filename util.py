@@ -39,6 +39,11 @@ def run(cmd):
     return subprocess.run(cmd, shell=True, check=True)
 
 
+def run_out(cmd: str):
+    p = subprocess.run(cmd, shell=True, capture_output=True)
+    return p
+
+
 class remote_fn(object):
     def __init__(self, fn):
         self.fn = fn

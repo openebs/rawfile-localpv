@@ -4,6 +4,7 @@ from google.protobuf.wrappers_pb2 import BoolValue
 import rawfile_util
 from csi import csi_pb2, csi_pb2_grpc
 from orchestrator.k8s import volume_to_node, run_on_node
+from rawfile_util import attach_loop
 from remote import init_rawfile, scrub
 from util import log_grpc_request, run
 
@@ -48,7 +49,8 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     def NodePublishVolume(self, request, context):
         mount_path = request.target_path
         img_file = rawfile_util.img_file(request.volume_id)
-        run(f"mount {img_file} {mount_path}")
+        loop_file = attach_loop(img_file)
+        run(f"mount {loop_file} {mount_path}")
         return csi_pb2.NodePublishVolumeResponse()
 
     @log_grpc_request
