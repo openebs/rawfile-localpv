@@ -39,9 +39,7 @@ def collect_stats():
         labels = {VOLUME_ID: volume_id}
         dev_stat = img_file.stat()
         dev_size.labels(**labels).set(dev_stat.st_size)
-        dev_free.labels(**labels).set(
-            dev_stat.st_size - dev_stat.st_blocks * dev_stat.st_blksize
-        )
+        dev_free.labels(**labels).set(dev_stat.st_size - dev_stat.st_blocks * 512)
         for dev in attached_loops(img_file):
             mountpoint = dev_to_mountpoint(dev)
             if mountpoint is None:
