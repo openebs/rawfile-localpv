@@ -1,20 +1,20 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: rawfile-csi-controller
+  name: csi-rawfile-controller
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: rawfile-csi-controller
+      app: csi-rawfile-controller
   template:
     metadata:
       labels:
-        app: rawfile-csi-controller
+        app: csi-rawfile-controller
     spec:
-      serviceAccount: rawfile-csi-controller
+      serviceAccount: csi-rawfile-driver
       priorityClassName: system-cluster-critical
       tolerations:
         - key: "node-role.kubernetes.io/master"

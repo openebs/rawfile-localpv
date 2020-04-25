@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: rawfile-csi-controller
+  name: csi-rawfile-driver
   namespace: kube-system
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: rawfile-external-provisioner-runner
+  name: csi-rawfile-provisioner
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -40,20 +40,20 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: rawfile-csi-provisioner-role
+  name: csi-rawfile-provisioner
 subjects:
   - kind: ServiceAccount
-    name: rawfile-csi-controller
+    name: csi-rawfile-driver
     namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: rawfile-external-provisioner-runner
+  name: csi-rawfile-provisioner
   apiGroup: rbac.authorization.k8s.io
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: rawfile-handler
+  name: csi-rawfile-broker
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -65,12 +65,12 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: rawfile-handler
+  name: csi-rawfile-broker
 subjects:
   - kind: ServiceAccount
-    name: rawfile-csi-controller
+    name: csi-rawfile-driver
     namespace: kube-system
 roleRef:
   kind: ClusterRole
-  name: rawfile-handler
+  name: csi-rawfile-broker
   apiGroup: rbac.authorization.k8s.io

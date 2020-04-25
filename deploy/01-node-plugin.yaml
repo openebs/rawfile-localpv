@@ -1,20 +1,20 @@
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
-  name: rawfile-csi-node
+  name: csi-rawfile-node
 spec:
   updateStrategy:
     rollingUpdate:
       maxUnavailable: "100%"
   selector:
     matchLabels:
-      app: rawfile-csi-node
+      app: csi-rawfile-node
   template:
     metadata:
       labels:
-        app: rawfile-csi-node
+        app: csi-rawfile-node
     spec:
-      serviceAccount: rawfile-csi-controller
+      serviceAccount: csi-rawfile-driver
       hostNetwork: true
       hostIPC: true
       priorityClassName: system-node-critical
