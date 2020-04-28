@@ -1,3 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rawfile-csi.fullname" . }}-node
+  labels:
+    {{- include "rawfile-csi.labels" . | nindent 4 }}
+    component: node
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    {{- include "rawfile-csi.selectorLabels" . | nindent 4 }}
+    component: node
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -49,6 +67,9 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
+          ports:
+            - name: metrics
+              containerPort: 9100
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
