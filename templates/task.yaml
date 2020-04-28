@@ -4,8 +4,6 @@ metadata:
   name: {name}
   namespace: {namespace}
 spec:
-  # FIXME: hardcoded
-  serviceAccount: rawfile-csi-controller
   restartPolicy: Never
   terminationGracePeriodSeconds: 0
   tolerations:
@@ -27,9 +25,11 @@ spec:
           mountPath: /data
       resources:
         requests: &rsc
+          cpu: 10m
+          memory: 100Mi
+        limit:
           cpu: 100m
           memory: 100Mi
-        limit: *rsc
       command:
         - /bin/sh
         - -c

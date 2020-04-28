@@ -1,20 +1,20 @@
-kind: Deployment
 apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: csi-rawfile-controller
+  name: {{ include "rawfile-csi.fullname" . }}-controller
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
-    matchLabels:
-      app: csi-rawfile-controller
+    matchLabels: &selectorLabels
+      {{- include "rawfile-csi.selectorLabels" . | nindent 6 }}
+      component: controller
   template:
     metadata:
-      labels:
-        app: csi-rawfile-controller
+      labels: *selectorLabels
     spec:
-      serviceAccount: csi-rawfile-driver
+      serviceAccount: {{ include "rawfile-csi.fullname" . }}-driver
       priorityClassName: system-cluster-critical
       tolerations:
         - key: "node-role.kubernetes.io/master"
@@ -26,14 +26,16 @@ spec:
           emptyDir: {}
       containers:
         - name: csi-driver
-          image: registry.hamdocker.ir/hamravesh/rawfile-csi:master
-          imagePullPolicy: Always
+          image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+          imagePullPolicy: {{ .Values.controller.image.pullPolicy }}
           env:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
+          resources:
+            {{- toYaml .Values.controller.resources | nindent 12 }}
         - name: csi-provisioner
           image: quay.io/k8scsi/csi-provisioner:v1.6.0
           imagePullPolicy: IfNotPresent
