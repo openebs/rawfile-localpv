@@ -1,11 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rawfile-csi.fullname" . }}-controller
+  labels:
+    {{- include "rawfile-csi.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "rawfile-csi.selectorLabels" . | nindent 4 }}
+  clusterIP: None
+---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "rawfile-csi.fullname" . }}-controller
 spec:
   replicas: 1
-  strategy:
-    type: Recreate
+  serviceName: {{ include "rawfile-csi.fullname" . }}
   selector:
     matchLabels: &selectorLabels
       {{- include "rawfile-csi.selectorLabels" . | nindent 6 }}
