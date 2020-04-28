@@ -3,6 +3,25 @@ RawFilePV
 
 Kubernetes LocalPVs on Steroids
 
+Install
+---
+`helm install -n kube-system rawfile-csi ./deploy/charts/rawfile-csi/`
+
+Usage
+---
+
+Create a `StorageClass` with your desired options:
+
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: my-sc
+provisioner: rawfile.hamravesh.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+```
+
 Features
 ---
 
