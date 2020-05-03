@@ -4,10 +4,12 @@ metadata:
   name: {{ include "rawfile-csi.fullname" . }}-controller
   labels:
     {{- include "rawfile-csi.labels" . | nindent 4 }}
+    component: controller
 spec:
   type: ClusterIP
   selector:
     {{- include "rawfile-csi.selectorLabels" . | nindent 4 }}
+    component: controller
   clusterIP: None
 ---
 apiVersion: apps/v1
