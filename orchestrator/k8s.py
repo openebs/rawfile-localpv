@@ -16,7 +16,7 @@ def volume_to_node(volume_id):
     node_name = pv.spec.nodeAffinity.required.nodeSelectorTerms[0].matchExpressions[0][
         "values"
     ][0]
-    expected_node_affainity = yaml.safe_load(
+    expected_node_affinity = yaml.safe_load(
         f"""
 required:
   nodeSelectorTerms:
@@ -27,7 +27,7 @@ required:
       - {node_name}
     """
     )
-    assert pv.spec.nodeAffinity == expected_node_affainity
+    assert pv.spec.nodeAffinity == expected_node_affinity
     return node_name
 
 
