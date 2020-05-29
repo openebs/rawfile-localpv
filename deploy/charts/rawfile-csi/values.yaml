@@ -1,6 +1,6 @@
 defaults: &defaults
   image:
-    repository: registry.hamdocker.ir/hamravesh/rawfile-csi
+    repository: docker.io/hamravesh/rawfile-csi
     tag: master
     pullPolicy: Always
   resources:

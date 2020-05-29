@@ -17,7 +17,7 @@ spec:
   containers:
     - name: task
       # FIXME: use immutable tag
-      image: registry.hamdocker.ir/hamravesh/rawfile-csi:master
+      image: docker.io/hamravesh/rawfile-csi:master
       # FIXME: change to IfNotPresent
       imagePullPolicy: Always
       volumeMounts:
