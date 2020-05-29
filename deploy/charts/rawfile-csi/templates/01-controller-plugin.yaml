@@ -44,6 +44,8 @@ spec:
           env:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
+            - name: IMAGE_REPOSITORY
+              value: "{{ .Values.controller.image.repository }}"
           volumeMounts:
             - name: socket-dir
               mountPath: /csi

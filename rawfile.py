@@ -6,13 +6,17 @@ import click
 import grpc
 
 import rawfile_servicer
+from consts import CONFIG
 from csi import csi_pb2_grpc
 from metrics import expose_metrics
 
 
 @click.group()
-def cli():
-    pass
+@click.option("--image-repository", envvar="IMAGE_REPOSITORY")
+@click.option("--image-tag", envvar="IMAGE_TAG")
+def cli(image_repository, image_tag):
+    CONFIG["image_repository"] = image_repository
+    CONFIG["image_tag"] = image_tag
 
 
 @cli.command()

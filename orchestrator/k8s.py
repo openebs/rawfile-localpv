@@ -7,6 +7,8 @@ import pykube
 import yaml
 from munch import Munch
 
+from consts import CONFIG
+
 api = pykube.HTTPClient(pykube.KubeConfig.from_env())
 
 
@@ -46,6 +48,8 @@ def run_on_node(fn, node):
         "namespace": "kube-system",  # FIXME
         "nodeSelector": json.dumps({"kubernetes.io/hostname": node}),
         "cmd": json.dumps(fn),
+        "image_repository": CONFIG["image_repository"],
+        "image_tag": CONFIG["image_tag"],
     }
     template = Path("./templates/task.yaml").read_bytes().decode()
     manifest = template.format(**ctx)

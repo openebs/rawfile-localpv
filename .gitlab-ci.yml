@@ -7,7 +7,13 @@ build:
     - export REGISTRY=docker.io
     - mkdir -p ~/.docker/; echo $DOCKER_AUTH_CONFIG >~/.docker/config.json
     - export IMAGE="$REGISTRY/$IMAGE_REPO"
-    - docker build -t $IMAGE:$CI_COMMIT_SHORT_SHA -t $IMAGE:$CI_COMMIT_REF_SLUG .
+    - |
+      docker build \
+        -t $IMAGE:$CI_COMMIT_SHORT_SHA \
+        -t $IMAGE:$CI_COMMIT_REF_SLUG \
+        --build-arg IMAGE_TAG=$CI_COMMIT_SHORT_SHA \
+        --build-arg IMAGE_REPOSITORY=$IMAGE \
+        .
     - docker push $IMAGE:$CI_COMMIT_SHORT_SHA
     - docker push $IMAGE:$CI_COMMIT_REF_SLUG
   tags:

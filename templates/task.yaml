@@ -16,10 +16,8 @@ spec:
   nodeSelector: {nodeSelector}
   containers:
     - name: task
-      # FIXME: use immutable tag
-      image: docker.io/hamravesh/rawfile-csi:master
-      # FIXME: change to IfNotPresent
-      imagePullPolicy: Always
+      image: {image_repository}:{image_tag}
+      imagePullPolicy: IfNotPresent
       volumeMounts:
         - name: data-dir
           mountPath: /data

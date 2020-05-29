@@ -62,6 +62,8 @@ spec:
           env:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
+            - name: IMAGE_REPOSITORY
+              value: "{{ .Values.node.image.repository }}"
             - name: NODE_ID
               valueFrom:
                 fieldRef:
