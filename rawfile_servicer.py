@@ -1,10 +1,12 @@
+from pathlib import Path
+
 import grpc
 from google.protobuf.wrappers_pb2 import BoolValue
 
 import rawfile_util
 from csi import csi_pb2, csi_pb2_grpc
 from orchestrator.k8s import volume_to_node, run_on_node
-from rawfile_util import attach_loop
+from rawfile_util import attach_loop, detach_loops
 from remote import init_rawfile, scrub
 from util import log_grpc_request, run
 
@@ -43,14 +45,16 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeGetCapabilities(self, request, context):
-        return csi_pb2.NodeGetCapabilitiesResponse(capabilities=[])
+        Cap = csi_pb2.NodeServiceCapability
+        return csi_pb2.NodeGetCapabilitiesResponse(
+            capabilities=[Cap(rpc=Cap.RPC(type=Cap.RPC.STAGE_UNSTAGE_VOLUME))]
+        )
 
     @log_grpc_request
     def NodePublishVolume(self, request, context):
         mount_path = request.target_path
-        img_file = rawfile_util.img_file(request.volume_id)
-        loop_file = attach_loop(img_file)
-        run(f"mount {loop_file} {mount_path}")
+        staging_path = request.staging_target_path
+        run(f"mount --bind {staging_path}/mount {mount_path}")
         return csi_pb2.NodePublishVolumeResponse()
 
     @log_grpc_request
@@ -67,6 +71,34 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
                 segments={NODE_NAME_TOPOLOGY_KEY: self.node_name}
             ),
         )
+
+    @log_grpc_request
+    def NodeStageVolume(self, request, context):
+        img_file = rawfile_util.img_file(request.volume_id)
+        loop_file = attach_loop(img_file)
+        staging_path = request.staging_target_path
+        device_path = Path(f"{staging_path}/device")
+        if not device_path.exists():
+            device_path.symlink_to(loop_file)
+        mount_path = Path(f"{staging_path}/mount")
+        if not mount_path.exists():
+            mount_path.mkdir()
+            run(f"mount {device_path} {mount_path}")
+        return csi_pb2.NodeStageVolumeResponse()
+
+    @log_grpc_request
+    def NodeUnstageVolume(self, request, context):
+        img_file = rawfile_util.img_file(request.volume_id)
+        staging_path = request.staging_target_path
+        mount_path = Path(f"{staging_path}/mount")
+        if mount_path.exists():
+            run(f"umount {mount_path}")
+            mount_path.rmdir()
+        device_path = Path(f"{staging_path}/device")
+        if device_path.exists():
+            device_path.unlink()
+        detach_loops(img_file)
+        return csi_pb2.NodeUnstageVolumeResponse()
 
 
 class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):

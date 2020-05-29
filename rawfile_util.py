@@ -57,6 +57,12 @@ def attach_loop(file) -> str:
         run(f"losetup --direct-io=on -f {file}")
 
 
+def detach_loops(file) -> None:
+    devs = attached_loops(file)
+    for dev in devs:
+        run(f"losetup -d {dev}")
+
+
 def list_all_volumes():
     metas = glob.glob(f"{DATA_DIR}/*/disk.meta")
     return [basename(dirname(meta)) for meta in metas]
