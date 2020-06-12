@@ -29,3 +29,15 @@ def init_rawfile(volume_id, size):
     )
     run(f"truncate -s {size} {img_file}")
     run(f"mkfs.ext4 {img_file}")
+
+
+@remote_fn
+def expand_rawfile(volume_id, size):
+    import rawfile_util
+    from util import run
+
+    img_file = rawfile_util.img_file(volume_id)
+    rawfile_util.patch_metadata(
+        volume_id, {"size": size},
+    )
+    run(f"truncate -s {size} {img_file}")

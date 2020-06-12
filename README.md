@@ -20,6 +20,7 @@ metadata:
 provisioner: rawfile.hamravesh.com
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
 ```
 
 Features
@@ -38,7 +39,7 @@ Features
     - [ ] `Block` mode
 - [x] Volume metrics
 - [ ] Supports fsTypes
-- [ ] Online expansion: If fs supports it (e.g. ext4, btrfs)
+- [x] Online expansion: If fs supports it (e.g. ext4, btrfs)
 - [ ] Online shrinking: If fs supports it (e.g. btrfs)
 - [ ] Offline expansion/shrinking
 - [ ] Ephemeral inline volume

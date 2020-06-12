@@ -7,7 +7,7 @@ import rawfile_util
 from csi import csi_pb2, csi_pb2_grpc
 from orchestrator.k8s import volume_to_node, run_on_node
 from rawfile_util import attach_loop, detach_loops
-from remote import init_rawfile, scrub
+from remote import init_rawfile, scrub, expand_rawfile
 from util import log_grpc_request, run
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
@@ -31,6 +31,11 @@ class RawFileIdentityServicer(csi_pb2_grpc.IdentityServicer):
                         type=Cap.Service.VOLUME_ACCESSIBILITY_CONSTRAINTS
                     )
                 ),
+                Cap(
+                    volume_expansion=Cap.VolumeExpansion(
+                        type=Cap.VolumeExpansion.ONLINE
+                    )
+                ),
             ]
         )
 
@@ -47,7 +52,10 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     def NodeGetCapabilities(self, request, context):
         Cap = csi_pb2.NodeServiceCapability
         return csi_pb2.NodeGetCapabilitiesResponse(
-            capabilities=[Cap(rpc=Cap.RPC(type=Cap.RPC.STAGE_UNSTAGE_VOLUME))]
+            capabilities=[
+                Cap(rpc=Cap.RPC(type=Cap.RPC.STAGE_UNSTAGE_VOLUME)),
+                Cap(rpc=Cap.RPC(type=Cap.RPC.EXPAND_VOLUME)),
+            ]
         )
 
     @log_grpc_request
@@ -100,13 +108,28 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         detach_loops(img_file)
         return csi_pb2.NodeUnstageVolumeResponse()
 
+    @log_grpc_request
+    def NodeExpandVolume(self, request, context):
+        volume_id = request.volume_id
+        size = request.capacity_range.required_bytes
+        img_file = rawfile_util.img_file(volume_id)
+        for dev in rawfile_util.attached_loops(img_file):
+            run(f"losetup -c {dev}")
+            if True:  # TODO: is ext2/ext3/ext4
+                run(f"resize2fs {dev}")
+            break
+        return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
+
 
 class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
     @log_grpc_request
     def ControllerGetCapabilities(self, request, context):
         Cap = csi_pb2.ControllerServiceCapability
         return csi_pb2.ControllerGetCapabilitiesResponse(
-            capabilities=[Cap(rpc=Cap.RPC(type=Cap.RPC.CREATE_DELETE_VOLUME))]
+            capabilities=[
+                Cap(rpc=Cap.RPC(type=Cap.RPC.CREATE_DELETE_VOLUME)),
+                Cap(rpc=Cap.RPC(type=Cap.RPC.EXPAND_VOLUME)),
+            ]
         )
 
     @log_grpc_request
@@ -177,3 +200,16 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         node_name = volume_to_node(request.volume_id)
         run_on_node(scrub.as_cmd(volume_id=request.volume_id), node=node_name)
         return csi_pb2.DeleteVolumeResponse()
+
+    @log_grpc_request
+    def ControllerExpandVolume(self, request, context):
+        volume_id = request.volume_id
+        node_name = volume_to_node(volume_id)
+        size = request.capacity_range.required_bytes
+        run_on_node(
+            expand_rawfile.as_cmd(volume_id=volume_id, size=size), node=node_name
+        )
+
+        return csi_pb2.ControllerExpandVolumeResponse(
+            capacity_bytes=size, node_expansion_required=True,
+        )
