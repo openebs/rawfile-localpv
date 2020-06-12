@@ -23,6 +23,16 @@ class VolumeStatsCollector(object):
             "Filesystem free space in bytes",
             labels=[VOLUME_ID],
         )
+        fs_files = GaugeMetricFamily(
+            "rawfile_filesystem_files",
+            "Filesystem total file nodes.",
+            labels=[VOLUME_ID],
+        )
+        fs_files_free = GaugeMetricFamily(
+            "rawfile_filesystem_files_free",
+            "Filesystem total free file nodes",
+            labels=[VOLUME_ID],
+        )
         dev_size = GaugeMetricFamily(
             "rawfile_device_size_bytes", "Device size in bytes.", labels=[VOLUME_ID]
         )
@@ -43,8 +53,10 @@ class VolumeStatsCollector(object):
                 fs_stat = os.statvfs(mountpoint)
                 fs_size.add_metric(labels, fs_stat.f_frsize * fs_stat.f_blocks)
                 fs_free.add_metric(labels, fs_stat.f_frsize * fs_stat.f_bfree)
+                fs_files.add_metric(labels, fs_stat.f_files)
+                fs_files_free.add_metric(labels, fs_stat.f_ffree)
 
-        return [fs_size, fs_free, dev_size, dev_free]
+        return [fs_size, fs_free, fs_files, fs_files_free, dev_size, dev_free]
 
 
 def volume_to_mountpoint(img_file):
