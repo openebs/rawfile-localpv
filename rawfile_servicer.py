@@ -5,6 +5,7 @@ from google.protobuf.wrappers_pb2 import BoolValue
 
 import rawfile_util
 from csi import csi_pb2, csi_pb2_grpc
+from declarative import be_mounted, be_unmounted, be_symlink, be_absent
 from orchestrator.k8s import volume_to_node, run_on_node
 from rawfile_util import attach_loop, detach_loops
 from remote import init_rawfile, scrub, expand_rawfile
@@ -62,13 +63,13 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     def NodePublishVolume(self, request, context):
         mount_path = request.target_path
         staging_path = request.staging_target_path
-        run(f"mount --bind {staging_path}/mount {mount_path}")
+        be_mounted(dev=f"{staging_path}/device", mountpoint=mount_path)
         return csi_pb2.NodePublishVolumeResponse()
 
     @log_grpc_request
     def NodeUnpublishVolume(self, request, context):
         mount_path = request.target_path
-        run(f"umount {mount_path}")
+        be_unmounted(mount_path)
         return csi_pb2.NodeUnpublishVolumeResponse()
 
     @log_grpc_request
@@ -86,12 +87,10 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         loop_file = attach_loop(img_file)
         staging_path = request.staging_target_path
         device_path = Path(f"{staging_path}/device")
-        if not device_path.exists():
-            device_path.symlink_to(loop_file)
+        be_symlink(path=device_path, to=loop_file)
         mount_path = Path(f"{staging_path}/mount")
-        if not mount_path.exists():
-            mount_path.mkdir()
-            run(f"mount {device_path} {mount_path}")
+        mount_path.mkdir(exist_ok=True)
+        be_mounted(dev=device_path, mountpoint=mount_path)
         return csi_pb2.NodeStageVolumeResponse()
 
     @log_grpc_request
@@ -99,12 +98,10 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         img_file = rawfile_util.img_file(request.volume_id)
         staging_path = request.staging_target_path
         mount_path = Path(f"{staging_path}/mount")
-        if mount_path.exists():
-            run(f"umount {mount_path}")
-            mount_path.rmdir()
+        be_unmounted(mount_path)
+        be_absent(mount_path)
         device_path = Path(f"{staging_path}/device")
-        if device_path.exists():
-            device_path.unlink()
+        be_absent(device_path)
         detach_loops(img_file)
         return csi_pb2.NodeUnstageVolumeResponse()
 
