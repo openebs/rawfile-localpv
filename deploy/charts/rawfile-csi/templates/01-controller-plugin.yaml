@@ -46,6 +46,10 @@ spec:
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
               value: "{{ .Values.controller.image.repository }}"
+          {{- if regexMatch "^.*-ci$" .Values.controller.image.tag }}
+            - name: IMAGE_TAG
+              value: "{{ .Values.controller.image.tag }}"
+          {{- end }}
           volumeMounts:
             - name: socket-dir
               mountPath: /csi

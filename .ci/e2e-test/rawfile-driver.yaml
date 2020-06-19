@@ -1,0 +1,19 @@
+StorageClass:
+  FromName: true
+SnapshotClass:
+  FromName: true
+DriverInfo:
+  Name: rawfile.hamravesh.com
+  Capabilities:
+    persistence: true
+    block: false
+    fsGroup: true
+    exec: true
+    snapshotDataSource: false
+    pvcDataSource: false
+    multipods: true
+    RWX: false
+    controllerExpansion: true
+    nodeExpansion: true
+    volumeLimits: false
+InlineVolumes: []

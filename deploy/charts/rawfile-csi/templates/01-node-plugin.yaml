@@ -64,6 +64,10 @@ spec:
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
               value: "{{ .Values.node.image.repository }}"
+          {{- if regexMatch "^.*-ci$" .Values.node.image.tag }}
+            - name: IMAGE_TAG
+              value: "{{ .Values.node.image.tag }}"
+          {{- end }}
             - name: NODE_ID
               valueFrom:
                 fieldRef:

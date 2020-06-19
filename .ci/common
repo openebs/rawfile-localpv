@@ -1,0 +1,21 @@
+#!/bin/bash
+set -ex
+
+export IMAGE="openebs/rawfile-localpv"
+export COMMIT=$(git rev-parse --short HEAD)
+export BRANCH=${TRAVIS_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
+
+export CI_REGISTRY="docker.io"
+export CI_TAG="${COMMIT}-ci"
+export CI_IMAGE_REPO="${CI_REGISTRY}/${IMAGE}"
+export CI_IMAGE_URI="${CI_IMAGE_REPO}:${CI_TAG}"
+
+function TagAndPushImage() {
+  REPO="$1"
+  TAG="$2"
+
+  IMAGE_URI="${REPO}:${TAG}${TAG_SUFFIX}";
+  sudo docker tag ${CI_IMAGE_URI} ${IMAGE_URI};
+  echo " push ${IMAGE_URI}";
+  sudo docker push ${IMAGE_URI};
+}

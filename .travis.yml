@@ -1,0 +1,20 @@
+os: linux
+dist: bionic
+language: minimal
+jobs:
+  include:
+    - stage: build
+      script: ./.ci/build.sh
+    - stage: e2e-test
+      install: ./.ci/e2e-test/setup.sh
+      if: NOT(commit_message =~ /skip-e2e/)
+      script: ./.ci/e2e-test/test.sh
+      env:
+        - CHANGE_MINIKUBE_NONE_USER=true
+        - MINIKUBE_WANTUPDATENOTIFICATION=false
+        - MINIKUBE_WANTREPORTERRORPROMPT=false
+        - MINIKUBE_HOME=$HOME
+        - CHANGE_MINIKUBE_NONE_USER=true
+        - KUBECONFIG=$HOME/.kube/config
+    - stage: publish
+      script: ./.ci/publish.sh
