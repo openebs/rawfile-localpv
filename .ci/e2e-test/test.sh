@@ -7,8 +7,16 @@ curl --location https://dl.k8s.io/v1.18.1/kubernetes-test-linux-amd64.tar.gz | t
 ssh-keygen -N "" -f $HOME/.ssh/id_rsa
 cat $HOME/.ssh/id_rsa.pub >>$HOME/.ssh/authorized_keys
 
-./e2e.test \
-  -ginkgo.v \
-  -ginkgo.focus='External.Storage' \
-  -storage.testdriver=rawfile-driver.yaml \
-  -report-dir report/
+# Taken from: https://kubernetes.io/blog/2020/01/08/testing-of-csi-drivers/
+./ginkgo -p -v \
+  -focus='External.Storage' \
+  -skip='\[Feature:|\[Disruptive\]|\[Serial\]' \
+  ./e2e.test \
+  -- \
+  -storage.testdriver=rawfile-driver.yaml
+
+./ginkgo -v \
+  -focus='External.Storage.*(\[Feature:|\[Disruptive\]|\[Serial\])' \
+  ./e2e.test \
+  -- \
+  -storage.testdriver=rawfile-driver.yaml
