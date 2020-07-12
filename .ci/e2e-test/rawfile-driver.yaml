@@ -4,6 +4,9 @@ SnapshotClass:
   FromName: true
 DriverInfo:
   Name: rawfile.hamravesh.com
+  SupportedFsType:
+    ext4:
+    btrfs:
   Capabilities:
     persistence: true
     block: false

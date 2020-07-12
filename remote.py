@@ -10,7 +10,7 @@ def scrub(volume_id):
 
 
 @remote_fn
-def init_rawfile(volume_id, size):
+def init_rawfile(volume_id, size, fs_type):
     import time
     import rawfile_util
     from volume_schema import LATEST_SCHEMA_VERSION
@@ -31,10 +31,16 @@ def init_rawfile(volume_id, size):
             "created_at": time.time(),
             "img_file": img_file.as_posix(),
             "size": size,
+            "fs_type": fs_type,
         },
     )
     run(f"truncate -s {size} {img_file}")
-    run(f"mkfs.ext4 {img_file}")
+    if fs_type == "ext4":
+        run(f"mkfs.ext4 {img_file}")
+    elif fs_type == "btrfs":
+        run(f"mkfs.btrfs {img_file}")
+    else:
+        raise Exception(f"Unsupported fsType: {fs_type}")
 
 
 @remote_fn

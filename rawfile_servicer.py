@@ -108,12 +108,18 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     @log_grpc_request
     def NodeExpandVolume(self, request, context):
         volume_id = request.volume_id
+        volume_path = request.volume_path
         size = request.capacity_range.required_bytes
+        fs_type = rawfile_util.metadata(volume_id)["fs_type"]
         img_file = rawfile_util.img_file(volume_id)
         for dev in rawfile_util.attached_loops(img_file):
             run(f"losetup -c {dev}")
-            if True:  # TODO: is ext2/ext3/ext4
+            if fs_type == "ext4":
                 run(f"resize2fs {dev}")
+            elif fs_type == "btrfs":
+                run(f"btrfs filesystem resize max {volume_path}")
+            else:
+                raise Exception(f"Unsupported fsType: {fs_type}")
             break
         return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
 
@@ -151,7 +157,9 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
 
         access_type = volume_capability.WhichOneof("access_type")
         if access_type == "mount":
-            pass
+            fs_type = volume_capability.mount.fs_type
+            if fs_type == "":
+                fs_type = "ext4"
         elif access_type == "block":
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT, "Block mode not supported (yet)"
@@ -179,7 +187,8 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
 
         run_on_node(
-            init_rawfile.as_cmd(volume_id=request.name, size=size), node=node_name
+            init_rawfile.as_cmd(volume_id=request.name, size=size, fs_type=fs_type),
+            node=node_name,
         )
 
         return csi_pb2.CreateVolumeResponse(
