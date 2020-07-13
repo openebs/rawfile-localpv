@@ -1,6 +1,6 @@
 defaults: &defaults
   image:
-    repository: docker.io/hamravesh/rawfile-csi
+    repository: docker.io/openebs/rawfile-localpv
     tag: master
     pullPolicy: Always
   resources:
