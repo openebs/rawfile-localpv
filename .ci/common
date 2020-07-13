@@ -1,9 +1,14 @@
 #!/bin/bash
 set -ex
 
+slugify() {
+  echo "$1" | sed -r 's/[^a-zA-Z0-9]+/-/g'
+}
+
 export IMAGE="openebs/rawfile-localpv"
 export COMMIT=$(git rev-parse --short HEAD)
 export BRANCH=${TRAVIS_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
+export BRANCH_SLUG=$(slugify $BRANCH)
 
 export CI_REGISTRY="docker.io"
 export CI_TAG="${COMMIT}-ci"
