@@ -10,6 +10,27 @@ import rawfile_util
 from rawfile_util import attached_loops
 
 
+def volume_stats(volume_id: str) -> dict:
+    img_file = rawfile_util.img_file(volume_id)
+    dev_stat = img_file.stat()
+    stats = {
+        "dev_size": dev_stat.st_size,
+        "dev_free": dev_stat.st_size - dev_stat.st_blocks * 512,
+    }
+    mountpoint = volume_to_mountpoint(img_file)
+    if mountpoint is not None:
+        fs_stat = os.statvfs(mountpoint)
+        stats.update(
+            {
+                "fs_size": fs_stat.f_frsize * fs_stat.f_blocks,
+                "fs_free": fs_stat.f_frsize * fs_stat.f_bfree,
+                "fs_files": fs_stat.f_files,
+                "fs_files_free": fs_stat.f_ffree,
+            }
+        )
+    return stats
+
+
 class VolumeStatsCollector(object):
     def collect(self):
         VOLUME_ID = "volume_id"
@@ -43,18 +64,18 @@ class VolumeStatsCollector(object):
         )
 
         for volume_id in rawfile_util.list_all_volumes():
-            img_file = rawfile_util.img_file(volume_id)
             labels = [volume_id]
-            dev_stat = img_file.stat()
-            dev_size.add_metric(labels, dev_stat.st_size)
-            dev_free.add_metric(labels, dev_stat.st_size - dev_stat.st_blocks * 512)
-            mountpoint = volume_to_mountpoint(img_file)
-            if mountpoint is not None:
-                fs_stat = os.statvfs(mountpoint)
-                fs_size.add_metric(labels, fs_stat.f_frsize * fs_stat.f_blocks)
-                fs_free.add_metric(labels, fs_stat.f_frsize * fs_stat.f_bfree)
-                fs_files.add_metric(labels, fs_stat.f_files)
-                fs_files_free.add_metric(labels, fs_stat.f_ffree)
+            key_to_gauge = {
+                "dev_size": dev_size,
+                "dev_free": dev_free,
+                "fs_size": fs_size,
+                "fs_free": fs_free,
+                "fs_files": fs_files,
+                "fs_files_free": fs_files_free,
+            }
+            stats = volume_stats(volume_id)
+            for key in stats.keys():
+                key_to_gauge[key].add_metric(labels, stats[key])
 
         return [fs_size, fs_free, fs_files, fs_files_free, dev_size, dev_free]
 

@@ -6,6 +6,7 @@ from google.protobuf.wrappers_pb2 import BoolValue
 import rawfile_util
 from csi import csi_pb2, csi_pb2_grpc
 from declarative import be_mounted, be_unmounted, be_symlink, be_absent
+from metrics import volume_stats
 from orchestrator.k8s import volume_to_node, run_on_node
 from rawfile_util import attach_loop, detach_loops
 from remote import init_rawfile, scrub, expand_rawfile
@@ -55,6 +56,7 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodeGetCapabilitiesResponse(
             capabilities=[
                 Cap(rpc=Cap.RPC(type=Cap.RPC.STAGE_UNSTAGE_VOLUME)),
+                Cap(rpc=Cap.RPC(type=Cap.RPC.GET_VOLUME_STATS)),
                 Cap(rpc=Cap.RPC(type=Cap.RPC.EXPAND_VOLUME)),
             ]
         )
@@ -104,6 +106,27 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         be_absent(device_path)
         detach_loops(img_file)
         return csi_pb2.NodeUnstageVolumeResponse()
+
+    @log_grpc_request
+    def NodeGetVolumeStats(self, request, context):
+        volume_id = request.volume_id
+        stats = volume_stats(volume_id)
+        return csi_pb2.NodeGetVolumeStatsResponse(
+            usage=[
+                csi_pb2.VolumeUsage(
+                    available=stats["fs_free"],
+                    total=stats["fs_size"],
+                    used=stats["fs_size"] - stats["fs_free"],
+                    unit=csi_pb2.VolumeUsage.Unit.BYTES,
+                ),
+                csi_pb2.VolumeUsage(
+                    available=stats["fs_files_free"],
+                    total=stats["fs_files"],
+                    used=stats["fs_files"] - stats["fs_files_free"],
+                    unit=csi_pb2.VolumeUsage.Unit.INODES,
+                ),
+            ]
+        )
 
     @log_grpc_request
     def NodeExpandVolume(self, request, context):
