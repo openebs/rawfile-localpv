@@ -4,6 +4,7 @@ from os.path import basename, dirname
 from pathlib import Path
 
 from consts import DATA_DIR
+from volume_schema import migrate_to, LATEST_SCHEMA_VERSION
 from util import run, run_out
 
 
@@ -26,11 +27,21 @@ def img_file(volume_id):
     return Path(metadata(volume_id)["img_file"])
 
 
-def patch_metadata(volume_id, obj):
+def update_metadata(volume_id: str, obj: dict) -> dict:
+    meta_file(volume_id).write_text(json.dumps(obj))
+    return obj
+
+
+def patch_metadata(volume_id: str, obj: dict) -> dict:
     old_data = metadata(volume_id)
     new_data = {**old_data, **obj}
-    meta_file(volume_id).write_text(json.dumps(new_data))
-    return new_data
+    return update_metadata(volume_id, new_data)
+
+
+def migrate_metadata(volume_id, target_version):
+    old_data = metadata(volume_id)
+    new_data = migrate_to(old_data, target_version)
+    return update_metadata(volume_id, new_data)
 
 
 def attached_loops(file: str) -> [str]:
@@ -66,3 +77,9 @@ def detach_loops(file) -> None:
 def list_all_volumes():
     metas = glob.glob(f"{DATA_DIR}/*/disk.meta")
     return [basename(dirname(meta)) for meta in metas]
+
+
+def migrate_all_volume_schemas():
+    target_version = LATEST_SCHEMA_VERSION
+    for volume_id in list_all_volumes():
+        migrate_metadata(volume_id, target_version)

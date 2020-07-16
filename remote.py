@@ -13,6 +13,7 @@ def scrub(volume_id):
 def init_rawfile(volume_id, size):
     import time
     import rawfile_util
+    from volume_schema import LATEST_SCHEMA_VERSION
     from pathlib import Path
 
     from util import run
@@ -25,6 +26,7 @@ def init_rawfile(volume_id, size):
     rawfile_util.patch_metadata(
         volume_id,
         {
+            "schema_version": LATEST_SCHEMA_VERSION,
             "volume_id": volume_id,
             "created_at": time.time(),
             "img_file": img_file.as_posix(),

@@ -9,6 +9,7 @@ import rawfile_servicer
 from consts import CONFIG
 from csi import csi_pb2_grpc
 from metrics import expose_metrics
+from rawfile_util import migrate_all_volume_schemas
 
 
 @click.group()
@@ -24,6 +25,7 @@ def cli(image_repository, image_tag):
 @click.option("--nodeid", envvar="NODE_ID")
 @click.option("--enable-metrics/--disable-metrics", default=True)
 def csi_driver(endpoint, nodeid, enable_metrics):
+    migrate_all_volume_schemas()
     if enable_metrics:
         expose_metrics()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
