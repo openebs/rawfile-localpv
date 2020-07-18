@@ -1,5 +1,3 @@
-ARG IMAGE_TAG
-ARG IMAGE_REPOSITORY
 FROM python:3.8.3-slim-buster
 
 WORKDIR /app/
