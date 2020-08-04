@@ -1,0 +1,351 @@
+---
+# Source: rawfile-csi/templates/00-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rawfile-csi-driver
+  namespace: kube-system
+---
+# Source: rawfile-csi/templates/00-rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rawfile-csi-provisioner
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshots"]
+    verbs: ["get", "list"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["get", "list"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+---
+# Source: rawfile-csi/templates/00-rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rawfile-csi-broker
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+# Source: rawfile-csi/templates/00-rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rawfile-csi-resizer
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+---
+# Source: rawfile-csi/templates/00-rbac.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rawfile-csi-provisioner
+subjects:
+  - kind: ServiceAccount
+    name: rawfile-csi-driver
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: rawfile-csi-provisioner
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: rawfile-csi/templates/00-rbac.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rawfile-csi-broker
+subjects:
+  - kind: ServiceAccount
+    name: rawfile-csi-driver
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: rawfile-csi-broker
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: rawfile-csi/templates/00-rbac.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rawfile-csi-resizer
+subjects:
+  - kind: ServiceAccount
+    name: rawfile-csi-driver
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: rawfile-csi-resizer
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: rawfile-csi/templates/01-controller-plugin.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: rawfile-csi-controller
+  namespace: kube-system
+  labels:
+    helm.sh/chart: rawfile-csi-0.1.6
+    app.kubernetes.io/name: rawfile-csi
+    app.kubernetes.io/instance: rawfile-csi
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/managed-by: Helm
+    component: controller
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: rawfile-csi
+    app.kubernetes.io/instance: rawfile-csi
+    component: controller
+  clusterIP: None
+---
+# Source: rawfile-csi/templates/01-node-plugin.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: rawfile-csi-node
+  namespace: kube-system
+  labels:
+    helm.sh/chart: rawfile-csi-0.1.6
+    app.kubernetes.io/name: rawfile-csi
+    app.kubernetes.io/instance: rawfile-csi
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/managed-by: Helm
+    component: node
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: rawfile-csi
+    app.kubernetes.io/instance: rawfile-csi
+    component: node
+---
+# Source: rawfile-csi/templates/01-node-plugin.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: rawfile-csi-node
+  namespace: kube-system
+spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: "100%"
+  selector:
+    matchLabels: &selectorLabels
+      app.kubernetes.io/name: rawfile-csi
+      app.kubernetes.io/instance: rawfile-csi
+      component: node
+  template:
+    metadata:
+      labels: *selectorLabels
+    spec:
+      serviceAccount: rawfile-csi-driver
+      priorityClassName: system-node-critical
+      tolerations:
+        - operator: "Exists"
+      volumes:
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/rawfile-csi
+            type: DirectoryOrCreate
+        - name: mountpoint-dir
+          hostPath:
+            path: /var/lib/kubelet
+            type: DirectoryOrCreate
+        - name: data-dir
+          hostPath:
+            path: /var/csi/rawfile
+            type: DirectoryOrCreate
+      containers:
+        - name: csi-driver
+          image: "docker.io/openebs/rawfile-localpv:c895312-ci"
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: IMAGE_REPOSITORY
+              value: "docker.io/openebs/rawfile-localpv"
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          ports:
+            - name: metrics
+              containerPort: 9100
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: mountpoint-dir
+              mountPath: /var/lib/kubelet
+              mountPropagation: "Bidirectional"
+            - name: data-dir
+              mountPath: /data
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 100Mi
+        - name: node-driver-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    rm -rf /registration/rawfile-csi /csi/csi.sock
+          args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/rawfile-csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+---
+# Source: rawfile-csi/templates/01-controller-plugin.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rawfile-csi-controller
+  namespace: kube-system
+spec:
+  replicas: 1
+  serviceName: rawfile-csi
+  selector:
+    matchLabels: &selectorLabels
+      app.kubernetes.io/name: rawfile-csi
+      app.kubernetes.io/instance: rawfile-csi
+      component: controller
+  template:
+    metadata:
+      labels: *selectorLabels
+    spec:
+      serviceAccount: rawfile-csi-driver
+      priorityClassName: system-cluster-critical
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+      containers:
+        - name: csi-driver
+          image: "docker.io/openebs/rawfile-localpv:c895312-ci"
+          imagePullPolicy: Always
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: IMAGE_REPOSITORY
+              value: "docker.io/openebs/rawfile-localpv"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 100Mi
+        - name: csi-provisioner
+          image: quay.io/k8scsi/csi-provisioner:v1.6.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--feature-gates=Topology=true"
+            - "--strict-topology"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: csi-resizer
+          image: quay.io/k8scsi/csi-resizer:v0.5.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+---
+# Source: rawfile-csi/templates/00-driver.yaml
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: rawfile.csi.openebs.io
+spec:
+  attachRequired: false
+  podInfoOnMount: true
+  volumeLifecycleModes:
+    - Persistent
+---

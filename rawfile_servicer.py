@@ -19,7 +19,7 @@ class RawFileIdentityServicer(csi_pb2_grpc.IdentityServicer):
     @log_grpc_request
     def GetPluginInfo(self, request, context):
         return csi_pb2.GetPluginInfoResponse(
-            name="rawfile.hamravesh.com", vendor_version="0.0.1"
+            name="rawfile.csi.openebs.io", vendor_version="0.0.1"
         )
 
     @log_grpc_request

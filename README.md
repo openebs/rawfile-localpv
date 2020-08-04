@@ -19,7 +19,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: my-sc
-provisioner: rawfile.hamravesh.com
+provisioner: rawfile.csi.openebs.io
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
