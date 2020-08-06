@@ -3,7 +3,7 @@ FROM python:3.8.3-slim-buster
 WORKDIR /app/
 
 RUN apt-get update && \
-    apt-get install -y e2fsprogs btrfs-progs && \
+    apt-get install -y e2fsprogs xfsprogs btrfs-progs && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PIP_NO_CACHE_DIR 1

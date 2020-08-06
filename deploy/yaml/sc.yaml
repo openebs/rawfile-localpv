@@ -6,3 +6,5 @@ provisioner: rawfile.csi.openebs.io
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
+parameters:
+  fstype: xfs

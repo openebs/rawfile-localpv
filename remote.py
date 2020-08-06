@@ -37,6 +37,8 @@ def init_rawfile(volume_id, size, fs_type):
     run(f"truncate -s {size} {img_file}")
     if fs_type == "ext4":
         run(f"mkfs.ext4 {img_file}")
+    elif fs_type == "xfs":
+        run(f"mkfs.xfs {img_file}")
     elif fs_type == "btrfs":
         run(f"mkfs.btrfs {img_file}")
     else:

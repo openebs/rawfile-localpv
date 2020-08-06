@@ -208,7 +208,7 @@ spec:
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
-          image: "docker.io/openebs/rawfile-localpv:c895312-ci"
+          image: "docker.io/openebs/rawfile-localpv:ci-3e0a780"
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -217,6 +217,8 @@ spec:
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
               value: "docker.io/openebs/rawfile-localpv"
+            - name: IMAGE_TAG
+              value: "ci-3e0a780"
             - name: NODE_ID
               valueFrom:
                 fieldRef:
@@ -296,13 +298,15 @@ spec:
           emptyDir: {}
       containers:
         - name: csi-driver
-          image: "docker.io/openebs/rawfile-localpv:c895312-ci"
+          image: "docker.io/openebs/rawfile-localpv:ci-3e0a780"
           imagePullPolicy: Always
           env:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
               value: "docker.io/openebs/rawfile-localpv"
+            - name: IMAGE_TAG
+              value: "ci-3e0a780"
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
