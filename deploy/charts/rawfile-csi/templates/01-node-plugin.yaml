@@ -60,6 +60,8 @@ spec:
           securityContext:
             privileged: true
           env:
+            - name: PROVISIONER_NAME
+              value: "{{ .Values.provisionerName }}"
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY

@@ -3,7 +3,7 @@ StorageClass:
 SnapshotClass:
   FromName: true
 DriverInfo:
-  Name: rawfile.hamravesh.com
+  Name: rawfile.csi.openebs.io
   SupportedFsType:
     ext4:
     btrfs:
