@@ -4,6 +4,7 @@ import grpc
 from google.protobuf.wrappers_pb2 import BoolValue
 
 import rawfile_util
+from consts import PROVISIONER_VERSION
 from csi import csi_pb2, csi_pb2_grpc
 from declarative import be_mounted, be_unmounted, be_symlink, be_absent
 from metrics import volume_stats
@@ -19,7 +20,7 @@ class RawFileIdentityServicer(csi_pb2_grpc.IdentityServicer):
     @log_grpc_request
     def GetPluginInfo(self, request, context):
         return csi_pb2.GetPluginInfoResponse(
-            name="rawfile.hamravesh.com", vendor_version="0.0.1"
+            name="rawfile.hamravesh.com", vendor_version=PROVISIONER_VERSION
         )
 
     @log_grpc_request

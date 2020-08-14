@@ -2,5 +2,4 @@ apiVersion: v2
 name: rawfile-csi
 description: RawFile Driver Container Storage Interface
 type: application
-version: 0.1.6
-appVersion: 0.0.1
+version: 0.3.0

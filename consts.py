@@ -1,2 +1,3 @@
+PROVISIONER_VERSION = "0.3.0"
 DATA_DIR = "/data"
 CONFIG = {}

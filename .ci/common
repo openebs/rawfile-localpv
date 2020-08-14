@@ -2,7 +2,7 @@
 set -ex
 
 slugify() {
-  echo "$1" | sed -r 's/[^a-zA-Z0-9]+/-/g'
+  echo "$1" | sed -r 's/[^.a-zA-Z0-9]+/-/g'
 }
 
 export IMAGE="openebs/rawfile-localpv"

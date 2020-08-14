@@ -1,7 +1,7 @@
 defaults: &defaults
   image:
     repository: docker.io/openebs/rawfile-localpv
-    tag: master
+    tag: 0.3.0
     pullPolicy: Always
   resources:
     limits:
