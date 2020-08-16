@@ -46,6 +46,8 @@ def be_mounted(dev, mountpoint):
         run(f"mount {dev} {mountpoint}")
     elif fs == "btrfs":
         run(f"mount -o flushoncommit {dev} {mountpoint}")
+    elif fs == "xfs":
+        run(f"mount {dev} {mountpoint}")
     else:
         raise Exception(f"Unsupported fs type: {fs}")
 
@@ -84,6 +86,8 @@ def be_formatted(dev, fs):
                 rmdir {tmp_mnt}
                 """
             )
+        elif fs == "xfs":
+            run(f"mkfs.xfs {device}")
         else:
             raise Exception(f"Unsupported fs type: {fs}")
 
@@ -104,5 +108,7 @@ def be_fs_expanded(dev, path):
         run(f"resize2fs {dev}")
     elif fs == "btrfs":
         run(f"btrfs filesystem resize max {path}")
+    elif fs == "xfs":
+        run(f"xfs_growfs -d {dev}")
     else:
         raise Exception(f"Unsupported fsType: {fs}")
