@@ -78,6 +78,16 @@ spec:
           ports:
             - name: metrics
               containerPort: 9100
+            - name: csi-probe
+              containerPort: 9808
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: csi-probe
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 2
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
@@ -88,26 +98,35 @@ spec:
               mountPath: /data
           resources:
             {{- toYaml .Values.node.resources | nindent 12 }}
-        - name: node-driver-registrar
-          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+        - name: liveness-probe
+          image: k8s.gcr.io/sig-storage/livenessprobe:v2.1.0
           imagePullPolicy: IfNotPresent
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    rm -rf /registration/rawfile-csi /csi/csi.sock
           args:
-            - --v=5
+            - --csi-address=/csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - name: node-driver-registrar
+          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.0.1
+          imagePullPolicy: IfNotPresent
+          args:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+            - --health-port=9809
           env:
             - name: ADDRESS
               value: /csi/csi.sock
             - name: DRIVER_REG_SOCK_PATH
               value: /var/lib/kubelet/plugins/rawfile-csi/csi.sock
+          ports:
+            - containerPort: 9809
+              name: healthz
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
