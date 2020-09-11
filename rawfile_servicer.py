@@ -42,7 +42,7 @@ class RawFileIdentityServicer(csi_pb2_grpc.IdentityServicer):
             ]
         )
 
-    @log_grpc_request
+    # @log_grpc_request
     def Probe(self, request, context):
         return csi_pb2.ProbeResponse(ready=BoolValue(value=True))
 
@@ -51,7 +51,7 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     def __init__(self, node_name):
         self.node_name = node_name
 
-    @log_grpc_request
+    # @log_grpc_request
     def NodeGetCapabilities(self, request, context):
         Cap = csi_pb2.NodeServiceCapability
         return csi_pb2.NodeGetCapabilitiesResponse(
@@ -108,7 +108,7 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         detach_loops(img_file)
         return csi_pb2.NodeUnstageVolumeResponse()
 
-    @log_grpc_request
+    # @log_grpc_request
     def NodeGetVolumeStats(self, request, context):
         volume_id = request.volume_id
         stats = volume_stats(volume_id)
