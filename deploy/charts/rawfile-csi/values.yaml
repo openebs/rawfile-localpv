@@ -7,17 +7,17 @@ defaults: &defaults
     pullPolicy: Always
   resources:
     limits:
-      cpu: 100m
+      cpu: 1
       memory: 100Mi
     requests:
       cpu: 10m
       memory: 100Mi
 
 controller:
-  << : *defaults
+  <<: *defaults
 
 node:
-  << : *defaults
+  <<: *defaults
   metrics:
     enabled: false
 
