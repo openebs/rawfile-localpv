@@ -51,7 +51,7 @@ spec:
             type: DirectoryOrCreate
         - name: data-dir
           hostPath:
-            path: /var/csi/rawfile
+            path: {{ .Values.node.data_dir }}
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
@@ -66,6 +66,8 @@ spec:
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
               value: "{{ .Values.node.image.repository }}"
+            - name: DATA_DIR
+              value: "{{ .Values.node.data_dir }}"
           {{- if regexMatch "^.*-ci$" .Values.node.image.tag }}
             - name: IMAGE_TAG
               value: "{{ .Values.node.image.tag }}"
@@ -85,7 +87,7 @@ spec:
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
             - name: data-dir
-              mountPath: /data
+              mountPath: {{ .Values.node.data_dir }}
           resources:
             {{- toYaml .Values.node.resources | nindent 12 }}
         - name: node-driver-registrar

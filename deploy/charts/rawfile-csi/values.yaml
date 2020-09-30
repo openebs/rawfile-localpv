@@ -12,6 +12,8 @@ defaults: &defaults
     requests:
       cpu: 10m
       memory: 100Mi
+  data_dir: /var/csi/data
+
 
 controller:
   << : *defaults

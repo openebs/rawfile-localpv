@@ -20,7 +20,7 @@ spec:
       imagePullPolicy: IfNotPresent
       volumeMounts:
         - name: data-dir
-          mountPath: /data
+          mountPath: {data_dir}
       resources:
         requests: &rsc
           cpu: 10m
