@@ -11,7 +11,7 @@ spec:
   volumes:
     - name: data-dir
       hostPath:
-        path: {data_dir}
+        path: {rawfile_dir}
         type: DirectoryOrCreate
   nodeSelector: {nodeSelector}
   containers:
