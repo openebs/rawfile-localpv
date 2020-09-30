@@ -51,7 +51,7 @@ spec:
             type: DirectoryOrCreate
         - name: data-dir
           hostPath:
-            path: {{ .Values.node.data_dir }}
+            path: {{ .Values.node.rawfile_dir }}
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
