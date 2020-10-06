@@ -12,7 +12,7 @@ defaults: &defaults
     requests:
       cpu: 10m
       memory: 100Mi
-  rawfile_dir: /rawfile
+  rawfile_dir: /var/csi/rawfile
   data_dir: /data
 
 
