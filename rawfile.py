@@ -5,6 +5,7 @@ from concurrent import futures
 import click
 import grpc
 
+import bd2fs
 import rawfile_servicer
 from consts import CONFIG
 from csi import csi_pb2_grpc
@@ -30,13 +31,15 @@ def csi_driver(endpoint, nodeid, enable_metrics):
         expose_metrics()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     csi_pb2_grpc.add_IdentityServicer_to_server(
-        rawfile_servicer.RawFileIdentityServicer(), server
+        bd2fs.Bd2FsIdentityServicer(rawfile_servicer.RawFileIdentityServicer()), server
     )
     csi_pb2_grpc.add_NodeServicer_to_server(
-        rawfile_servicer.RawFileNodeServicer(node_name=nodeid), server
+        bd2fs.Bd2FsNodeServicer(rawfile_servicer.RawFileNodeServicer(node_name=nodeid)),
+        server,
     )
     csi_pb2_grpc.add_ControllerServicer_to_server(
-        rawfile_servicer.RawFileControllerServicer(), server
+        bd2fs.Bd2FsControllerServicer(rawfile_servicer.RawFileControllerServicer()),
+        server,
     )
     server.add_insecure_port(endpoint)
     server.start()

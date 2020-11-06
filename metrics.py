@@ -10,6 +10,16 @@ import rawfile_util
 from rawfile_util import attached_loops
 
 
+def path_stats(path):
+    fs_stat = os.statvfs(path)
+    return {
+        "fs_size": fs_stat.f_frsize * fs_stat.f_blocks,
+        "fs_free": fs_stat.f_frsize * fs_stat.f_bfree,
+        "fs_files": fs_stat.f_files,
+        "fs_files_free": fs_stat.f_ffree,
+    }
+
+
 def volume_stats(volume_id: str) -> dict:
     img_file = rawfile_util.img_file(volume_id)
     dev_stat = img_file.stat()
@@ -19,15 +29,7 @@ def volume_stats(volume_id: str) -> dict:
     }
     mountpoint = volume_to_mountpoint(img_file)
     if mountpoint is not None:
-        fs_stat = os.statvfs(mountpoint)
-        stats.update(
-            {
-                "fs_size": fs_stat.f_frsize * fs_stat.f_blocks,
-                "fs_free": fs_stat.f_frsize * fs_stat.f_bfree,
-                "fs_files": fs_stat.f_files,
-                "fs_files_free": fs_stat.f_ffree,
-            }
-        )
+        stats.update(path_stats(mountpoint))
     return stats
 
 
@@ -100,6 +102,18 @@ def dev_to_mountpoint(dev_name):
         return data["filesystems"][0]["target"]
     except subprocess.CalledProcessError:
         return None
+
+
+def mountpoint_to_dev(mountpoint):
+    res = subprocess.run(
+        f"findmnt --json --first-only --mountpoint {mountpoint}",
+        shell=True,
+        capture_output=True,
+    )
+    if res.returncode != 0:
+        return None
+    data = json.loads(res.stdout.decode().strip())
+    return data["filesystems"][0]["source"]
 
 
 def expose_metrics():

@@ -6,7 +6,7 @@ from google.protobuf.wrappers_pb2 import BoolValue
 import rawfile_util
 from consts import PROVISIONER_VERSION, PROVISIONER_NAME
 from csi import csi_pb2, csi_pb2_grpc
-from declarative import be_mounted, be_unmounted, be_symlink, be_absent
+from declarative import be_symlink, be_absent
 from metrics import volume_stats
 from orchestrator.k8s import volume_to_node, run_on_node
 from rawfile_util import attach_loop, detach_loops
@@ -64,15 +64,16 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodePublishVolume(self, request, context):
-        mount_path = request.target_path
+        target_path = request.target_path
         staging_path = request.staging_target_path
-        be_mounted(dev=f"{staging_path}/device", mountpoint=mount_path)
+        staging_dev_path = Path(f"{staging_path}/dev")
+        be_symlink(path=target_path, to=staging_dev_path)
         return csi_pb2.NodePublishVolumeResponse()
 
     @log_grpc_request
     def NodeUnpublishVolume(self, request, context):
-        mount_path = request.target_path
-        be_unmounted(mount_path)
+        target_path = request.target_path
+        be_absent(path=target_path)
         return csi_pb2.NodeUnpublishVolumeResponse()
 
     @log_grpc_request
@@ -89,62 +90,37 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         img_file = rawfile_util.img_file(request.volume_id)
         loop_file = attach_loop(img_file)
         staging_path = request.staging_target_path
-        device_path = Path(f"{staging_path}/device")
-        be_symlink(path=device_path, to=loop_file)
-        mount_path = Path(f"{staging_path}/mount")
-        mount_path.mkdir(exist_ok=True)
-        be_mounted(dev=device_path, mountpoint=mount_path)
+        staging_dev_path = Path(f"{staging_path}/dev")
+        be_symlink(path=staging_dev_path, to=loop_file)
         return csi_pb2.NodeStageVolumeResponse()
 
     @log_grpc_request
     def NodeUnstageVolume(self, request, context):
         img_file = rawfile_util.img_file(request.volume_id)
         staging_path = request.staging_target_path
-        mount_path = Path(f"{staging_path}/mount")
-        be_unmounted(mount_path)
-        be_absent(mount_path)
-        device_path = Path(f"{staging_path}/device")
-        be_absent(device_path)
+        staging_dev_path = Path(f"{staging_path}/dev")
+        be_absent(staging_dev_path)
         detach_loops(img_file)
         return csi_pb2.NodeUnstageVolumeResponse()
 
     # @log_grpc_request
     def NodeGetVolumeStats(self, request, context):
         volume_id = request.volume_id
-        stats = volume_stats(volume_id)
+        stats = volume_stats(volume_id)  # FIXME
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
                 csi_pb2.VolumeUsage(
-                    available=stats["fs_free"],
-                    total=stats["fs_size"],
-                    used=stats["fs_size"] - stats["fs_free"],
-                    unit=csi_pb2.VolumeUsage.Unit.BYTES,
-                ),
-                csi_pb2.VolumeUsage(
-                    available=stats["fs_files_free"],
-                    total=stats["fs_files"],
-                    used=stats["fs_files"] - stats["fs_files_free"],
-                    unit=csi_pb2.VolumeUsage.Unit.INODES,
+                    total=stats["dev_size"], unit=csi_pb2.VolumeUsage.Unit.BYTES,
                 ),
             ]
         )
 
     @log_grpc_request
     def NodeExpandVolume(self, request, context):
-        volume_id = request.volume_id
         volume_path = request.volume_path
         size = request.capacity_range.required_bytes
-        fs_type = rawfile_util.metadata(volume_id)["fs_type"]
-        img_file = rawfile_util.img_file(volume_id)
-        for dev in rawfile_util.attached_loops(img_file):
-            run(f"losetup -c {dev}")
-            if fs_type == "ext4":
-                run(f"resize2fs {dev}")
-            elif fs_type == "btrfs":
-                run(f"btrfs filesystem resize max {volume_path}")
-            else:
-                raise Exception(f"Unsupported fsType: {fs_type}")
-            break
+        volume_path = Path(volume_path).resolve()
+        run(f"losetup -c {volume_path}")
         return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
 
 
@@ -179,22 +155,17 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
                 f"Unsupported access mode: {AccessModeEnum.Name(volume_capability.access_mode.mode)}",
             )
 
-        access_type = volume_capability.WhichOneof("access_type")
-        if access_type == "mount":
-            fs_type = volume_capability.mount.fs_type
-            if fs_type == "":
-                fs_type = "ext4"
-        elif access_type == "block":
-            context.abort(
-                grpc.StatusCode.INVALID_ARGUMENT, "Block mode not supported (yet)"
-            )
-        else:
-            context.abort(
-                grpc.StatusCode.INVALID_ARGUMENT, f"Unknown access type: {access_type}"
-            )
+        # FIXME: re-enable access_type after bd2fs is fixed
+        # access_type = volume_capability.WhichOneof("access_type")
+        # if access_type == "block":
+        #     pass
+        # else:
+        #     context.abort(
+        #         grpc.StatusCode.INVALID_ARGUMENT,
+        #         "PANIC! This should be handled by bd2fs!",
+        #     )
 
         size = request.capacity_range.required_bytes
-        size = max(size, 10 * 1024 * 1024)  # At least 10MB
 
         try:
             node_name = request.accessibility_requirements.preferred[0].segments[
@@ -211,8 +182,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
 
         run_on_node(
-            init_rawfile.as_cmd(volume_id=request.name, size=size, fs_type=fs_type),
-            node=node_name,
+            init_rawfile.as_cmd(volume_id=request.name, size=size), node=node_name,
         )
 
         return csi_pb2.CreateVolumeResponse(
