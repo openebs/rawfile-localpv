@@ -80,14 +80,6 @@ spec:
               containerPort: 9100
             - name: csi-probe
               containerPort: 9808
-          livenessProbe:
-            failureThreshold: 5
-            httpGet:
-              path: /healthz
-              port: csi-probe
-            initialDelaySeconds: 10
-            timeoutSeconds: 3
-            periodSeconds: 2
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
@@ -98,14 +90,6 @@ spec:
               mountPath: /data
           resources:
             {{- toYaml .Values.node.resources | nindent 12 }}
-        - name: liveness-probe
-          image: k8s.gcr.io/sig-storage/livenessprobe:v2.1.0
-          imagePullPolicy: IfNotPresent
-          args:
-            - --csi-address=/csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /csi
         - name: node-driver-registrar
           image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.0.1
           imagePullPolicy: IfNotPresent
