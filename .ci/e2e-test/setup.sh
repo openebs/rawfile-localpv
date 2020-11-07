@@ -9,7 +9,7 @@ mkdir -p $HOME/.kube $HOME/.minikube
 touch $KUBECONFIG
 sudo minikube start --profile=minikube --vm-driver=none --kubernetes-version=v1.18.1
 minikube update-context --profile=minikube
-chown -R travis: /home/travis/.minikube/
+chown -R $(id -un):$(id -gn) ${HOME}/.minikube/
 eval "$(minikube docker-env --profile=minikube)" && export DOCKER_CLI='docker'
 
 curl -fsSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
