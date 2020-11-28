@@ -7,7 +7,7 @@ jobs:
       script: ./.ci/build.sh
     - stage: e2e-test
       install: ./.ci/e2e-test/setup.sh
-      if: NOT(commit_message =~ /skip-e2e/)
+      if: tag IS present OR commit_message =~ /perform-e2e/
       script: ./.ci/e2e-test/test.sh
       env:
         - CHANGE_MINIKUBE_NONE_USER=true
