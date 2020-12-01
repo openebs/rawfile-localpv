@@ -49,10 +49,6 @@ spec:
           hostPath:
             path: /var/lib/kubelet
             type: DirectoryOrCreate
-        - name: data-dir
-          hostPath:
-            path: /var/csi/rawfile
-            type: DirectoryOrCreate
       containers:
         - name: csi-driver
           image: "{{ .Values.node.image.repository }}:{{ .Values.node.image.tag }}"
@@ -86,8 +82,6 @@ spec:
             - name: mountpoint-dir
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
-            - name: data-dir
-              mountPath: /data
           resources:
             {{- toYaml .Values.node.resources | nindent 12 }}
         - name: node-driver-registrar

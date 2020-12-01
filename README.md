@@ -25,6 +25,13 @@ volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
+Run this on nodes you want to have this storage type.
+```
+pvcreate /dev/sdX
+vgcreate vg-test /dev/sdX
+lvcreate -L 200m --thinpool tpool vg-test
+```
+
 Features
 ---
 

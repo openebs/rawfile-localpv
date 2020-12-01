@@ -1,4 +1,4 @@
-provisionerName: "rawfile.csi.openebs.io"
+provisionerName: "ngpv.hamravesh.com"
 
 defaults: &defaults
   image:
