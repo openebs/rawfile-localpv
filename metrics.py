@@ -4,10 +4,6 @@ import subprocess
 
 from prometheus_client.core import REGISTRY
 from prometheus_client.exposition import start_http_server
-from prometheus_client.metrics_core import GaugeMetricFamily
-
-import rawfile_util
-from rawfile_util import attached_loops
 
 
 def path_stats(path):
@@ -20,74 +16,12 @@ def path_stats(path):
     }
 
 
-def volume_stats(volume_id: str) -> dict:
-    img_file = rawfile_util.img_file(volume_id)
-    dev_stat = img_file.stat()
-    stats = {
-        "dev_size": dev_stat.st_size,
-        "dev_free": dev_stat.st_size - dev_stat.st_blocks * 512,
-    }
-    mountpoint = volume_to_mountpoint(img_file)
-    if mountpoint is not None:
-        stats.update(path_stats(mountpoint))
-    return stats
-
-
-class VolumeStatsCollector(object):
-    def collect(self):
-        VOLUME_ID = "volume_id"
-        fs_size = GaugeMetricFamily(
-            "rawfile_filesystem_size_bytes",
-            "Filesystem size in bytes.",
-            labels=[VOLUME_ID],
-        )
-        fs_free = GaugeMetricFamily(
-            "rawfile_filesystem_avail_bytes",
-            "Filesystem free space in bytes",
-            labels=[VOLUME_ID],
-        )
-        fs_files = GaugeMetricFamily(
-            "rawfile_filesystem_files",
-            "Filesystem total file nodes.",
-            labels=[VOLUME_ID],
-        )
-        fs_files_free = GaugeMetricFamily(
-            "rawfile_filesystem_files_free",
-            "Filesystem total free file nodes",
-            labels=[VOLUME_ID],
-        )
-        dev_size = GaugeMetricFamily(
-            "rawfile_device_size_bytes", "Device size in bytes.", labels=[VOLUME_ID]
-        )
-        dev_free = GaugeMetricFamily(
-            "rawfile_device_free_bytes",
-            "Device free space in bytes.",
-            labels=[VOLUME_ID],
-        )
-
-        for volume_id in rawfile_util.list_all_volumes():
-            labels = [volume_id]
-            key_to_gauge = {
-                "dev_size": dev_size,
-                "dev_free": dev_free,
-                "fs_size": fs_size,
-                "fs_free": fs_free,
-                "fs_files": fs_files,
-                "fs_files_free": fs_files_free,
-            }
-            stats = volume_stats(volume_id)
-            for key in stats.keys():
-                key_to_gauge[key].add_metric(labels, stats[key])
-
-        return [fs_size, fs_free, fs_files, fs_files_free, dev_size, dev_free]
-
-
-def volume_to_mountpoint(img_file):
-    for dev in attached_loops(img_file):
-        mountpoint = dev_to_mountpoint(dev)
-        if mountpoint is not None:
-            return mountpoint
-    return None
+def device_stats(dev):
+    output = subprocess.run(
+        f"blockdev --getsize64 {dev}", shell=True, check=True, capture_output=True
+    ).stdout.decode()
+    dev_size = int(output)
+    return {"dev_size": dev_size}
 
 
 def dev_to_mountpoint(dev_name):
@@ -114,6 +48,11 @@ def mountpoint_to_dev(mountpoint):
         return None
     data = json.loads(res.stdout.decode().strip())
     return data["filesystems"][0]["source"]
+
+
+class VolumeStatsCollector(object):
+    def collect(self):
+        return []
 
 
 def expose_metrics():

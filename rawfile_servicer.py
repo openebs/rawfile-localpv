@@ -7,7 +7,7 @@ import rawfile_util
 from consts import PROVISIONER_VERSION, PROVISIONER_NAME
 from csi import csi_pb2, csi_pb2_grpc
 from declarative import be_symlink, be_absent
-from metrics import volume_stats
+from metrics import device_stats, mountpoint_to_dev
 from orchestrator.k8s import volume_to_node, run_on_node
 from rawfile_util import attach_loop, detach_loops
 from remote import init_rawfile, scrub, expand_rawfile
@@ -105,8 +105,9 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
 
     # @log_grpc_request
     def NodeGetVolumeStats(self, request, context):
-        volume_id = request.volume_id
-        stats = volume_stats(volume_id)  # FIXME
+        volume_path = request.volume_path
+        dev = mountpoint_to_dev(volume_path)
+        stats = device_stats(dev=dev)
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
                 csi_pb2.VolumeUsage(
