@@ -106,7 +106,7 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     # @log_grpc_request
     def NodeGetVolumeStats(self, request, context):
         volume_path = request.volume_path
-        dev = mountpoint_to_dev(volume_path)
+        dev = mountpoint_to_dev(volume_path)  # FIXME
         stats = device_stats(dev=dev)
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
