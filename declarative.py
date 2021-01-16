@@ -6,13 +6,15 @@ from util import run
 
 def be_absent(path):
     path = Path(path)
-    if not path.exists():
-        return
-    elif path.is_symlink() or path.is_file():
+    if path.is_symlink():
+        path.unlink()
+    elif path.is_file():
         path.unlink()
     elif path.is_dir():
         path.rmdir()
         # XXX: should we `shutil.rmtree(path)` instead?
+    elif not path.exists():
+        return
     else:
         raise Exception("Unknown file type")
 
@@ -20,11 +22,10 @@ def be_absent(path):
 def be_symlink(path, to):
     path = Path(path)
     to = Path(to)
-    if path.exists():
-        if path.is_symlink():
-            if os.readlink(path) == str(to):
-                return
-        be_absent(path)
+    if path.is_symlink():
+        if os.readlink(path) == str(to):
+            return
+    be_absent(path)
     path.symlink_to(to)
 
 
