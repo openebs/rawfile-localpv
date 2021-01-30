@@ -22,9 +22,9 @@ spec:
         - name: data-dir
           mountPath: /data
       resources:
-        requests: &rsc
-          cpu: 10m
-          memory: 100Mi
+        requests:
+          cpu: 0m
+          memory: 0Mi
         limit:
           cpu: 100m
           memory: 100Mi
