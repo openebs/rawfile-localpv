@@ -6,7 +6,11 @@ def scrub(volume_id):
     import time
     import rawfile_util
 
-    rawfile_util.patch_metadata(volume_id, {"deleted_at": time.time()})
+    now = time.time()
+    deleted_at = now
+    gc_at = now  # TODO: GC sensitive PVCs later
+    rawfile_util.patch_metadata(volume_id, {"deleted_at": deleted_at, "gc_at": gc_at})
+    rawfile_util.gc_if_needed(volume_id, dry_run=False)
 
 
 @remote_fn

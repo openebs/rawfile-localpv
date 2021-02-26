@@ -10,7 +10,7 @@ import rawfile_servicer
 from consts import CONFIG
 from csi import csi_pb2_grpc
 from metrics import expose_metrics
-from rawfile_util import migrate_all_volume_schemas
+from rawfile_util import migrate_all_volume_schemas, gc_all_volumes
 
 
 @click.group()
@@ -44,6 +44,12 @@ def csi_driver(endpoint, nodeid, enable_metrics):
     server.add_insecure_port(endpoint)
     server.start()
     server.wait_for_termination()
+
+
+@cli.command()
+@click.option("--dry-run/--seriously", default=True)
+def gc(dry_run):
+    gc_all_volumes(dry_run=dry_run)
 
 
 if __name__ == "__main__":
