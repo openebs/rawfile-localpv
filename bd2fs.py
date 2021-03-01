@@ -146,8 +146,10 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
         # > The staging_target_path field is not required, for backwards compatibility, but the CO SHOULD supply it.
         # Apparently, k8s 1.18 does not supply it. So:
         dev_path = mountpoint_to_dev(request.volume_path)
+        volume_path = request.volume_path
         if dev_path is None:
             dev_path = f"{request.volume_path}/device"
+            volume_path = f"{request.volume_path}/mount"
 
         bd_request = NodeExpandVolumeRequest()
         bd_request.CopyFrom(request)
@@ -160,7 +162,7 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
         # > node expansion.
         # Apparently k8s 1.18 omits this field.
         fs_type = current_fs(bd_request.volume_path)
-        be_fs_expanded(fs_type, bd_request.volume_path, request.volume_path)
+        be_fs_expanded(fs_type, bd_request.volume_path, volume_path)
 
         size = request.capacity_range.required_bytes
         return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
