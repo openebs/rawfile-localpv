@@ -40,7 +40,7 @@ def dev_to_mountpoint(dev_name):
 
 def mountpoint_to_dev(mountpoint):
     res = subprocess.run(
-        f"findmnt --json --first-only --mountpoint {mountpoint}",
+        f"findmnt --json --first-only --nofsroot --mountpoint {mountpoint}",
         shell=True,
         capture_output=True,
     )
