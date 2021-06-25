@@ -61,7 +61,7 @@ def current_fs(device):
 def be_formatted(dev, fs):
     def init_fs(device):
         if fs == "ext4":
-            run(f"mkfs.ext4 {device}")
+            run(f"mkfs.ext4 -m 0 {device}")
         elif fs == "btrfs":
             run(f"mkfs.btrfs {device}")
         else:
