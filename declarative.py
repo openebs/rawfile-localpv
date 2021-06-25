@@ -40,7 +40,13 @@ def be_mounted(dev, mountpoint):
         # noinspection PyUnreachableCode
         be_unmounted(mountpoint)
 
-    run(f"mount {dev} {mountpoint}")
+    fs = current_fs(dev)
+    if fs == "ext4":
+        run(f"mount {dev} {mountpoint}")
+    elif fs == "btrfs":
+        run(f"mount -o flushoncommit {dev} {mountpoint}")
+    else:
+        raise Exception(f"Unsupported fs type: {fs}")
 
 
 def be_unmounted(path):
