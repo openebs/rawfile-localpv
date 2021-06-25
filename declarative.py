@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 from util import run
@@ -70,6 +71,19 @@ def be_formatted(dev, fs):
             run(f"mkfs.ext4 -m 0 {device}")
         elif fs == "btrfs":
             run(f"mkfs.btrfs {device}")
+            tmp_mnt = tempfile.mkdtemp(prefix="mnt-")
+            default_subvol = f"{tmp_mnt}/default"
+            run(
+                f"""
+                set -ex
+                mkdir -p {tmp_mnt}
+                mount {device} {tmp_mnt}
+                btrfs subvolume create {default_subvol}
+                btrfs subvolume set-default {default_subvol}
+                umount {tmp_mnt}
+                rmdir {tmp_mnt}
+                """
+            )
         else:
             raise Exception(f"Unsupported fs type: {fs}")
 
