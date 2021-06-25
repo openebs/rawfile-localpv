@@ -6,6 +6,10 @@ def scrub(volume_id):
     import time
     import rawfile_util
 
+    img_dir = rawfile_util.img_dir(volume_id)
+    if not img_dir.exists():
+        return
+
     now = time.time()
     deleted_at = now
     gc_at = now  # TODO: GC sensitive PVCs later
