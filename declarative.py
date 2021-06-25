@@ -59,25 +59,26 @@ def current_fs(device):
 
 
 def be_formatted(dev, fs):
-    def init_fs(device, filesystem):
+    def init_fs(device):
         if fs == "ext4":
             run(f"mkfs.ext4 {device}")
         elif fs == "btrfs":
             run(f"mkfs.btrfs {device}")
         else:
-            raise Exception(f"Unsupported fs type: {filesystem}")
+            raise Exception(f"Unsupported fs type: {fs}")
 
     dev = Path(dev).resolve()
     current = current_fs(dev)
     if current is None:
-        init_fs(dev, fs)
+        init_fs(dev)
     else:
         if current != fs:
             raise Exception(f"Existing filesystem does not match: {current}/{fs}")
 
 
-def be_fs_expanded(fs, dev, path):
+def be_fs_expanded(dev, path):
     dev = Path(dev).resolve()
+    fs = current_fs(dev)
     path = Path(path).resolve()
     if fs == "ext4":
         run(f"resize2fs {dev}")

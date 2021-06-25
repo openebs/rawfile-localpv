@@ -17,7 +17,6 @@ from declarative import (
     be_absent,
     be_formatted,
     be_fs_expanded,
-    current_fs,
 )
 from metrics import path_stats, mountpoint_to_dev
 from util import log_grpc_request
@@ -161,8 +160,7 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
         # > access_type from given volume_path for the volume and perform
         # > node expansion.
         # Apparently k8s 1.18 omits this field.
-        fs_type = current_fs(bd_request.volume_path)
-        be_fs_expanded(fs_type, bd_request.volume_path, volume_path)
+        be_fs_expanded(bd_request.volume_path, volume_path)
 
         size = request.capacity_range.required_bytes
         return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
