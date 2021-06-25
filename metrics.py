@@ -10,9 +10,9 @@ def path_stats(path):
     fs_stat = os.statvfs(path)
     return {
         "fs_size": fs_stat.f_frsize * fs_stat.f_blocks,
-        "fs_free": fs_stat.f_frsize * fs_stat.f_bfree,
+        "fs_avail": fs_stat.f_frsize * fs_stat.f_bavail,
         "fs_files": fs_stat.f_files,
-        "fs_files_free": fs_stat.f_ffree,
+        "fs_files_avail": fs_stat.f_favail,
     }
 
 

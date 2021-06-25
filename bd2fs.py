@@ -124,15 +124,15 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
                 csi_pb2.VolumeUsage(
-                    available=stats["fs_free"],
+                    available=stats["fs_avail"],
                     total=stats["fs_size"],
-                    used=stats["fs_size"] - stats["fs_free"],
+                    used=stats["fs_size"] - stats["fs_avail"],
                     unit=csi_pb2.VolumeUsage.Unit.BYTES,
                 ),
                 csi_pb2.VolumeUsage(
-                    available=stats["fs_files_free"],
+                    available=stats["fs_files_avail"],
                     total=stats["fs_files"],
-                    used=stats["fs_files"] - stats["fs_files_free"],
+                    used=stats["fs_files"] - stats["fs_files_avail"],
                     unit=csi_pb2.VolumeUsage.Unit.INODES,
                 ),
             ]
