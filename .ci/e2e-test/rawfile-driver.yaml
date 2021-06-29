@@ -19,5 +19,6 @@ DriverInfo:
     RWX: false
     controllerExpansion: true
     nodeExpansion: true
+    onlineExpansion: true
     volumeLimits: false
 InlineVolumes: []
