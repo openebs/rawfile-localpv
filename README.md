@@ -5,6 +5,10 @@ RawFilePV
 
 Kubernetes LocalPVs on Steroids
 
+Prerequisite
+---
+- Kubernetes: 1.19+
+
 Install
 ---
 `helm install -n kube-system rawfile-csi ./deploy/charts/rawfile-csi/`
