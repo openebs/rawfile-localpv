@@ -166,7 +166,8 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         #         "PANIC! This should be handled by bd2fs!",
         #     )
 
-        size = request.capacity_range.required_bytes
+        MIN_SIZE = 16 * 1024 * 1024  # 16MiB: can't format xfs with smaller volumes
+        size = max(MIN_SIZE, request.capacity_range.required_bytes)
 
         try:
             node_name = request.accessibility_requirements.preferred[0].segments[
