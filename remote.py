@@ -53,6 +53,7 @@ def expand_rawfile(volume_id, size):
     if rawfile_util.metadata(volume_id)["size"] >= size:
         return
     rawfile_util.patch_metadata(
-        volume_id, {"size": size},
+        volume_id,
+        {"size": size},
     )
     run(f"truncate -s {size} {img_file}")

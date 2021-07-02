@@ -111,7 +111,8 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
                 csi_pb2.VolumeUsage(
-                    total=stats["dev_size"], unit=csi_pb2.VolumeUsage.Unit.BYTES,
+                    total=stats["dev_size"],
+                    unit=csi_pb2.VolumeUsage.Unit.BYTES,
                 ),
             ]
         )
@@ -184,7 +185,8 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
 
         run_on_node(
-            init_rawfile.as_cmd(volume_id=request.name, size=size), node=node_name,
+            init_rawfile.as_cmd(volume_id=request.name, size=size),
+            node=node_name,
         )
 
         return csi_pb2.CreateVolumeResponse(
@@ -213,5 +215,6 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         )
 
         return csi_pb2.ControllerExpandVolumeResponse(
-            capacity_bytes=size, node_expansion_required=True,
+            capacity_bytes=size,
+            node_expansion_required=True,
         )
