@@ -25,6 +25,10 @@ def init_rawfile(volume_id, size):
     from pathlib import Path
 
     from util import run
+    from consts import RESOURCE_EXHAUSTED_EXIT_CODE
+
+    if rawfile_util.get_capacity() < size:
+        exit(RESOURCE_EXHAUSTED_EXIT_CODE)
 
     img_dir = rawfile_util.img_dir(volume_id)
     img_dir.mkdir(exist_ok=True)
@@ -47,11 +51,17 @@ def init_rawfile(volume_id, size):
 @remote_fn
 def expand_rawfile(volume_id, size):
     import rawfile_util
+
     from util import run
+    from consts import RESOURCE_EXHAUSTED_EXIT_CODE
 
     img_file = rawfile_util.img_file(volume_id)
-    if rawfile_util.metadata(volume_id)["size"] >= size:
+    size_inc = size - rawfile_util.metadata(volume_id)["size"]
+    if size_inc <= 0:
         return
+    if rawfile_util.get_capacity() < size_inc:
+        exit(RESOURCE_EXHAUSTED_EXIT_CODE)
+
     rawfile_util.patch_metadata(
         volume_id,
         {"size": size},

@@ -35,7 +35,6 @@ Features
 - [x] Direct I/O: Near-zero disk performance overhead
 - [x] Dynamic provisioning
 - [x] Enforced volume size limit
-- [x] Thin provisioned
 - [x] Access Modes
     - [x] ReadWriteOnce
     - ~~ReadOnlyMany~~

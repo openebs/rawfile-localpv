@@ -1,10 +1,11 @@
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import grpc
 from google.protobuf.wrappers_pb2 import BoolValue
 
 import rawfile_util
-from consts import PROVISIONER_VERSION, PROVISIONER_NAME
+from consts import PROVISIONER_VERSION, PROVISIONER_NAME, RESOURCE_EXHAUSTED_EXIT_CODE
 from csi import csi_pb2, csi_pb2_grpc
 from declarative import be_symlink, be_absent
 from fs_util import device_stats, mountpoint_to_dev
@@ -184,10 +185,18 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
                 grpc.StatusCode.INVALID_ARGUMENT, "Topology key not found... why?"
             )
 
-        run_on_node(
-            init_rawfile.as_cmd(volume_id=request.name, size=size),
-            node=node_name,
-        )
+        try:
+            run_on_node(
+                init_rawfile.as_cmd(volume_id=request.name, size=size),
+                node=node_name,
+            )
+        except CalledProcessError as exc:
+            if exc.returncode == RESOURCE_EXHAUSTED_EXIT_CODE:
+                context.abort(
+                    grpc.StatusCode.RESOURCE_EXHAUSTED, "Not enough disk space"
+                )
+            else:
+                raise exc
 
         return csi_pb2.CreateVolumeResponse(
             volume=csi_pb2.Volume(
@@ -210,9 +219,18 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         volume_id = request.volume_id
         node_name = volume_to_node(volume_id)
         size = request.capacity_range.required_bytes
-        run_on_node(
-            expand_rawfile.as_cmd(volume_id=volume_id, size=size), node=node_name
-        )
+
+        try:
+            run_on_node(
+                expand_rawfile.as_cmd(volume_id=volume_id, size=size), node=node_name
+            )
+        except CalledProcessError as exc:
+            if exc.returncode == RESOURCE_EXHAUSTED_EXIT_CODE:
+                context.abort(
+                    grpc.StatusCode.RESOURCE_EXHAUSTED, "Not enough disk space"
+                )
+            else:
+                raise exc
 
         return csi_pb2.ControllerExpandVolumeResponse(
             capacity_bytes=size,

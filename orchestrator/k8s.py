@@ -1,6 +1,7 @@
 import json
 import uuid
 from pathlib import Path
+from subprocess import CalledProcessError
 from time import sleep
 
 import pykube
@@ -66,5 +67,8 @@ def run_on_node(fn, node):
 
     wait_for(is_finished, "task to finish")
     if task_pod.obj["status"]["phase"] != "Succeeded":
-        raise Exception(f"Task {name} failed")
+        exit_code = task_pod.obj["status"]["containerStatuses"][0]["state"][
+            "terminated"
+        ]["exitCode"]
+        raise CalledProcessError(returncode=exit_code, cmd=f"Task: {name}")
     task_pod.delete()
