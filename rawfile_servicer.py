@@ -7,7 +7,7 @@ import rawfile_util
 from consts import PROVISIONER_VERSION, PROVISIONER_NAME
 from csi import csi_pb2, csi_pb2_grpc
 from declarative import be_symlink, be_absent
-from metrics import device_stats, mountpoint_to_dev
+from fs_util import device_stats, mountpoint_to_dev
 from orchestrator.k8s import volume_to_node, run_on_node
 from rawfile_util import attach_loop, detach_loops
 from remote import init_rawfile, scrub, expand_rawfile

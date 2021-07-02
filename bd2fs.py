@@ -18,7 +18,7 @@ from declarative import (
     be_formatted,
     be_fs_expanded,
 )
-from metrics import path_stats, mountpoint_to_dev
+from fs_util import path_stats, mountpoint_to_dev
 from util import log_grpc_request
 
 
