@@ -6,6 +6,7 @@ import time
 
 from consts import DATA_DIR
 from declarative import be_absent
+from fs_util import path_stats
 from volume_schema import migrate_to, LATEST_SCHEMA_VERSION
 from util import run, run_out
 
@@ -113,3 +114,23 @@ def migrate_all_volume_schemas():
 def gc_all_volumes(dry_run=True):
     for volume_id in list_all_volumes():
         gc_if_needed(volume_id, dry_run=dry_run)
+
+
+def get_volumes_stats() -> [dict]:
+    volumes_stats = {}
+    for volume_id in list_all_volumes():
+        file = img_file(volume_id=volume_id)
+        stats = file.stat()
+        volumes_stats[volume_id] = {
+            "used": stats.st_blocks * 512,
+            "total": stats.st_size,
+        }
+    return volumes_stats
+
+
+def get_capacity():
+    disk_free_size = path_stats(DATA_DIR)["fs_avail"]
+    capacity = disk_free_size
+    for volume_stat in get_volumes_stats().values():
+        capacity -= volume_stat["total"] - volume_stat["used"]
+    return capacity

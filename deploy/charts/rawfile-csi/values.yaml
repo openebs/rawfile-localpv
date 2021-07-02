@@ -24,4 +24,4 @@ node:
 imagePullSecrets: []
 serviceMonitor:
   enabled: true
-  interval: 15s
+  interval: 1m

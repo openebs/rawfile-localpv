@@ -28,7 +28,7 @@ def cli(image_repository, image_tag):
 def csi_driver(endpoint, nodeid, enable_metrics):
     migrate_all_volume_schemas()
     if enable_metrics:
-        expose_metrics()
+        expose_metrics(nodeid)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     csi_pb2_grpc.add_IdentityServicer_to_server(
         bd2fs.Bd2FsIdentityServicer(rawfile_servicer.RawFileIdentityServicer()), server

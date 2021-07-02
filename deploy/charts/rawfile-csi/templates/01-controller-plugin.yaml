@@ -41,6 +41,9 @@ spec:
         - name: csi-driver
           image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
           imagePullPolicy: {{ .Values.controller.image.pullPolicy }}
+          args:
+            - csi-driver
+            - --disable-metrics
           env:
             - name: PROVISIONER_NAME
               value: "{{ .Values.provisionerName }}"
