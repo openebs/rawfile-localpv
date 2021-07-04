@@ -43,11 +43,11 @@ def be_mounted(dev, mountpoint):
 
     fs = current_fs(dev)
     if fs == "ext4":
-        run(f"mount {dev} {mountpoint}")
+        run(f"mount -t ext4 {dev} {mountpoint}")
     elif fs == "btrfs":
-        run(f"mount -o flushoncommit {dev} {mountpoint}")
+        run(f"mount -t btrfs -o flushoncommit {dev} {mountpoint}")
     elif fs == "xfs":
-        run(f"mount {dev} {mountpoint}")
+        run(f"mount -t xfs {dev} {mountpoint}")
     else:
         raise Exception(f"Unsupported fs type: {fs}")
 
@@ -79,7 +79,7 @@ def be_formatted(dev, fs):
                 f"""
                 set -ex
                 mkdir -p {tmp_mnt}
-                mount {device} {tmp_mnt}
+                mount -t btrfs {device} {tmp_mnt}
                 btrfs subvolume create {default_subvol}
                 btrfs subvolume set-default {default_subvol}
                 umount {tmp_mnt}
