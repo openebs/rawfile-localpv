@@ -21,4 +21,7 @@ DriverInfo:
     nodeExpansion: true
     onlineExpansion: true
     volumeLimits: false
+    singleNodeVolume: true
+    topology: true
+    capacity: true
 InlineVolumes: []

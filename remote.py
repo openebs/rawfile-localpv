@@ -1,7 +1,6 @@
 from util import remote_fn
 
 
-@remote_fn
 def scrub(volume_id):
     import time
     import rawfile_util
@@ -17,18 +16,18 @@ def scrub(volume_id):
     rawfile_util.gc_if_needed(volume_id, dry_run=False)
 
 
-@remote_fn
 def init_rawfile(volume_id, size):
     import time
-    import rawfile_util
-    from volume_schema import LATEST_SCHEMA_VERSION
+    from subprocess import CalledProcessError
     from pathlib import Path
 
+    import rawfile_util
+    from volume_schema import LATEST_SCHEMA_VERSION
     from util import run
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
 
     if rawfile_util.get_capacity() < size:
-        exit(RESOURCE_EXHAUSTED_EXIT_CODE)
+        raise CalledProcessError(returncode=RESOURCE_EXHAUSTED_EXIT_CODE, cmd="")
 
     img_dir = rawfile_util.img_dir(volume_id)
     img_dir.mkdir(exist_ok=True)
@@ -46,6 +45,12 @@ def init_rawfile(volume_id, size):
         },
     )
     run(f"truncate -s {size} {img_file}")
+
+
+def get_capacity():
+    import rawfile_util
+
+    return rawfile_util.get_capacity()
 
 
 @remote_fn

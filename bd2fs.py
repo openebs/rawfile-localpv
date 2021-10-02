@@ -212,6 +212,10 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
         return self.bds.DeleteVolume(request, context)
 
     @log_grpc_request
+    def GetCapacity(self, request, context):
+        return self.bds.GetCapacity(request, context)
+
+    @log_grpc_request
     def ControllerExpandVolume(self, request, context):
         response = self.bds.ControllerExpandVolume(request, context)
         assert response.node_expansion_required

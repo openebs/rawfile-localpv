@@ -7,7 +7,7 @@ Kubernetes LocalPVs on Steroids
 
 Prerequisite
 ---
-- Kubernetes: 1.19+
+- Kubernetes: 1.21+
 
 Install
 ---

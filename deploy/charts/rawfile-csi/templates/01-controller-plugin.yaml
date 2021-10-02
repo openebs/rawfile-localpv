@@ -63,20 +63,6 @@ spec:
               containerPort: 9808
           resources:
             {{- toYaml .Values.controller.resources | nindent 12 }}
-        - name: external-provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
-          imagePullPolicy: IfNotPresent
-          args:
-            - "--csi-address=$(ADDRESS)"
-            - "--feature-gates=Topology=true"
-            - "--strict-topology"
-            - "--timeout=120s"
-          env:
-            - name: ADDRESS
-              value: /csi/csi.sock
-          volumeMounts:
-            - name: socket-dir
-              mountPath: /csi
         - name: external-resizer
           image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
           imagePullPolicy: IfNotPresent

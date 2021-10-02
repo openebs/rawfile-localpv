@@ -11,7 +11,7 @@ from declarative import be_symlink, be_absent
 from fs_util import device_stats, mountpoint_to_dev
 from orchestrator.k8s import volume_to_node, run_on_node
 from rawfile_util import attach_loop, detach_loops
-from remote import init_rawfile, scrub, expand_rawfile
+from remote import init_rawfile, scrub, get_capacity, expand_rawfile
 from util import log_grpc_request, run
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
@@ -134,6 +134,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         return csi_pb2.ControllerGetCapabilitiesResponse(
             capabilities=[
                 Cap(rpc=Cap.RPC(type=Cap.RPC.CREATE_DELETE_VOLUME)),
+                Cap(rpc=Cap.RPC(type=Cap.RPC.GET_CAPACITY)),
                 Cap(rpc=Cap.RPC(type=Cap.RPC.EXPAND_VOLUME)),
             ]
         )
@@ -186,10 +187,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
 
         try:
-            run_on_node(
-                init_rawfile.as_cmd(volume_id=request.name, size=size),
-                node=node_name,
-            )
+            init_rawfile(volume_id=request.name, size=size),
         except CalledProcessError as exc:
             if exc.returncode == RESOURCE_EXHAUSTED_EXIT_CODE:
                 context.abort(
@@ -210,9 +208,14 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
 
     @log_grpc_request
     def DeleteVolume(self, request, context):
-        node_name = volume_to_node(request.volume_id)
-        run_on_node(scrub.as_cmd(volume_id=request.volume_id), node=node_name)
+        scrub(volume_id=request.volume_id)
         return csi_pb2.DeleteVolumeResponse()
+
+    @log_grpc_request
+    def GetCapacity(self, request, context):
+        return csi_pb2.GetCapacityResponse(
+            available_capacity=get_capacity(),
+        )
 
     @log_grpc_request
     def ControllerExpandVolume(self, request, context):

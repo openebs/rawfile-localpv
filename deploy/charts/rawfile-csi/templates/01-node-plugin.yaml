@@ -123,3 +123,33 @@ spec:
             requests:
               cpu: 10m
               memory: 100Mi
+        - name: external-provisioner
+          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--feature-gates=Topology=true"
+            - "--strict-topology"
+            - "--immediate-topology=false"
+            - "--timeout=120s"
+            - "--enable-capacity=true"
+            - "--capacity-ownerref-level=1" # DaemonSet
+            - "--node-deployment=true"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
