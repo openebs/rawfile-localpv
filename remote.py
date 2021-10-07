@@ -50,7 +50,8 @@ def init_rawfile(volume_id, size):
 def get_capacity():
     import rawfile_util
 
-    return rawfile_util.get_capacity()
+    cap = rawfile_util.get_capacity()
+    return max(0, cap)
 
 
 @remote_fn
