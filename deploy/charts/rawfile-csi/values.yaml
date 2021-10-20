@@ -21,6 +21,9 @@ node:
   metrics:
     enabled: false
 
+csiResizer:
+  image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+
 imagePullSecrets: []
 serviceMonitor:
   enabled: true
