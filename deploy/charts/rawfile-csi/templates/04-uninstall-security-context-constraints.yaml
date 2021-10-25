@@ -1,0 +1,50 @@
+{{- if (and (eq (.Values.securityContextConstraints.enabled | default true) true ) ($.Capabilities.APIVersions.Has "security.openshift.io/v1")) }}
+kind: SecurityContextConstraints
+apiVersion: security.openshift.io/v1
+metadata:
+  name: {{ .Values.securityContextConstraints.name }}
+  labels:
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "{{ add (.Values.hookWeight | default 0) 4 }}"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+
+seLinuxContext:
+  type: RunAsAny
+runAsUser:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+
+allowedCapabilities:
+  - '*'
+seccompProfiles:
+  - '*'
+allowedUnsafeSysctls:
+  - '*'
+volumes:
+  - '*'
+
+defaultAddCapabilities: null
+requiredDropCapabilities: null
+readOnlyRootFilesystem: false
+priority: null
+
+allowHostPorts: true
+allowPrivilegedContainer: true
+allowHostDirVolumePlugin: true
+allowHostIPC: true
+allowHostPID: true
+allowHostNetwork: true
+allowPrivilegeEscalation: true
+
+groups: []
+users:
+- 'system:serviceaccount:{{ .Release.Namespace }}:{{ .Release.Name }}-post-delete'
+---
+{{- end -}}

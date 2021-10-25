@@ -49,6 +49,7 @@ def run_on_node(fn, node):
         "namespace": "kube-system",  # FIXME
         "nodeSelector": json.dumps({"kubernetes.io/hostname": node}),
         "cmd": json.dumps(fn),
+        "data_dir": CONFIG["data_dir"],
         "image_repository": CONFIG["image_repository"],
         "image_tag": CONFIG["image_tag"],
     }

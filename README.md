@@ -70,6 +70,34 @@ The idea here is to use a single file as the block device, using Linux’s loop,
 - The size limit is enforced by the operating system, based on the backing file size.
 - Since volumes are backed by different files, each file could be formatted using different filesystems, and/or customized with different filesystem options.
 
+### Why use Helm hooks to install/uninstall
+
+Storage classes are one of the foundation building blocks for setting up a solution, so they need to be in place before a solution is installed and only be removed after a solution is uninstalled. This means that the Helm chart needs to be installed and removed seperatly from other Helm charts. One way to allow us to use this Helm chart as part of an umbrella Helm chart is to use Helm Hooks.
+
+In order to ensure that we have a fully functioning storage class before creating other resources we can leverage Helm hooks weight. This also allows us to specify the order of resource creation otherwise Helm views custom resources as a single bucket and simply relies on file name order.
+
+Its also important to ensure that we don't remove resources that are necessary to run storage class before we have removed the solution, as Helm will be left in a deadlock situation waiting for PVCs to be deleted which will never be deleted.
+
+### Recommended locations for data directory
+
+Docker
+---
+Recommended location:
+```
+dataDir: /var/lib/csi/rawfile
+```
+
+To view locations on Docker
+```
+docker run -it --rm --net=host --ipc=host --uts=host --pid=host --security-opt=seccomp=unconfined --privileged -v /:/host alpine /bin/ash -c "df -Th"
+```
+
+CRC
+---
+Recommended location:
+```
+dataDir: /var/lib/csi/rawfile
+```
 
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fopenebs%2Frawfile-localpv.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fopenebs%2Frawfile-localpv?ref=badge_large)

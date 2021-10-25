@@ -1,0 +1,9 @@
+{{- if ($.Capabilities.APIVersions.Has "flowcontrol.apiserver.k8s.io/v1alpha1") }}
+apiVersion: flowcontrol.apiserver.k8s.io/v1alpha1
+kind: PriorityLevelConfiguration
+metadata:
+  name: {{ .Release.Name }}-post-delete
+spec:
+  type: Exempt
+---
+{{- end -}}

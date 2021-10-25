@@ -1,0 +1,30 @@
+{{- if (and (eq (.Values.serviceMonitor.enabled | default true) true) ($.Capabilities.APIVersions.Has "monitoring.coreos.com/v1")) }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "rawfile-csi.fullname" . }}-node
+  labels:
+    {{- include "rawfile-csi.labels" . | nindent 4 }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-install,pre-upgrade,pre-rollback
+    "helm.sh/hook-weight": "{{ add (.Values.hookWeight | default 0) 2 }}"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: {{ .Values.serviceMonitor.interval }}
+  jobLabel: "helm.sh/chart"
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      {{- include "rawfile-csi.selectorLabels" . | nindent 6 }}
+      component: node
+{{- end }}
