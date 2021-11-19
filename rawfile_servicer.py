@@ -222,7 +222,6 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
                 raise exc
         return csi_pb2.DeleteVolumeResponse()
 
-    @log_grpc_request
     def GetCapacity(self, request, context):
         return csi_pb2.GetCapacityResponse(
             available_capacity=get_capacity(),
