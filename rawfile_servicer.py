@@ -5,7 +5,12 @@ import grpc
 from google.protobuf.wrappers_pb2 import BoolValue
 
 import rawfile_util
-from consts import PROVISIONER_VERSION, PROVISIONER_NAME, RESOURCE_EXHAUSTED_EXIT_CODE
+from consts import (
+    PROVISIONER_VERSION,
+    PROVISIONER_NAME,
+    RESOURCE_EXHAUSTED_EXIT_CODE,
+    VOLUME_IN_USE_EXIT_CODE,
+)
 from csi import csi_pb2, csi_pb2_grpc
 from declarative import be_symlink, be_absent
 from fs_util import device_stats, mountpoint_to_dev
@@ -208,7 +213,13 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
 
     @log_grpc_request
     def DeleteVolume(self, request, context):
-        scrub(volume_id=request.volume_id)
+        try:
+            scrub(volume_id=request.volume_id)
+        except CalledProcessError as exc:
+            if exc.returncode == VOLUME_IN_USE_EXIT_CODE:
+                context.abort(grpc.StatusCode.FAILED_PRECONDITION, "Volume in use")
+            else:
+                raise exc
         return csi_pb2.DeleteVolumeResponse()
 
     @log_grpc_request

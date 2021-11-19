@@ -3,11 +3,19 @@ from util import remote_fn
 
 def scrub(volume_id):
     import time
+    from subprocess import CalledProcessError
+
     import rawfile_util
+    from consts import VOLUME_IN_USE_EXIT_CODE
 
     img_dir = rawfile_util.img_dir(volume_id)
     if not img_dir.exists():
         return
+
+    img_file = rawfile_util.img_file(volume_id)
+    loops = rawfile_util.attached_loops(img_file)
+    if len(loops) > 0:
+        raise CalledProcessError(returncode=VOLUME_IN_USE_EXIT_CODE, cmd="")
 
     now = time.time()
     deleted_at = now
