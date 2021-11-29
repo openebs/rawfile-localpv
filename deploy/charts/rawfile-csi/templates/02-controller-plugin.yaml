@@ -5,6 +5,15 @@ metadata:
   labels:
     {{- include "rawfile-csi.labels" . | nindent 4 }}
     component: controller
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-install,pre-upgrade,pre-rollback
+    "helm.sh/hook-weight": "{{ add (.Values.hookWeight | default 0) 2 }}"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   type: ClusterIP
   selector:
@@ -16,6 +25,16 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "rawfile-csi.fullname" . }}-controller
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-install,pre-upgrade,pre-rollback
+    "helm.sh/hook-weight": "{{ add (.Values.hookWeight | default 0) 2 }}"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   replicas: 1
   serviceName: {{ include "rawfile-csi.fullname" . }}

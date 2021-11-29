@@ -1,9 +1,9 @@
 provisionerName: "rawfile.csi.openebs.io"
-
+hookWeight: -99
 defaults: &defaults
   image:
     repository: docker.io/openebs/rawfile-localpv
-    tag: 0.7.0
+    tag: 0.7.1
     pullPolicy: Always
   resources:
     limits:
@@ -18,10 +18,26 @@ controller:
 
 node:
   <<: *defaults
+  dataDir: /var/lib/csi/rawfile
   metrics:
     enabled: false
 
+uninstaller:
+  image:
+    repository: mcr.microsoft.com/oss/kubernetes/kubectl
+    tag: v1.21.0
+    pullPolicy: Always
+
 imagePullSecrets: []
+
+securityContextConstraints:
+  enabled: true
+  name: rawfile
+
 serviceMonitor:
   enabled: true
   interval: 1m
+
+storageClass:
+  enabled: true
+  name: rawfile

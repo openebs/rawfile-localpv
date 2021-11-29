@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-post-delete
+  namespace: {{ .Release.Namespace }}
+  labels:
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "{{ add (.Values.hookWeight | default 0) 5 }}"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+data:
+  post-delete.sh: |-
+    #!/bin/bash
+
+    set -e
+
+    KUBEHOME=/tmp/.kube
+    export KUBECONFIG=${KUBEHOME}/config
+    export KUBECACHEDIR=${KUBEHOME}/cache
+
+    mkdir -p ${KUBECACHEDIR}
+    
+    sleep 10
+
+    for i in {1..10}   # you can also use {0..9}
+    do
+      terminatingPods=$(kubectl get pv --no-headers --cache-dir ${KUBECACHEDIR} |  awk '{ if ($5 == "Terminating") { print $1} }')
+      if [ "$terminatingPods" = "" ]
+      then 
+          break
+      else
+          echo "Waiting for PV to finish"
+          sleep 3
+      fi
+    done
+
+    {{- if (eq (.Values.storageClass.enabled | default true) true) }}
+    kubectl delete StorageClass {{ .Values.storageClass.name }} -v=9 --cache-dir ${KUBECACHEDIR}
+
+    {{- end }}
+
+    {{- if (and (eq (.Values.serviceMonitor.enabled | default true) true) ($.Capabilities.APIVersions.Has "monitoring.coreos.com/v1")) }}    
+    kubectl delete ServiceMonitor {{ include "rawfile-csi.fullname" . }}-node -n {{ .Release.Namespace }} -v=9 --cache-dir ${KUBECACHEDIR}
+
+    {{- end }}
+    kubectl delete Service {{ include "rawfile-csi.fullname" . }}-node -n {{ .Release.Namespace }} -v=9 --cache-dir ${KUBECACHEDIR}
+    kubectl delete DaemonSet {{ include "rawfile-csi.fullname" . }}-node -n {{ .Release.Namespace }} -v=9 --cache-dir ${KUBECACHEDIR}
+    
+    kubectl delete Service {{ include "rawfile-csi.fullname" . }}-controller -n {{ .Release.Namespace }} -v=9 --cache-dir ${KUBECACHEDIR}
+    kubectl delete StatefulSet {{ include "rawfile-csi.fullname" . }}-controller -n {{ .Release.Namespace }} -v=9 --cache-dir ${KUBECACHEDIR}
+
+    kubectl delete ClusterRoleBinding {{ include "rawfile-csi.fullname" . }}-resizer -v=9 --cache-dir ${KUBECACHEDIR}
+    kubectl delete ClusterRole {{ include "rawfile-csi.fullname" . }}-resizer -v=9 --cache-dir ${KUBECACHEDIR}
+    kubectl delete ClusterRoleBinding {{ include "rawfile-csi.fullname" . }}-broker -v=9 --cache-dir ${KUBECACHEDIR}
+    kubectl delete ClusterRole {{ include "rawfile-csi.fullname" . }}-broker -v=9 --cache-dir ${KUBECACHEDIR}
+    kubectl delete ClusterRoleBinding {{ include "rawfile-csi.fullname" . }}-provisioner -v=9 --cache-dir ${KUBECACHEDIR}
+    kubectl delete ClusterRole {{ include "rawfile-csi.fullname" . }}-provisioner -v=9 --cache-dir ${KUBECACHEDIR}
+    {{- if ($.Capabilities.APIVersions.Has "flowcontrol.apiserver.k8s.io/v1alpha1") }}
+    kubectl delete FlowSchema {{ include "rawfile-csi.fullname" . }}-driver -v=9 --cache-dir ${KUBECACHEDIR}
+    {{- end }}
+    kubectl delete ServiceAccount {{ include "rawfile-csi.fullname" . }}-driver -n {{ .Release.Namespace }} -v=9 --cache-dir ${KUBECACHEDIR}
+
+    kubectl delete CSIDriver {{ .Values.provisionerName }} -v=9 --cache-dir ${KUBECACHEDIR}
+    {{- if (and (eq (.Values.securityContextConstraints.enabled | default true) true ) ($.Capabilities.APIVersions.Has "security.openshift.io/v1")) }}  
+    kubectl delete SecurityContextConstraints {{ .Values.securityContextConstraints.name }} -v=9 --cache-dir ${KUBECACHEDIR}
+
+    {{- end -}}

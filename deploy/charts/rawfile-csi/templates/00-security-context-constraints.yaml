@@ -1,0 +1,52 @@
+{{- if (and (eq (.Values.securityContextConstraints.enabled | default true) true ) ($.Capabilities.APIVersions.Has "security.openshift.io/v1")) }}
+kind: SecurityContextConstraints
+apiVersion: security.openshift.io/v1
+metadata:
+  name: {{ .Values.securityContextConstraints.name }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-install,pre-upgrade,pre-rollback
+    "helm.sh/hook-weight": "{{ add (.Values.hookWeight | default 0) 0 }}"
+    "helm.sh/hook-delete-policy": before-hook-creation
+
+seLinuxContext:
+  type: RunAsAny
+runAsUser:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+
+allowedCapabilities:
+  - '*'
+seccompProfiles:
+  - '*'
+allowedUnsafeSysctls:
+  - '*'
+volumes:
+  - '*'
+
+defaultAddCapabilities: null
+requiredDropCapabilities: null
+readOnlyRootFilesystem: false
+priority: null
+
+allowHostPorts: true
+allowPrivilegedContainer: true
+allowHostDirVolumePlugin: true
+allowHostIPC: true
+allowHostPID: true
+allowHostNetwork: true
+allowPrivilegeEscalation: true
+
+groups: []
+users:
+- 'system:serviceaccount:{{ .Release.Namespace }}:{{ include "rawfile-csi.fullname" . }}-driver'
+---
+{{- end -}}
