@@ -66,9 +66,9 @@ def run_on_node(fn, node):
         return False
 
     wait_for(is_finished, "task to finish")
+    task_pod.delete()
     if task_pod.obj["status"]["phase"] != "Succeeded":
         exit_code = task_pod.obj["status"]["containerStatuses"][0]["state"][
             "terminated"
         ]["exitCode"]
         raise CalledProcessError(returncode=exit_code, cmd=f"Task: {name}")
-    task_pod.delete()
