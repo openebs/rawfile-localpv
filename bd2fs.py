@@ -30,7 +30,7 @@ def get_fs(request):
 
 
 class Bd2FsIdentityServicer(csi_pb2_grpc.IdentityServicer):
-    def __init__(self, bds):
+    def __init__(self, bds: csi_pb2_grpc.IdentityServicer):
         self.bds = bds
 
     @log_grpc_request
@@ -47,7 +47,7 @@ class Bd2FsIdentityServicer(csi_pb2_grpc.IdentityServicer):
 
 
 class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
-    def __init__(self, bds):
+    def __init__(self, bds: csi_pb2_grpc.NodeServicer):
         self.bds = bds
 
     # @log_grpc_request
@@ -167,7 +167,7 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
 
 class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
-    def __init__(self, bds):
+    def __init__(self, bds: csi_pb2_grpc.ControllerServicer):
         self.bds = bds
 
     @log_grpc_request
