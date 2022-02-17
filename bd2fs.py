@@ -11,6 +11,8 @@ from csi.csi_pb2 import (
     NodeExpandVolumeRequest,
     CreateVolumeRequest,
 )
+from google.protobuf.timestamp_pb2 import Timestamp
+
 from declarative import (
     be_mounted,
     be_unmounted,
@@ -19,6 +21,8 @@ from declarative import (
     be_fs_expanded,
 )
 from fs_util import path_stats, mountpoint_to_dev
+from orchestrator.k8s import volume_to_node, run_on_node
+from remote import btrfs_create_snapshot, btrfs_delete_snapshot
 from util import log_grpc_request
 
 
@@ -219,3 +223,32 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
         response = self.bds.ControllerExpandVolume(request, context)
         assert response.node_expansion_required
         return response
+
+    @log_grpc_request
+    def CreateSnapshot(self, request: csi_pb2.CreateSnapshotRequest, context):
+        volume_id = request.source_volume_id
+        name = request.name
+
+        snapshot_id, creation_time_ns = btrfs_create_snapshot(
+            volume_id=volume_id, name=name
+        )
+
+        nano = 10**9
+        return csi_pb2.CreateSnapshotResponse(
+            snapshot=csi_pb2.Snapshot(
+                size_bytes=0,
+                snapshot_id=snapshot_id,
+                source_volume_id=volume_id,
+                creation_time=Timestamp(
+                    seconds=creation_time_ns // nano, nanos=creation_time_ns % nano
+                ),
+                ready_to_use=True,
+            )
+        )
+
+    @log_grpc_request
+    def DeleteSnapshot(self, request: csi_pb2.DeleteSnapshotRequest, context):
+        snapshot_id = request.snapshot_id
+        volume_id, name = snapshot_id.rsplit("/", 1)
+        btrfs_delete_snapshot(volume_id=volume_id, name=name)
+        return csi_pb2.DeleteSnapshotResponse()
