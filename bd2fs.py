@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import grpc
-
 from csi import csi_pb2, csi_pb2_grpc
 from csi.csi_pb2 import (
     NodeStageVolumeRequest,
@@ -21,7 +20,6 @@ from declarative import (
     be_fs_expanded,
 )
 from fs_util import path_stats, mountpoint_to_dev
-from orchestrator.k8s import volume_to_node, run_on_node
 from remote import btrfs_create_snapshot, btrfs_delete_snapshot
 from util import log_grpc_request
 
