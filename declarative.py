@@ -31,7 +31,16 @@ def be_symlink(path, to):
     path.symlink_to(to)
 
 
-def be_mounted(dev, mountpoint):
+def options_flag(options):
+    if options is None:
+        options = []
+    flag = ",".join(options)
+    if len(flag) > 0:
+        flag = f"-o {flag}"
+    return flag
+
+
+def be_mounted(dev, mountpoint, options=None):
     dev = Path(dev).resolve()
     mountpoint = Path(mountpoint)
 
@@ -43,11 +52,12 @@ def be_mounted(dev, mountpoint):
 
     fs = current_fs(dev)
     if fs == "ext4":
-        run(f"mount -t ext4 {dev} {mountpoint}")
+        run(f"mount -t ext4 {options_flag(options)} {dev} {mountpoint}")
     elif fs == "btrfs":
-        run(f"mount -t btrfs -o flushoncommit {dev} {mountpoint}")
+        options.append("flushoncommit")
+        run(f"mount -t btrfs {options_flag(options)} {dev} {mountpoint}")
     elif fs == "xfs":
-        run(f"mount -t xfs {dev} {mountpoint}")
+        run(f"mount -t xfs {options_flag(options)} {dev} {mountpoint}")
     else:
         raise Exception(f"Unsupported fs type: {fs}")
 

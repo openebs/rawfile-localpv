@@ -96,7 +96,11 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
         mount_path = f"{request.staging_target_path}/mount"
         Path(mount_path).mkdir(exist_ok=True)
         be_formatted(dev=bd_publish_request.target_path, fs=get_fs(request))
-        be_mounted(dev=bd_publish_request.target_path, mountpoint=mount_path)
+        be_mounted(
+            dev=bd_publish_request.target_path,
+            mountpoint=mount_path,
+            options=request.volume_capability.mount.mount_flags,
+        )
 
         return csi_pb2.NodeStageVolumeResponse()
 
