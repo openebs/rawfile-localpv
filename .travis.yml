@@ -1,4 +1,7 @@
 os: linux
+services:
+  - docker
+
 dist: bionic
 language: minimal
 jobs:
@@ -17,4 +20,22 @@ jobs:
         - CHANGE_MINIKUBE_NONE_USER=true
         - KUBECONFIG=$HOME/.kube/config
     - stage: publish
+      script: ./.ci/publish.sh
+    - stage: build-arm
+      arch: arm64
+      script: ./.ci/build.sh
+    - stage: e2e-test-arm
+      arch: arm64
+      install: ./.ci/e2e-test/setup.sh
+      if: tag IS present OR commit_message =~ /perform-e2e/
+      script: ./.ci/e2e-test/test.sh
+      env:
+        - CHANGE_MINIKUBE_NONE_USER=true
+        - MINIKUBE_WANTUPDATENOTIFICATION=false
+        - MINIKUBE_WANTREPORTERRORPROMPT=false
+        - MINIKUBE_HOME=$HOME
+        - CHANGE_MINIKUBE_NONE_USER=true
+        - KUBECONFIG=$HOME/.kube/config
+    - stage: publish-arm
+      arch: arm64
       script: ./.ci/publish.sh
