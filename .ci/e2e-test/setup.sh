@@ -9,6 +9,7 @@ sudo apt update && sudo apt install -y conntrack
 curl -Lo minikube https://storage.googleapis.com/minikube/releases/v${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
 mkdir -p $HOME/.kube $HOME/.minikube
 touch $KUBECONFIG
+sudo systemctl enable docker.service
 sudo minikube start --profile=minikube --vm-driver=none --kubernetes-version=v${K8S_VERSION}
 minikube update-context --profile=minikube
 eval "$(minikube docker-env --profile=minikube)" && export DOCKER_CLI='docker'
