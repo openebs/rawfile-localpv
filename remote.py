@@ -136,3 +136,17 @@ def btrfs_create_snapshot(volume_id, name):
     snapshot_id = f"{volume_id}/{name}"
     creation_time_ns = time.time_ns()
     return snapshot_id, creation_time_ns
+
+
+def btrfs_stats(volume_id):
+    with mount_root_subvol(volume_id) as root_subvol:
+        cmd = f"btdu --headless --procs=1 --min-resolution=1M --max-time=1s --export=/dev/stdout {root_subvol}"
+
+        "block_group_size_bytes"
+        l = ("profile", ["SINGLE", "DUP"])
+        l = ("block_group", ["METADATA", "DATA", "SYSTEM"])
+
+        l = ("data_type", ["SLACK", "UNREACHABLE", "ROOT_TREE"])
+        # ["data_usage", "profile", "type"]
+
+    return snapshot_id, creation_time_ns

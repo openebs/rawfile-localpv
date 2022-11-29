@@ -12,6 +12,7 @@ RUN apt-get update && \
 
 COPY --from=builder /wheels/ /wheels/
 RUN pip install /wheels/*
+RUN wget -O /usr/local/bin/btdu bthttps://github.com/CyberShadow/btdu/releases/download/v0.4.1/btdu-static-x86_64
 
 ENV PIP_NO_CACHE_DIR 1
 ADD ./requirements.txt ./
