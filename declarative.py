@@ -109,6 +109,6 @@ def be_fs_expanded(dev, path):
     elif fs == "btrfs":
         run(f"btrfs filesystem resize max {path}")
     elif fs == "xfs":
-        run(f"xfs_growfs -d {dev}")
+        run(f"xfs_growfs -d {path}")
     else:
         raise Exception(f"Unsupported fsType: {fs}")
