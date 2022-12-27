@@ -5,4 +5,5 @@ pyyaml
 pykube-ng
 munch
 prometheus_client
+psutil
 #https://github.com/kdave/btrfs-progs/archive/refs/tags/v5.16.1.tar.gz#egg=btrfsutil&subdirectory=libbtrfsutil/python

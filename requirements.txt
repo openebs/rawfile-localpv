@@ -24,6 +24,8 @@ prometheus-client==0.13.1
     # via -r requirements.in
 protobuf==3.19.4
     # via grpcio-tools
+psutil==5.9.4
+    # via -r requirements.in
 pykube-ng==22.1.0
     # via -r requirements.in
 pyyaml==6.0

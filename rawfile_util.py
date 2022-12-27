@@ -1,10 +1,12 @@
 import glob
 import json
 from os.path import basename, dirname
+from os import listdir, major, minor
 from pathlib import Path
+from psutil import disk_partitions, disk_usage
 import time
 
-from consts import DATA_DIR
+from consts import DATA_DIR, PROVISIONER_NAME
 from declarative import be_absent
 from fs_util import path_stats
 from volume_schema import migrate_to, LATEST_SCHEMA_VERSION
@@ -134,3 +136,67 @@ def get_capacity():
     for volume_stat in get_volumes_stats().values():
         capacity -= volume_stat["total"] - volume_stat["used"]
     return capacity
+
+
+def list_all_loops():
+    loops = []
+    loopdir = Path('/sys/devices/virtual/block/')
+    if not loopdir.exists():
+        return loops
+    for vb in listdir(loopdir):
+        bf = Path(f"/sys/devices/virtual/block/{vb}/loop/backing_file")
+        bdi = Path(f"/sys/devices/virtual/block/{vb}/bdi").resolve()
+        dev = Path(f"/dev/{vb}")
+        if not bf.is_file() or not bdi.is_dir() or not dev.is_block_device():
+            continue
+        # loop stat
+        rdev = dev.stat().st_rdev
+        if f"{major(rdev)}:{minor(rdev)}" != bdi.name:
+            continue
+        loops.append({
+            'name': str(dev),
+            'back-file': bf.read_text().strip(),
+        })
+    return loops
+
+
+def get_volumes_fs_stats() -> [dict]:
+    # get all volumes
+    volumes = {}
+    for volume_id in list_all_volumes():
+        volumes[str(img_file(volume_id))] = volume_id
+    # get managed loops
+    loops = {}
+    all_loops = list_all_loops()
+    for loop in all_loops:
+        img = loop['back-file']
+        # DATA_DIR prefix will miss in 'back-file' if csi-driver container is restarted
+        if img.startswith('/pvc-') and not img.startswith(DATA_DIR):
+            img = f"{DATA_DIR}{img}"
+        if img in volumes:
+            loops[loop['name']] = loop
+    # get volumes fs
+    volumes_fs_stats = {}
+    parts = disk_partitions()
+    for part in parts:
+        if part.device in loops and PROVISIONER_NAME in part.mountpoint:
+            pu = disk_usage(part.mountpoint)
+            loop = loops[part.device]
+            img = loop['back-file']
+            if img.startswith('/pvc-') and not img.startswith(DATA_DIR):
+                img = f"{DATA_DIR}{img}"
+            volume_id = volumes[img]
+            volumes_fs_stats[volume_id] = {
+                # part info
+                "device": part.device,
+                "mountpoint": part.mountpoint,
+                "fstype": part.fstype,
+                # loop info
+                "loop": loop['name'],
+                "img": img,
+                # fs info
+                "total": pu.total,
+                "used": pu.used,
+                "free": pu.free,
+            }
+    return volumes_fs_stats
