@@ -1,10 +1,17 @@
-FROM python:3.9-slim-buster
+FROM python:3.10-slim-buster as builder
+RUN apt-get update && apt-get install -y build-essential libbtrfsutil-dev
+RUN pip wheel -w /wheels "https://github.com/kdave/btrfs-progs/archive/refs/tags/v5.16.1.tar.gz#egg=btrfsutil&subdirectory=libbtrfsutil/python"
+
+FROM python:3.10-slim-buster
 
 WORKDIR /app/
 
 RUN apt-get update && \
-    apt-get install -y e2fsprogs btrfs-progs xfsprogs && \
+    apt-get install -y e2fsprogs btrfs-progs libbtrfsutil1 xfsprogs && \
     rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /wheels/ /wheels/
+RUN pip install /wheels/*
 
 ENV PIP_NO_CACHE_DIR 1
 ADD ./requirements.txt ./

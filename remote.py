@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from util import remote_fn
 
 
@@ -33,9 +35,6 @@ def init_rawfile(volume_id, size):
     from volume_schema import LATEST_SCHEMA_VERSION
     from util import run
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
-
-    if rawfile_util.get_capacity() < size:
-        raise CalledProcessError(returncode=RESOURCE_EXHAUSTED_EXIT_CODE, cmd="")
 
     img_dir = rawfile_util.img_dir(volume_id)
     img_dir.mkdir(exist_ok=True)
@@ -73,11 +72,62 @@ def expand_rawfile(volume_id, size):
     size_inc = size - rawfile_util.metadata(volume_id)["size"]
     if size_inc <= 0:
         return
-    if rawfile_util.get_capacity() < size_inc:
-        exit(RESOURCE_EXHAUSTED_EXIT_CODE)
 
     rawfile_util.patch_metadata(
         volume_id,
         {"size": size},
     )
     run(f"truncate -s {size} {img_file}")
+
+
+@contextmanager
+def mount_root_subvol(volume_id):
+    import tempfile
+    import pathlib
+
+    import rawfile_util
+    from util import run
+
+    root_subvol = tempfile.mkdtemp(prefix="rawfile-")
+
+    img_file = rawfile_util.img_file(volume_id)
+    loop_dev = rawfile_util.attach_loop(img_file)
+
+    run(f"mount -t btrfs -o subvolid=0 {loop_dev} {root_subvol}")
+    try:
+        yield root_subvol
+    finally:
+        run(f"umount {root_subvol}")
+        pathlib.Path(root_subvol).rmdir()
+
+
+def btrfs_delete_snapshot(volume_id, name):
+    import btrfsutil
+
+    with mount_root_subvol(volume_id) as root_subvol:
+        snapshots_dir = f"{root_subvol}/.snapshots"
+        snapshot_path = f"{snapshots_dir}/{name}"
+        btrfsutil.delete_subvolume(snapshot_path)
+
+
+def btrfs_create_snapshot(volume_id, name):
+    import btrfsutil
+    import time
+    import pathlib
+
+    # TODO: check fstype
+
+    with mount_root_subvol(volume_id) as root_subvol:
+        default_subvol_id = btrfsutil.get_default_subvolume(root_subvol)
+        default_subvol = btrfsutil.subvolume_path(root_subvol, default_subvol_id)
+        default_subvol = f"{root_subvol}/{default_subvol}"
+
+        snapshots_dir = f"{root_subvol}/.snapshots"
+        pathlib.Path(snapshots_dir).mkdir(parents=True, exist_ok=True)
+
+        snapshot_subvol = f"{snapshots_dir}/{name}"
+        btrfsutil.create_snapshot(default_subvol, snapshot_subvol, read_only=True)
+
+    snapshot_id = f"{volume_id}/{name}"
+    creation_time_ns = time.time_ns()
+    return snapshot_id, creation_time_ns

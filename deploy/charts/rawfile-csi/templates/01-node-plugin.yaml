@@ -153,3 +153,20 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
+        - name: external-snapshotter
+          image: gcr.io/k8s-staging-sig-storage/csi-snapshotter:v5.0.1
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--node-deployment=true"
+            - "--extra-create-metadata=true"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi

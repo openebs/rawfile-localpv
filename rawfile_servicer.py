@@ -141,6 +141,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
                 Cap(rpc=Cap.RPC(type=Cap.RPC.CREATE_DELETE_VOLUME)),
                 Cap(rpc=Cap.RPC(type=Cap.RPC.GET_CAPACITY)),
                 Cap(rpc=Cap.RPC(type=Cap.RPC.EXPAND_VOLUME)),
+                Cap(rpc=Cap.RPC(type=Cap.RPC.CREATE_DELETE_SNAPSHOT)),
             ]
         )
 
