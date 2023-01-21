@@ -36,9 +36,6 @@ def init_rawfile(volume_id, size):
     from util import run
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
 
-    if rawfile_util.get_capacity() < size:
-        raise CalledProcessError(returncode=RESOURCE_EXHAUSTED_EXIT_CODE, cmd="")
-
     img_dir = rawfile_util.img_dir(volume_id)
     img_dir.mkdir(exist_ok=True)
     img_file = Path(f"{img_dir}/disk.img")
@@ -75,8 +72,6 @@ def expand_rawfile(volume_id, size):
     size_inc = size - rawfile_util.metadata(volume_id)["size"]
     if size_inc <= 0:
         return
-    if rawfile_util.get_capacity() < size_inc:
-        exit(RESOURCE_EXHAUSTED_EXIT_CODE)
 
     rawfile_util.patch_metadata(
         volume_id,
