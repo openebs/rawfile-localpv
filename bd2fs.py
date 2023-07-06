@@ -79,7 +79,7 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
         bd_stage_request = NodeStageVolumeRequest()
         bd_stage_request.CopyFrom(request)
         bd_stage_request.staging_target_path = f"{request.staging_target_path}/block"
-        Path(bd_stage_request.staging_target_path).mkdir(exist_ok=True)
+        Path(bd_stage_request.staging_target_path).mkdir(exist_ok=True, parents=True)
         self.bds.NodeStageVolume(bd_stage_request, context)
 
         bd_publish_request = NodePublishVolumeRequest()
