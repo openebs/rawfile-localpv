@@ -70,9 +70,9 @@ def current_fs(device):
 def be_formatted(dev, fs):
     def init_fs(device):
         if fs == "ext4":
-            run(f"mkfs.ext4 -m 0 {device}")
+            run(f"mkfs.ext4 -m 0 -E nodiscard {device}")
         elif fs == "btrfs":
-            run(f"mkfs.btrfs {device}")
+            run(f"mkfs.btrfs -K {device}")
             tmp_mnt = tempfile.mkdtemp(prefix="mnt-")
             default_subvol = f"{tmp_mnt}/default"
             run(
@@ -87,7 +87,7 @@ def be_formatted(dev, fs):
                 """
             )
         elif fs == "xfs":
-            run(f"mkfs.xfs {device}")
+            run(f"mkfs.xfs -K {device}")
         else:
             raise Exception(f"Unsupported fs type: {fs}")
 
