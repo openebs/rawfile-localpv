@@ -1,0 +1,63 @@
+# Metadata section
+
+name: rawfile-localpv
+summary: RawFilePV
+description: Kubernetes LocalPVs on Steroids
+version: "0.8.0"
+license: Apache-2.0
+
+base: bare
+build-base: ubuntu@22.04
+platforms:
+  amd64:
+
+services:
+  rawfile:
+    override: replace
+    command: python3 /app/rawfile.py
+    startup: enabled
+    environment:
+      PYTHONUNBUFFERED: '1'
+    working-dir: '/app'
+
+parts:
+  btrfsutil:
+    plugin: nil
+    build-packages:
+      - build-essential
+      - libbtrfsutil-dev
+      - python3
+    override-build: |-
+      pip wheel -w wheels/ "https://github.com/kdave/btrfs-progs/archive/refs/tags/v6.3.2.tar.gz#egg=btrfsutil&subdirectory=libbtrfsutil/python"
+    override-stage: |-
+      mkdir -p $CRAFT_STAGE/wheels/
+      rm -rf $CRAFT_STAGE/wheels/wheels.txt
+      find $CRAFT_PART_BUILD/wheels -name \*.whl -exec cp {} $CRAFT_STAGE/wheels/ \;
+      for wheel in $CRAFT_STAGE/wheels/*.whl; do
+        echo $wheel >> $CRAFT_STAGE/wheels/wheels.txt
+      done
+  rawfile-deps:
+    after: [btrfsutil]
+    plugin: python
+    source: .
+    build-environment:
+      - PIP_NO_CACHE_DIR: "1"
+    python-requirements:
+      - $CRAFT_STAGE/wheels/wheels.txt
+      - ./requirements.txt
+    stage-packages:
+      - e2fsprogs
+      - btrfs-progs
+      - libbtrfsutil1
+      - xfsprogs
+      - python3-venv
+  rawfile:
+    after: [rawfile-deps]
+    plugin: dump
+    source: .
+    organize:
+      csi: app/csi/
+      orchestrator: app/orchestrator
+      protos: app/protos
+      templates: app/templates
+      '*.py': app/
