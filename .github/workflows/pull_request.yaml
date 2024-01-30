@@ -1,0 +1,23 @@
+name: Push Multiarch Image
+on:
+  pull_request:
+  push:
+    branches:
+      - rockcraft
+
+jobs:
+  build-and-push-arch-specifics:
+    name: Build Rocks and Push Arch Specific Images
+    uses: canonical/k8s-workflows/.github/workflows/build_rocks.yaml@main
+    with:
+      owner: ${{ github.repository_owner }}
+      trivy-image-config: "trivy.yaml"
+      multiarch-awareness: true
+      cache-action: ${{ (github.event_name == 'push') && 'save' || 'restore' }}
+  build-and-push-multiarch-manifest:
+    name: Combine Rocks and Push Multiarch Manifest
+    uses: canonical/k8s-workflows/.github/workflows/assemble_multiarch_image.yaml@main
+    needs: [build-and-push-arch-specifics]
+    with:
+      rock-metas: ${{ needs.build-and-push-arch-specifics.outputs.rock-metas }}
+      dry-run: ${{ github.event_name != 'push' }}
