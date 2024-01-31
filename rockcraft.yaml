@@ -14,7 +14,7 @@ platforms:
 services:
   rawfile:
     override: replace
-    command: python3 /app/rawfile.py
+    command: python3 /app/rawfile.py [ csi-driver ]
     startup: enabled
     environment:
       PYTHONUNBUFFERED: '1'
