@@ -52,6 +52,7 @@ parts:
       - xfsprogs
       - python3-venv
       - dash
+      - mount
   rawfile:
     after: [rawfile-deps]
     plugin: dump
