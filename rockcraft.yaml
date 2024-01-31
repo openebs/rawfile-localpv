@@ -51,6 +51,7 @@ parts:
       - libbtrfsutil1
       - xfsprogs
       - python3-venv
+      - dash
   rawfile:
     after: [rawfile-deps]
     plugin: dump
