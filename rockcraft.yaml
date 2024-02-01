@@ -53,6 +53,7 @@ parts:
       - python3-venv
       - dash
       - mount
+      - coreutils
   rawfile:
     after: [rawfile-deps]
     plugin: dump
