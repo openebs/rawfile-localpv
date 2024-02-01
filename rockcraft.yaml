@@ -54,6 +54,7 @@ parts:
       - dash
       - mount
       - coreutils
+      - util-linux
   rawfile:
     after: [rawfile-deps]
     plugin: dump
