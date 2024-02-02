@@ -15,9 +15,14 @@ defaults: &defaults
 
 controller:
   <<: *defaults
+  csiDriverArgs:
+    - csi-driver
+    - --disable-metrics
 
 node:
   <<: *defaults
+  storage:
+    path: /var/csi/rawfile
   metrics:
     enabled: false
 

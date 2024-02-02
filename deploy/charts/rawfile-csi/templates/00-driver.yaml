@@ -6,6 +6,6 @@ spec:
   attachRequired: false
   podInfoOnMount: true
   fsGroupPolicy: File
-  storageCapacity: true
+  storageCapacity: false  # TODO: reenable once switch from using v1beta1 apis
   volumeLifecycleModes:
     - Persistent

@@ -51,7 +51,7 @@ spec:
             type: DirectoryOrCreate
         - name: data-dir
           hostPath:
-            path: /var/csi/rawfile
+            path: {{ .Values.node.storage.path | quote }}
             type: DirectoryOrCreate
       containers:
         - name: csi-driver

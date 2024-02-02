@@ -34,6 +34,10 @@ spec:
           operator: Equal
           value: "true"
           effect: NoSchedule
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
       volumes:
         - name: socket-dir
           emptyDir: {}
@@ -41,9 +45,10 @@ spec:
         - name: csi-driver
           image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
           imagePullPolicy: {{ .Values.controller.image.pullPolicy }}
+          {{- if .Values.controller.csiDriverArgs }}
           args:
-            - csi-driver
-            - --disable-metrics
+          {{- .Values.controller.csiDriverArgs | toYaml | nindent 10 }}
+          {{- end }}
           env:
             - name: PROVISIONER_NAME
               value: "{{ .Values.provisionerName }}"
