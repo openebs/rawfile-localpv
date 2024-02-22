@@ -1,0 +1,10 @@
+{{- if .Values.storageClass.enabled }} 
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ include "rawfile-csi.fullname" . }} 
+provisioner: {{ .Values.provisionerName }}
+reclaimPolicy: {{ .Values.storageClass.reclaimPolicy }}
+volumeBindingMode: {{ .Values.storageClass.volumeBindingMode }}
+allowVolumeExpansion: true
+{{- end }}

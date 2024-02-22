@@ -25,3 +25,8 @@ imagePullSecrets: []
 serviceMonitor:
   enabled: true
   interval: 1m
+
+storageClass:
+  enabled: true
+  volumeBindingMode: WaitForFirstConsumer
+  reclaimPolicy: Delete
