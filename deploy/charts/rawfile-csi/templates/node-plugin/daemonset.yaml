@@ -1,21 +1,3 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "rawfile-csi.fullname" . }}-node
-  labels:
-    {{- include "rawfile-csi.labels" . | nindent 4 }}
-    component: node
-spec:
-  type: ClusterIP
-  ports:
-    - name: metrics
-      port: 9100
-      targetPort: metrics
-      protocol: TCP
-  selector:
-    {{- include "rawfile-csi.selectorLabels" . | nindent 4 }}
-    component: node
----
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -33,9 +15,9 @@ spec:
       labels: *selectorLabels
     spec:
       serviceAccount: {{ include "rawfile-csi.fullname" . }}-driver
-      priorityClassName: system-node-critical
+      priorityClassName: {{ .Values.node.priorityClassName }}
       tolerations:
-        - operator: "Exists"
+        {{- .Values.node.tolerations | toYaml | nindent 8 }}
       volumes:
         - name: registration-dir
           hostPath:
@@ -51,33 +33,39 @@ spec:
             type: DirectoryOrCreate
         - name: data-dir
           hostPath:
-            path: /var/csi/rawfile
+            path: {{ .Values.node.dataDirPath }}
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
-          image: "{{ .Values.node.image.repository }}:{{ .Values.node.image.tag }}"
-          imagePullPolicy: {{ .Values.node.image.pullPolicy }}
+          image: "{{ include "rawfile-csi.node-image" . }}"
+          imagePullPolicy: "{{ include "rawfile-csi.node-pull-policy" . }}"
           securityContext:
             privileged: true
           env:
             - name: PROVISIONER_NAME
               value: "{{ .Values.provisionerName }}"
+            - name: NODE_DATADIR
+              value: "{{ .Values.node.dataDirPath }}"
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
-              value: "{{ .Values.node.image.repository }}"
-          {{- if regexMatch "^.*-ci$" .Values.node.image.tag }}
+              value: "{{ include "rawfile-csi.node-image-repository" . }}"
+          {{- if regexMatch "^.*-ci$" (include "rawfile-csi.node-image-tag" .) }}
             - name: IMAGE_TAG
-              value: "{{ .Values.node.image.tag }}"
+              value: "{{ include "rawfile-csi.node-image-tag" . }}"
           {{- end }}
             - name: NODE_ID
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
+            - name: ENABLE_METRICS
+              value: {{ .Values.metrics.enabled | toString | quote }}
+            - name: METRICS_PORT
+              value: {{ .Values.metrics.port | toString | quote }}
           ports:
             - name: metrics
-              containerPort: 9100
+              containerPort: {{ .Values.metrics.port }}
             - name: csi-probe
               containerPort: 9808
           volumeMounts:
@@ -89,9 +77,9 @@ spec:
             - name: data-dir
               mountPath: /data
           resources:
-            {{- toYaml .Values.node.resources | nindent 12 }}
+            {{- include "rawfile-csi.controller-resources" . | nindent 12 }}
         - name: node-driver-registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
+          image: {{ printf "%s/%s:%s" (.Values.node.driverRegistrar.image.registry | default .Values.global.k8sImageRegistry) .Values.node.driverRegistrar.image.repository .Values.node.driverRegistrar.image.tag }}
           imagePullPolicy: IfNotPresent
           args:
             - --csi-address=$(ADDRESS)
@@ -124,7 +112,7 @@ spec:
               cpu: 10m
               memory: 100Mi
         - name: external-provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+          image: {{ printf "%s/%s:%s" (.Values.node.externalProvisioner.image.registry | default .Values.global.k8sImageRegistry) .Values.node.externalProvisioner.image.repository .Values.node.externalProvisioner.image.tag }}
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -154,7 +142,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: external-snapshotter
-          image: gcr.io/k8s-staging-sig-storage/csi-snapshotter:v5.0.1
+          image: {{ printf "%s/%s:%s" (.Values.node.externalSnapshotter.image.registry | default .Values.global.k8sImageRegistry) .Values.node.externalSnapshotter.image.repository .Values.node.externalSnapshotter.image.tag }}
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"

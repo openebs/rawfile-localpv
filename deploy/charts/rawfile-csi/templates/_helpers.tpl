@@ -61,3 +61,53 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Some helpers to handle image global information
+*/}}
+{{- define "rawfile-csi.controller-image-tag" -}}
+{{- $imageTag := .Values.image.tag | default .Chart.AppVersion }}
+{{- printf "%s" $imageTag }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-image-repository" -}}
+{{- printf "%s" .Values.image.repository }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-image" -}}
+{{- $imageTag := .Values.controller.image.tag | default (.Values.global.image.tag | default .Chart.AppVersion) }}
+{{- $imageRegistry := .Values.image.registry | default(.Values.global.imageRegistry) }}
+{{- printf "%s/%s:%s" $imageRegistry (include "rawfile-csi.controller-image-repository" .) (include "rawfile-csi.controller-image-tag" .) }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-pull-policy" -}}
+{{- printf "%s" (.Values.image.pullPolicy | default .Values.global.imagePullPolicy) }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-resources" -}}
+{{- toYaml (.Values.controller.resources) }}
+{{- end }}
+
+{{- define "rawfile-csi.node-image-tag" -}}
+{{- $imageTag := .Values.image.tag | default .Chart.AppVersion }}
+{{- printf "%s" $imageTag }}
+{{- end }}
+
+{{- define "rawfile-csi.node-image-repository" -}}
+{{- $imageRepo := (.Values.image.repository) }}
+{{- printf "%s" $imageRepo }}
+{{- end }}
+
+{{- define "rawfile-csi.node-image" -}}
+{{- $imageTag := .Values.node.image.tag | default (.Values.global.image.tag | default .Chart.AppVersion) }}
+{{- $imageRegistry := .Values.image.registry | default(.Values.global.imageRegistry) }}
+{{- printf "%s/%s:%s" $imageRegistry (include "rawfile-csi.node-image-repository" .) (include "rawfile-csi.node-image-tag" .) }}
+{{- end }}
+
+{{- define "rawfile-csi.node-pull-policy" -}}
+{{- printf "%s" (.Values.image.pullPolicy | default .Values.global.imagePullPolicy) }}
+{{- end }}
+
+{{- define "rawfile-csi.node-resources" -}}
+{{- toYaml (.Values.node.resources) }}
+{{- end }}

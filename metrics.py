@@ -35,6 +35,6 @@ class VolumeStatsCollector(object):
         return [remaining_capacity, volume_used, volume_total]
 
 
-def expose_metrics(node):
+def expose_metrics(node, port):
     REGISTRY.register(VolumeStatsCollector(node))
-    start_http_server(9100)
+    start_http_server(port)

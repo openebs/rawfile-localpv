@@ -1,8 +1,8 @@
-FROM python:3.11-slim-buster as builder
+FROM python:3.11-slim-bookworm as builder
 RUN apt-get update && apt-get install -y build-essential libbtrfsutil-dev
 RUN pip wheel -w /wheels "https://github.com/kdave/btrfs-progs/archive/refs/tags/v6.3.2.tar.gz#egg=btrfsutil&subdirectory=libbtrfsutil/python"
 
-FROM python:3.11-slim-buster
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app/
 

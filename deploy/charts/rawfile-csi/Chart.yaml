@@ -2,5 +2,17 @@ apiVersion: v2
 name: rawfile-csi
 description: RawFile Driver Container Storage Interface
 type: application
-version: 0.8.0
+version: 0.9.0
 appVersion: 0.8.0
+kubeVersion: ">= 1.21"
+icon: https://raw.githubusercontent.com/cncf/artwork/main/projects/openebs/icon/color/openebs-icon-color.png
+home: https://openebs.io/
+keywords:
+  - cloud-native-storage
+  - filesystem
+  - sparse
+  - rawfile
+  - Local Persistent Volumes
+  - storage
+sources:
+- https://github.com/openebs/rawfile-localpv
