@@ -28,7 +28,7 @@ spec:
       labels: *selectorLabels
     spec:
       serviceAccount: {{ include "rawfile-csi.fullname" . }}-driver
-      priorityClassName: system-cluster-critical
+      priorityClassName: {{ .Values.controller.priorityClassName }}
       tolerations:
         {{- .Values.controller.tolerations | toYaml | nindent 8 }}
       volumes:

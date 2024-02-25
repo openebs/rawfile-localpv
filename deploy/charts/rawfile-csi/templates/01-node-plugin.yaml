@@ -33,7 +33,7 @@ spec:
       labels: *selectorLabels
     spec:
       serviceAccount: {{ include "rawfile-csi.fullname" . }}-driver
-      priorityClassName: system-node-critical
+      priorityClassName: {{ .Values.node.priorityClassName }}
       tolerations:
         {{- .Values.node.tolerations | toYaml | nindent 8 }}
       volumes:

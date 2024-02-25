@@ -17,6 +17,7 @@ Kubernetes: `>= 1.21`
 | controller.image.pullPolicy | string | `""` | Overrides default image pull policy for controller component |
 | controller.image.repository | string | `""` | Overrides default image repository for controller component |
 | controller.image.tag | string | `""` | Overrides default image tag for controller component |
+| controller.priorityClassName | string | `"system-cluster-critical"` | priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default |
 | controller.resources | object | `{}` | Overrides default resources for controller component |
 | controller.tolerations | list | `[{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal","value":"true"}]` | Tolerations for controller component |
 | global.image.pullPolicy | string | `"IfNotPresent"` | Default image pull policy for node and controller components |
@@ -38,6 +39,7 @@ Kubernetes: `>= 1.21`
 | node.image.repository | string | `""` | Overrides default image repository for node component |
 | node.image.tag | string | `""` | Overrides default image tag for node component |
 | node.metrics.enabled | bool | `false` |  |
+| node.priorityClassName | string | `"system-node-critical"` | priorityClassName for node component since this part is critical for node `system-node-critical` is default |
 | node.resources | object | `{}` | Overrides default resources for node component |
 | node.tolerations | list | `[{"operator":"Exist"}]` | Tolerations for node component |
 | provisionerName | string | `"rawfile.csi.openebs.io"` | Name of the registered CSI Driver in cluster |

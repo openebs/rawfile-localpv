@@ -47,6 +47,9 @@ controller:
     #   cpu: 10m
     #   memory: 100Mi
 
+  # -- priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default
+  priorityClassName: system-cluster-critical
+
   # -- Tolerations for controller component
   tolerations:
     - key: "node-role.kubernetes.io/master"
@@ -98,6 +101,9 @@ node:
     #   memory: 100Mi
   metrics:
     enabled: false
+
+  # -- priorityClassName for node component since this part is critical for node `system-node-critical` is default
+  priorityClassName: system-node-critical
 
   # -- Tolerations for node component
   tolerations:
