@@ -61,3 +61,52 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Some helpers to handle image global information
+*/}}
+{{- define "rawfile-csi.controller-image-tag" -}}
+{{- $imageTag := .Values.controller.image.tag | default (.Values.global.image.tag | default .Chart.AppVersion) }}
+{{- printf "%s" $imageTag }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-image-repository" -}}
+{{- $imageRepo := (.Values.controller.image.repository | default .Values.global.image.repository) }}
+{{- printf "%s" $imageRepo }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-image" -}}
+{{- $imageTag := .Values.controller.image.tag | default (.Values.global.image.tag | default .Chart.AppVersion) }}
+{{- printf "%s:%s" (include "rawfile-csi.controller-image-repository" .) (include "rawfile-csi.controller-image-tag" .) }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-pull-policy" -}}
+{{- printf "%s" (.Values.controller.image.pullPolicy | default .Values.global.image.pullPolicy) }}
+{{- end }}
+
+{{- define "rawfile-csi.controller-resources" -}}
+{{- toYaml (.Values.controller.resources | default .Values.global.resources) }}
+{{- end }}
+
+{{- define "rawfile-csi.node-image-tag" -}}
+{{- $imageTag := .Values.node.image.tag | default (.Values.global.image.tag | default .Chart.AppVersion) }}
+{{- printf "%s" $imageTag }}
+{{- end }}
+
+{{- define "rawfile-csi.node-image-repository" -}}
+{{- $imageRepo := (.Values.node.image.repository | default .Values.global.image.repository) }}
+{{- printf "%s" $imageRepo }}
+{{- end }}
+
+{{- define "rawfile-csi.node-image" -}}
+{{- $imageTag := .Values.node.image.tag | default (.Values.global.image.tag | default .Chart.AppVersion) }}
+{{- printf "%s:%s" (include "rawfile-csi.node-image-repository" .) (include "rawfile-csi.node-image-tag" .) }}
+{{- end }}
+
+{{- define "rawfile-csi.node-pull-policy" -}}
+{{- printf "%s" (.Values.node.image.pullPolicy | default .Values.global.image.pullPolicy) }}
+{{- end }}
+
+{{- define "rawfile-csi.node-resources" -}}
+{{- toYaml (.Values.node.resources | default .Values.global.resources) }}
+{{- end }}

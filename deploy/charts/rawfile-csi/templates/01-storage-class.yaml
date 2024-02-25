@@ -1,0 +1,14 @@
+{{- $vals := .Values }}
+{{- range $class := .Values.storageClasses }}
+{{- if $class.enabled }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ $class.name }}
+provisioner: {{ $vals.provisionerName }}
+reclaimPolicy: {{ $class.reclaimPolicy }}
+volumeBindingMode: {{ $class.volumeBindingMode }}
+allowVolumeExpansion: {{ $class.allowVolumeExpansion }}
+---
+{{- end }}
+{{- end }}

@@ -35,7 +35,7 @@ spec:
       serviceAccount: {{ include "rawfile-csi.fullname" . }}-driver
       priorityClassName: system-node-critical
       tolerations:
-        - operator: "Exists"
+        {{- .Values.node.tolerations | toYaml | nindent 8 }}
       volumes:
         - name: registration-dir
           hostPath:
@@ -51,12 +51,12 @@ spec:
             type: DirectoryOrCreate
         - name: data-dir
           hostPath:
-            path: /var/csi/rawfile
+            path: {{ .Values.node.dataDirPath }}
             type: DirectoryOrCreate
       containers:
         - name: csi-driver
-          image: "{{ .Values.node.image.repository }}:{{ .Values.node.image.tag }}"
-          imagePullPolicy: {{ .Values.node.image.pullPolicy }}
+          image: "{{ include "rawfile-csi.node-image" . }}"
+          imagePullPolicy: "{{ include "rawfile-csi.node-pull-policy" . }}"
           securityContext:
             privileged: true
           env:
@@ -65,10 +65,10 @@ spec:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
-              value: "{{ .Values.node.image.repository }}"
-          {{- if regexMatch "^.*-ci$" .Values.node.image.tag }}
+              value: "{{ include "rawfile-csi.node-image-repository" . }}"
+          {{- if regexMatch "^.*-ci$" (include "rawfile-csi.node-image-tag" .) }}
             - name: IMAGE_TAG
-              value: "{{ .Values.node.image.tag }}"
+              value: "{{ include "rawfile-csi.node-image-tag" . }}"
           {{- end }}
             - name: NODE_ID
               valueFrom:
@@ -89,9 +89,9 @@ spec:
             - name: data-dir
               mountPath: /data
           resources:
-            {{- toYaml .Values.node.resources | nindent 12 }}
+            {{- include "rawfile-csi.controller-resources" . | nindent 12 }}
         - name: node-driver-registrar
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
+          image: {{ printf "%s:%s" .Values.node.driverRegistrar.image.repository .Values.node.driverRegistrar.image.tag }}
           imagePullPolicy: IfNotPresent
           args:
             - --csi-address=$(ADDRESS)
@@ -124,7 +124,7 @@ spec:
               cpu: 10m
               memory: 100Mi
         - name: external-provisioner
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+          image: {{ printf "%s:%s" .Values.node.externalProvisioner.image.repository .Values.node.externalProvisioner.image.tag }}
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"
@@ -154,7 +154,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: external-snapshotter
-          image: gcr.io/k8s-staging-sig-storage/csi-snapshotter:v5.0.1
+          image: {{ printf "%s:%s" .Values.node.externalSnapshotter.image.repository .Values.node.externalSnapshotter.image.tag }}
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"

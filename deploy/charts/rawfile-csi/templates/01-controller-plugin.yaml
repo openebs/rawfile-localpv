@@ -30,17 +30,14 @@ spec:
       serviceAccount: {{ include "rawfile-csi.fullname" . }}-driver
       priorityClassName: system-cluster-critical
       tolerations:
-        - key: "node-role.kubernetes.io/master"
-          operator: Equal
-          value: "true"
-          effect: NoSchedule
+        {{- .Values.controller.tolerations | toYaml | nindent 8 }}
       volumes:
         - name: socket-dir
           emptyDir: {}
       containers:
         - name: csi-driver
-          image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
-          imagePullPolicy: {{ .Values.controller.image.pullPolicy }}
+          image: "{{ include "rawfile-csi.controller-image" . }}"
+          imagePullPolicy: "{{ include "rawfile-csi.controller-pull-policy" . }}"
           args:
             - csi-driver
             - --disable-metrics
@@ -50,10 +47,10 @@ spec:
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
-              value: "{{ .Values.controller.image.repository }}"
-          {{- if regexMatch "^.*-ci$" .Values.controller.image.tag }}
+              value: "{{ include "rawfile-csi.controller-image-repository" . }}"
+          {{- if regexMatch "^.*-ci$" (include "rawfile-csi.controller-image-tag" .) }}
             - name: IMAGE_TAG
-              value: "{{ .Values.controller.image.tag }}"
+              value: "{{ include "rawfile-csi.controller-image-tag" . }}"
           {{- end }}
           volumeMounts:
             - name: socket-dir
@@ -62,9 +59,9 @@ spec:
             - name: csi-probe
               containerPort: 9808
           resources:
-            {{- toYaml .Values.controller.resources | nindent 12 }}
+            {{- include "rawfile-csi.controller-resources" . | nindent 12 }}
         - name: external-resizer
-          image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+          image: {{ printf "%s:%s" .Values.controller.externalResizer.image.repository .Values.controller.externalResizer.image.tag }}
           imagePullPolicy: IfNotPresent
           args:
             - "--csi-address=$(ADDRESS)"

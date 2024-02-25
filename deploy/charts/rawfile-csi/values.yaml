@@ -1,27 +1,125 @@
+# -- Name of the registered CSI Driver in cluster
 provisionerName: "rawfile.csi.openebs.io"
 
-defaults: &defaults
+global:
   image:
+    # -- Default image repository for node and controller components
     repository: docker.io/openebs/rawfile-localpv
-    tag: 0.8.0
-    pullPolicy: Always
+    # -- Default image tag for node and controller components (uses AppVersion if empty)
+    tag: ""
+    # -- Default image pull policy for node and controller components
+    pullPolicy: IfNotPresent
   resources:
     limits:
+      # -- Default CPU Limit for node and controller components
       cpu: 1
+      # -- Default Memory Limit for node and controller components
       memory: 100Mi
     requests:
+      # -- Default CPU Request (Guaranty) for node and controller components
       cpu: 10m
+      # -- Default Memory Request (Guaranty) for node and controller components
       memory: 100Mi
 
 controller:
-  <<: *defaults
+  image:
+    # -- Overrides default image repository for controller component
+    repository: ""
+    # -- Overrides default image tag for controller component
+    tag: ""
+    # -- Overrides default image pull policy for controller component
+    pullPolicy: ""
+
+  externalResizer:
+    image:
+      # -- Image Repository for `csi-resizer`
+      repository: registry.k8s.io/sig-storage/csi-resizer
+      # -- Image tag for `csi-resizer`
+      tag: v1.2.0
+
+  # -- Overrides default resources for controller component
+  resources:
+    {}
+    # limits:
+    #   cpu: 1
+    #   memory: 100Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 100Mi
+
+  # -- Tolerations for controller component
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: Equal
+      value: "true"
+      effect: NoSchedule
 
 node:
-  <<: *defaults
+  image:
+    # -- Overrides default image repository for node component
+    repository: ""
+    # -- Overrides default image tag for node component
+    tag: ""
+    # -- Overrides default image pull policy for node component
+    pullPolicy: ""
+
+  driverRegistrar:
+    image:
+      # -- Image Repository for `csi-node-driver-registrar`
+      repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
+      # -- Image Tag for `csi-node-driver-registrar`
+      tag: v2.2.0
+
+  externalProvisioner:
+    image:
+      # -- Image Repository for `csi-provisioner`
+      repository: registry.k8s.io/sig-storage/csi-provisioner
+      # -- Image Tag for `csi-provisioner`
+      tag: v2.2.2
+
+  externalSnapshotter:
+    image:
+      # -- Image Repository for `csi-snapshotter`
+      repository: registry.k8s.io/sig-storage/csi-snapshotter
+      # -- Image Tag for `csi-snapshotter`
+      tag: v5.0.1
+
+  # -- Data dir path for provisioner to be used by provisioner
+  dataDirPath: /var/lib/rawfile-localpv
+
+  # -- Overrides default resources for node component
+  resources:
+    {}
+    # limits:
+    #   cpu: 1
+    #   memory: 100Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 100Mi
   metrics:
     enabled: false
 
+  # -- Tolerations for node component
+  tolerations:
+    - operator: Exist
+
+# -- Sets image pull secret while pulling images from a private registry
 imagePullSecrets: []
+
 serviceMonitor:
-  enabled: true
+  # -- Enables prometheus service monitor
+  enabled: false
+  # -- Sets prometheus target interval
   interval: 1m
+
+storageClasses:
+  - # -- Name of the StorageClass
+    name: rawfile-localpv
+    # -- Enable or disable StorageClass
+    enabled: true
+    # -- Sets volumeBindingMode for StorageClass
+    volumeBindingMode: WaitForFirstConsumer
+    # -- volumes are able to expand/resize or not?
+    allowVolumeExpansion: true
+    # -- Sets default reclaimPolicy for StorageClass volumes
+    reclaimPolicy: Delete
