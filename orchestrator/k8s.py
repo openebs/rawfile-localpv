@@ -51,6 +51,7 @@ def run_on_node(fn, node):
         "cmd": json.dumps(fn),
         "image_repository": CONFIG["image_repository"],
         "image_tag": CONFIG["image_tag"],
+        "datadir": CONFIG["node_datadir"]
     }
     template = Path("./templates/task.yaml").read_bytes().decode()
     manifest = template.format(**ctx)
