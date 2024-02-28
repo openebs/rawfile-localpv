@@ -88,7 +88,7 @@ node:
       tag: v5.0.1
 
   # -- Data dir path for provisioner to be used by provisioner
-  dataDirPath: /var/lib/rawfile-localpv
+  dataDirPath: /var/csi/rawfile
 
   # -- Overrides default resources for node component
   resources:
