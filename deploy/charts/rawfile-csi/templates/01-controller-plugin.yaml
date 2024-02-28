@@ -46,6 +46,8 @@ spec:
               value: "{{ .Values.provisionerName }}"
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
+            - name: NODE_DATADIR
+              value: "{{ .Values.node.dataDirPath }}"
             - name: IMAGE_REPOSITORY
               value: "{{ include "rawfile-csi.controller-image-repository" . }}"
           {{- if regexMatch "^.*-ci$" (include "rawfile-csi.controller-image-tag" .) }}

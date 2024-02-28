@@ -62,6 +62,8 @@ spec:
           env:
             - name: PROVISIONER_NAME
               value: "{{ .Values.provisionerName }}"
+            - name: NODE_DATADIR
+              value: "{{ .Values.node.dataDirPath }}"
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
             - name: IMAGE_REPOSITORY
