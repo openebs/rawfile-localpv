@@ -22,7 +22,7 @@ The OpenEBS LocalPV-HostPath Data-Engine makes it pretty easy to automatically p
    - hostPath/LocalPVs are simple bind-mounts from the host filesystem into the pod.
 
 ### The idea behind RawFile-LocalPB 
-To use a Filesystem based 'individual file' as the emulated block device (i.e. a soft-LUN target), and leverage the LINUX loopback device to associate that soft-LUN file as a complete complete block device (i.e. an emulated soft disk device). Then you can create a volume based on it. This allows you to...
+To use a Filesystem based 'extant file' as the emulated block device (i.e. a soft-LUN block device), and leverage the LINUX loop device to associate that soft-LUN file as a complete flexibe block device (i.e. an emulated soft disk device). At this point you can create a PV with a fileystem on it. This allows you to...
 > [!NOTE]
 > - You can monitor volume usage by running `df -hT` in `O(1)` since each soft-LUN block device is mounted separately on the local node (displaying utilization status/metrics or each mountpoint).
 > - The size limit is enforced by the operating system, based on the backing file system capacity and soft-lun device file size.
