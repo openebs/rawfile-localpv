@@ -83,7 +83,7 @@ node:
       # -- Image Repository for `csi-provisioner`
       repository: sig-storage/csi-provisioner
       # -- Image Tag for `csi-provisioner`
-      tag: v2.2.2
+      tag: v4.0.1
 
   externalSnapshotter:
     image:
