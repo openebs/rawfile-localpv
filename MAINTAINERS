@@ -1,10 +1,1 @@
-# Official list of OpenEBS Maintainers.
-#
-# Names added to this file should be in the following format:
-#     Individual's name,@githubhandle, Company Name
-#
-# Please keep the below list sorted in ascending order.
-#
-#Maintainers
-"Kiran Mova",@kmova,MayaData
-"Mehran Kholdi",@semekh,Hamravesh
+See OpenEBS Maintainers at https://github.com/openebs/community/blob/HEAD/MAINTAINERS
