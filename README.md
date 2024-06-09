@@ -72,7 +72,7 @@ Features
 - [ ] Online shrinking: If fs supports it (e.g. btrfs)
 - [ ] Offline expansion/shrinking
 - [ ] Ephemeral inline volume
-- [ ] Snapshots: If the fs supports it (e.g. btrfs)
+- [x] Filesystem-level snapshots: `btrfs` supported
 
 
 ## License
