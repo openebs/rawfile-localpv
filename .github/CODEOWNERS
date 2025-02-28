@@ -1,5 +1,5 @@
 # Default code owners
-*                           @openebs/localpv-rawfile-approvers @openebs/org-maintainers
+*                           @openebs/localpv-rawfile-approvers
 
 # CODEOWNERS file owners
 /.github/CODEOWNERS         @openebs/org-maintainers
