@@ -32,7 +32,7 @@ pyyaml==6.0
     #   pykube-ng
 requests==2.31.0
     # via pykube-ng
-urllib3==2.0.3
+urllib3==2.2.2
     # via
     #   pykube-ng
     #   requests
