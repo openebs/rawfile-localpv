@@ -16,7 +16,7 @@ grpcio==1.56.0
     #   grpcio-tools
 grpcio-tools==1.56.0
     # via -r requirements.in
-idna==3.4
+idna==3.7
     # via requests
 munch==4.0.0
     # via -r requirements.in
