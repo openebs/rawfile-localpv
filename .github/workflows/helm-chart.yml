@@ -1,0 +1,22 @@
+name: Helm Chart CI
+on:
+  workflow_call:
+
+jobs:
+  helm-chart-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: DeterminateSystems/nix-installer-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - name: Pre-populate nix-shell
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+          nix-shell --run "echo"
+      - name: HelmChart Readme
+        run: nix-shell --run ".ci/helm-docs.sh"
+      - name: HelmChart Lint
+        run: nix-shell --run ".ci/helm-lint.sh"

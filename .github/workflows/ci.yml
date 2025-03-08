@@ -10,11 +10,14 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
+  helm-ci:
+    uses: ./.github/workflows/helm-chart.yml
   k8s-ci:
     uses: ./.github/workflows/k8s.yml
   ci:
     if: ${{ success() }}
     needs:
+      - helm-ci
       - k8s-ci
     runs-on: ubuntu-latest
     steps:
