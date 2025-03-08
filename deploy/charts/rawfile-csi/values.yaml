@@ -139,3 +139,11 @@ storageClasses:
     allowVolumeExpansion: true
     # -- Sets default reclaimPolicy for StorageClass volumes
     reclaimPolicy: Delete
+
+crds:
+  # -- Disables the installation of all CRDs if set to false
+  enabled: true
+  csi:
+    volumeSnapshots:
+      # -- Install Volume Snapshot CRDs
+      enabled: true

@@ -16,3 +16,7 @@ keywords:
   - storage
 sources:
 - https://github.com/openebs/rawfile-localpv
+dependencies:
+  - name: crds
+    version: 0.0.1
+    condition: crds.enabled

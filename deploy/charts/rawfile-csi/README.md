@@ -14,6 +14,10 @@ RawFile Driver Container Storage Interface
 
 Kubernetes: `>= 1.21`
 
+| Repository | Name | Version |
+|------------|------|---------|
+|  | crds | 0.0.1 |
+
 ## Values
 
 | Key | Type | Default | Description |
@@ -27,6 +31,8 @@ Kubernetes: `>= 1.21`
 | controller.priorityClassName | string | `"system-cluster-critical"` | priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default |
 | controller.resources | object | `{}` | Sets compute resources for controller component |
 | controller.tolerations | list | `[{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal","value":"true"}]` | Tolerations for controller component |
+| crds.csi.volumeSnapshots.enabled | bool | `true` | Install Volume Snapshot CRDs |
+| crds.enabled | bool | `true` | Disables the installation of all CRDs if set to false |
 | global.imagePullPolicy | string | `"IfNotPresent"` | Default pull policy for images |
 | global.imagePullSecrets | list | `[]` | Default image pull secret for images |
 | global.imageRegistry | string | `"docker.io"` | Default image registry for Images from DockerHub |
@@ -46,7 +52,7 @@ Kubernetes: `>= 1.21`
 | node.driverRegistrar.image.tag | string | `"v2.2.0"` | Image Tag for `csi-node-driver-registrar` |
 | node.externalProvisioner.image.registry | string | `""` | Image Registry for `csi-provisioner` |
 | node.externalProvisioner.image.repository | string | `"sig-storage/csi-provisioner"` | Image Repository for `csi-provisioner` |
-| node.externalProvisioner.image.tag | string | `"v2.2.2"` | Image Tag for `csi-provisioner` |
+| node.externalProvisioner.image.tag | string | `"v4.0.1"` | Image Tag for `csi-provisioner` |
 | node.externalSnapshotter.image.registry | string | `""` | Image Registry for `csi-snapshotter` |
 | node.externalSnapshotter.image.repository | string | `"sig-storage/csi-snapshotter"` | Image Repository for `csi-snapshotter` |
 | node.externalSnapshotter.image.tag | string | `"v5.0.1"` | Image Tag for `csi-snapshotter` |
