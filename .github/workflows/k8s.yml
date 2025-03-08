@@ -1,0 +1,46 @@
+name: K8s CI
+on:
+  workflow_call:
+
+jobs:
+  k8s-ci:
+    runs-on: ubuntu-latest-8-cores
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: DeterminateSystems/nix-installer-action@v11
+        with:
+          kvm: true
+      - uses: DeterminateSystems/magic-nix-cache-action@v6
+      - name: Setup Nix Path
+        run: |
+          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
+          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+      - name: Pre-populate nix-shell
+        run: nix-shell --run "echo"
+      - name: BootStrap k8s cluster
+        run: |
+          sudo debconf-communicate <<< "set man-db/auto-update false" || true
+          sudo dpkg-reconfigure man-db || true
+          sudo chown $USER /mnt
+          nix-shell --run "TMP_KIND=/mnt/kind/rawfile/ .ci/deployer.sh start"
+      - name: Build test images
+        run: nix-shell --run ".ci/build.sh"
+      - name: Install HelmChart
+        run: nix-shell --run ".ci/e2e-test/setup.sh"
+      - name: Run K8s tests
+        run: nix-shell --run ".ci/e2e-test/test.sh"
+      - name: Collect dump
+        if: failure()
+        run: nix-shell --run "kind export logs ./dump"
+      - name: Upload cluster dump
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k8s-dump
+          path: dump
+      # - name: Setup tmate session
+      #   if: ${{ failure() }}
+      #   timeout-minutes: 120
+      #   uses: mxschmitt/action-tmate@v3
