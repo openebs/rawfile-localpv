@@ -4,7 +4,7 @@ set -e
 
 SCRIPT_DIR="$(dirname "$0")"
 
-TMP_KIND="/tmp/kind/openebs/"
+TMP_KIND=${TMP_KIND:-"/tmp/kind/rawfile/"}
 TMP_KIND_CONFIG="$TMP_KIND/config.yaml"
 WORKERS=1
 DRY_RUN=
@@ -14,7 +14,7 @@ DOCKER="docker"
 CLEANUP="false"
 SUDO=${SUDO:-"sudo"}
 # todo: make configurable
-K8S_VERSION=${K8S_VERSION:-v1.26.0}
+K8S_VERSION=${K8S_VERSION:-v1.27.0}
 
 help() {
   cat <<EOF
@@ -134,8 +134,8 @@ for node_index in $(seq 1 $WORKERS); do
     - hostPath: /dev
       containerPath: /dev
       propagation: HostToContainer
-    - hostPath: /
-      containerPath: /host
+    - hostPath: $host_path
+      containerPath: /var/csi/rawfile
       propagation: HostToContainer
 EOF
 done
@@ -160,10 +160,10 @@ for node in ${nodes[@]}; do
   $DOCKER exec "$node" bash -c 'printf "'"$host_ip"' kvmhost\n" >> /etc/hosts'
 
   # SSH access is required by the e2e test disruptive storage tests
-  docker exec -it "$node" apt update
-  docker exec -it "$node" apt install -y -q openssh-server
-  docker exec -it "$node" mkdir -p /root/.ssh
-  docker exec -it "$node" sh -c 'cat /etc/ssh/ssh_host_rsa_key.pub > /root/.ssh/authorized_keys'
+  docker exec "$node" apt update
+  docker exec "$node" apt install -y -q openssh-server
+  docker exec "$node" mkdir -p /root/.ssh
+  docker exec "$node" sh -c 'cat /etc/ssh/ssh_host_rsa_key.pub > /root/.ssh/authorized_keys'
   docker cp "$node":/etc/ssh/ssh_host_rsa_key "$SCRIPT_DIR/e2e-test/ssh_id"
-  docker exec -it "$node" systemctl restart sshd
+  docker exec "$node" systemctl restart sshd
 done
