@@ -33,7 +33,9 @@ jobs:
         run: nix-shell --run ".ci/e2e-test/test.sh"
       - name: Collect dump
         if: failure()
-        run: nix-shell --run "kind export logs ./dump"
+        run: |
+          nix-shell --run "kind export logs ./dump/kind --name rawfile"
+          nix-shell --run "kubectl cluster-info dump --output-directory=./dump/k8s --namespaces=openebs,kube-system"
       - name: Upload cluster dump
         if: failure()
         uses: actions/upload-artifact@v4

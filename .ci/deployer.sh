@@ -96,7 +96,7 @@ if [ -z "$COMMAND" ]; then
 fi
 
 if [ "$COMMAND" = "stop" ] || [ "$CLEANUP" = "true" ]; then
-  $KIND delete cluster
+  $KIND delete cluster --name "rawfile"
   if [ "$COMMAND" = "stop" ]; then
     exit 0
   fi
@@ -120,9 +120,9 @@ start_core=1
 nodes=()
 for node_index in $(seq 1 $WORKERS); do
   if [ "$node_index" == 1 ]; then
-    node="kind-worker"
+    node="rawfile-worker"
   else
-    node="kind-worker$node_index"
+    node="rawfile-worker$node_index"
   fi
   nodes+=($node)
 
@@ -144,9 +144,9 @@ if [ -n "$DRY_RUN" ]; then
   cat "$TMP_KIND_CONFIG"
 fi
 
-$KIND create cluster --config "$TMP_KIND_CONFIG"
+$KIND create cluster --config "$TMP_KIND_CONFIG" --name "rawfile"
 
-$KUBECTL cluster-info --context kind-kind
+$KUBECTL cluster-info --context kind-rawfile
 if [ -z "$DRY_RUN" ]; then
   host_ip=$($DOCKER network inspect kind | jq -r 'first (.[0].IPAM.Config[].Gateway | select(.))')
 fi
