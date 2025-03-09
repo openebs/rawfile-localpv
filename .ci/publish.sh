@@ -1,8 +1,9 @@
-#!/bin/bash
-set -ex
-source .ci/common
+#!/usr/bin/env bash
 
-docker pull ${CI_IMAGE_URI}
+SCRIPT_DIR="$(dirname "$0")"
+
+set -exuo pipefail
+source "$SCRIPT_DIR/common"
 
 docker login -u "${DNAME}" -p "${DPASS}";
 for TAG in $COMMIT $BRANCH_SLUG; do

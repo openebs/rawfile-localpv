@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 set -ex
 
 slugify() {
@@ -20,7 +21,7 @@ function TagAndPushImage() {
   TAG="$2"
 
   IMAGE_URI="${REPO}:${TAG}${TAG_SUFFIX}";
-  sudo docker tag ${CI_IMAGE_URI} ${IMAGE_URI};
+  docker tag ${CI_IMAGE_URI} ${IMAGE_URI};
   echo " push ${IMAGE_URI}";
-  sudo docker push ${IMAGE_URI};
+  docker push ${IMAGE_URI};
 }
