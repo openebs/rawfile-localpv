@@ -16,6 +16,8 @@ export CI_TAG="${COMMIT}-ci"
 export CI_IMAGE_REPO="${IMAGE}"
 export CI_IMAGE_URI="${CI_REGISTRY}/${CI_IMAGE_REPO}:${CI_TAG}"
 
+command -v docker &>/dev/null || ( echo 'docker not found. exiting...'; exit 1 )
+
 function TagAndPushImage() {
   REPO="$1"
   TAG="$2"
