@@ -22,7 +22,7 @@ jobs:
             git fetch -f origin ${{ github.ref }}:${{ github.ref }}
           fi
       - uses: DeterminateSystems/nix-installer-action@v14
-      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - uses: DeterminateSystems/magic-nix-cache-action@v9
       - name: Pre-populate nix-shell
         run: |
           export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
