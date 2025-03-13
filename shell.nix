@@ -11,8 +11,8 @@ pkgs.mkShell {
     helm-docs
     nixos-shell
     kind
-    python311
-    (poetry.override { python3 = python311; })
+    python313
+    poetry # Python3.13 is not supported (Overriding python3 input will not work)
     gcc
     gnumake
     btrfs-progs
