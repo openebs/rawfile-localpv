@@ -2,6 +2,6 @@
 
 set -e
 
-. ${PYSETUP_PATH}/.venv/bin/activate
+. "${PYSETUP_PATH}/.venv/bin/activate"
 
 exec python -m rawfile "$@"

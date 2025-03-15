@@ -4,6 +4,11 @@ on:
 
 jobs:
   e2e:
+    services:
+      registery:
+        image: registry:2
+        ports:
+          - 5000:5000
     runs-on: ubuntu-latest-8-cores
     steps:
       - uses: actions/checkout@v4
@@ -17,16 +22,21 @@ jobs:
         run: |
           export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
           echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
       - name: Pre-populate nix-shell
         run: nix-shell --run "echo"
+      - name: Build test images
+        run: nix-shell --run "CI_TEST=true .ci/build.sh"
       - name: BootStrap k8s cluster
         run: |
           sudo debconf-communicate <<< "set man-db/auto-update false" || true
           sudo dpkg-reconfigure man-db || true
           sudo chown $USER /mnt
           nix-shell --run "TMP_KIND=/mnt/kind/rawfile/ .ci/deployer.sh start"
-      - name: Build test images
-        run: nix-shell --run ".ci/build.sh"
       - name: Install HelmChart
         run: nix-shell --run ".ci/e2e-test/setup.sh"
       - name: Run K8s tests
