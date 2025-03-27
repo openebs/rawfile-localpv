@@ -46,7 +46,7 @@ def run_on_node(fn, node):
     name = f"task-{uuid.uuid4()}"
     ctx = {
         "name": name,
-        "namespace": "kube-system",  # FIXME
+        "namespace": CONFIG["namespace"],
         "nodeSelector": json.dumps({"kubernetes.io/hostname": node}),
         "cmd": json.dumps(fn),
         "image_repository": CONFIG["image_repository"],

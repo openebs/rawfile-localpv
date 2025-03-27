@@ -17,10 +17,12 @@ from rawfile_util import migrate_all_volume_schemas, gc_all_volumes
 @click.option("--image-repository", envvar="IMAGE_REPOSITORY")
 @click.option("--image-tag", envvar="IMAGE_TAG")
 @click.option("--node-datadir", envvar="NODE_DATADIR")
-def cli(image_repository, image_tag, node_datadir):
+@click.option("--namespace", envvar="NAMESPACE")
+def cli(image_repository, image_tag, node_datadir, namespace):
     CONFIG["image_repository"] = image_repository
     CONFIG["image_tag"] = image_tag
     CONFIG["node_datadir"] = node_datadir
+    CONFIG["namespace"] = namespace
 
 
 @cli.command()
@@ -36,14 +38,17 @@ def csi_driver(endpoint, nodeid, enable_metrics, metrics_port):
         expose_metrics(nodeid, metrics_port)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     csi_pb2_grpc.add_IdentityServicer_to_server(
-        bd2fs.Bd2FsIdentityServicer(rawfile_servicer.RawFileIdentityServicer()), server
+        bd2fs.Bd2FsIdentityServicer(
+            rawfile_servicer.RawFileIdentityServicer()), server
     )
     csi_pb2_grpc.add_NodeServicer_to_server(
-        bd2fs.Bd2FsNodeServicer(rawfile_servicer.RawFileNodeServicer(node_name=nodeid)),
+        bd2fs.Bd2FsNodeServicer(
+            rawfile_servicer.RawFileNodeServicer(node_name=nodeid)),
         server,
     )
     csi_pb2_grpc.add_ControllerServicer_to_server(
-        bd2fs.Bd2FsControllerServicer(rawfile_servicer.RawFileControllerServicer()),
+        bd2fs.Bd2FsControllerServicer(
+            rawfile_servicer.RawFileControllerServicer()),
         server,
     )
     server.add_insecure_port(endpoint)

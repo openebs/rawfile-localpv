@@ -28,6 +28,10 @@ spec:
             - csi-driver
             - --disable-metrics
           env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: PROVISIONER_NAME
               value: "{{ .Values.provisionerName }}"
             - name: CSI_ENDPOINT

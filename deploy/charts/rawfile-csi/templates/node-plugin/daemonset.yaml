@@ -42,6 +42,10 @@ spec:
           securityContext:
             privileged: true
           env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: PROVISIONER_NAME
               value: "{{ .Values.provisionerName }}"
             - name: NODE_DATADIR
