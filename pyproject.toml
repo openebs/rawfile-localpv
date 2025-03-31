@@ -15,7 +15,7 @@ pyyaml = "^6.0.2"
 pykube-ng = "^23.6.0"
 munch = "^4.0.0"
 prometheus-client = "^0.21.1"
-btrfsutil = "^6.13"
+btrfsutil = "^6.14"
 
 [tool.poetry.scripts]
 rawfile = "rawfile.rawfile:cli"
