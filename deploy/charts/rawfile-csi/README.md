@@ -24,7 +24,7 @@ Kubernetes: `>= 1.21`
 |-----|------|---------|-------------|
 | controller.externalResizer.image.registry | string | `""` | Image registry for `csi-resizer` |
 | controller.externalResizer.image.repository | string | `"sig-storage/csi-resizer"` | Image Repository for `csi-resizer` |
-| controller.externalResizer.image.tag | string | `"v1.2.0"` | Image tag for `csi-resizer` |
+| controller.externalResizer.image.tag | string | `"v1.13.2"` | Image tag for `csi-resizer` |
 | controller.image.pullPolicy | string | `""` | Overrides default image pull policy for node component |
 | controller.image.repository | string | `""` | Overrides default image repository for node component |
 | controller.image.tag | string | `""` | Overrides default image tag for node component |
@@ -49,13 +49,13 @@ Kubernetes: `>= 1.21`
 | node.dataDirPath | string | `"/var/csi/rawfile"` | Data dir path for provisioner to be used by provisioner |
 | node.driverRegistrar.image.registry | string | `""` | Image Registry for `csi-node-driver-registrar` |
 | node.driverRegistrar.image.repository | string | `"sig-storage/csi-node-driver-registrar"` | Image Repository for `csi-node-driver-registrar` |
-| node.driverRegistrar.image.tag | string | `"v2.2.0"` | Image Tag for `csi-node-driver-registrar` |
+| node.driverRegistrar.image.tag | string | `"v2.13.0"` | Image Tag for `csi-node-driver-registrar` |
 | node.externalProvisioner.image.registry | string | `""` | Image Registry for `csi-provisioner` |
 | node.externalProvisioner.image.repository | string | `"sig-storage/csi-provisioner"` | Image Repository for `csi-provisioner` |
-| node.externalProvisioner.image.tag | string | `"v4.0.1"` | Image Tag for `csi-provisioner` |
+| node.externalProvisioner.image.tag | string | `"v5.2.0"` | Image Tag for `csi-provisioner` |
 | node.externalSnapshotter.image.registry | string | `""` | Image Registry for `csi-snapshotter` |
 | node.externalSnapshotter.image.repository | string | `"sig-storage/csi-snapshotter"` | Image Repository for `csi-snapshotter` |
-| node.externalSnapshotter.image.tag | string | `"v5.0.1"` | Image Tag for `csi-snapshotter` |
+| node.externalSnapshotter.image.tag | string | `"v8.2.1"` | Image Tag for `csi-snapshotter` |
 | node.image.pullPolicy | string | `""` | Overrides default image pull policy for node component |
 | node.image.repository | string | `""` | Overrides default image repository for node component |
 | node.image.tag | string | `""` | Overrides default image tag for node component |
