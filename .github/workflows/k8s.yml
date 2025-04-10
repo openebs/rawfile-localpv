@@ -12,7 +12,6 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v16
         with:
           kvm: true
-      - uses: DeterminateSystems/magic-nix-cache-action@v9
       - name: Setup Nix Path
         run: |
           export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
