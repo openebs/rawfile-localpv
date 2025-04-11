@@ -44,12 +44,14 @@ def wait_for(pred, desc=""):
 
 def run_on_node(fn, node):
     name = f"task-{uuid.uuid4()}"
+    registry = CONFIG["image_registry"]
+    repository = CONFIG["image_repository"]
     ctx = {
         "name": name,
-        "namespace": "kube-system",  # FIXME
+        "namespace": CONFIG["namespace"],
         "nodeSelector": json.dumps({"kubernetes.io/hostname": node}),
         "cmd": json.dumps(fn),
-        "image_repository": CONFIG["image_repository"],
+        "image_repository": f"{registry}/{repository}" if registry is not None else repository,
         "image_tag": CONFIG["image_tag"],
         "datadir": CONFIG["node_datadir"]
     }

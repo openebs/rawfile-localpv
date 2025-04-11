@@ -14,13 +14,17 @@ from rawfile_util import migrate_all_volume_schemas, gc_all_volumes
 
 
 @click.group()
+@click.option("--image-registry", envvar="IMAGE_REGISTRY")
 @click.option("--image-repository", envvar="IMAGE_REPOSITORY")
 @click.option("--image-tag", envvar="IMAGE_TAG")
 @click.option("--node-datadir", envvar="NODE_DATADIR")
-def cli(image_repository, image_tag, node_datadir):
+@click.option("--namespace", envvar="NAMESPACE")
+def cli(image_registry, image_repository, image_tag, node_datadir, namespace):
+    CONFIG["image_registry"] = image_registry
     CONFIG["image_repository"] = image_repository
     CONFIG["image_tag"] = image_tag
     CONFIG["node_datadir"] = node_datadir
+    CONFIG["namespace"] = namespace
 
 
 @cli.command()

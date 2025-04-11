@@ -48,12 +48,12 @@ spec:
               value: "{{ .Values.node.dataDirPath }}"
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
+            - name: IMAGE_REGISTRY
+              value: "{{ include "rawfile-csi.node-image-registry" . }}"
             - name: IMAGE_REPOSITORY
               value: "{{ include "rawfile-csi.node-image-repository" . }}"
-          {{- if regexMatch "^.*-ci$" (include "rawfile-csi.node-image-tag" .) }}
             - name: IMAGE_TAG
               value: "{{ include "rawfile-csi.node-image-tag" . }}"
-          {{- end }}
             - name: NODE_ID
               valueFrom:
                 fieldRef:
@@ -63,6 +63,8 @@ spec:
               value: {{ .Values.metrics.enabled | toString | quote }}
             - name: METRICS_PORT
               value: {{ .Values.metrics.port | toString | quote }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
           ports:
             - name: metrics
               containerPort: {{ .Values.metrics.port }}

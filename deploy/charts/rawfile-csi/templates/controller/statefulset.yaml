@@ -34,12 +34,14 @@ spec:
               value: unix:///csi/csi.sock
             - name: NODE_DATADIR
               value: "{{ .Values.node.dataDirPath }}"
+            - name: IMAGE_REGISTRY
+              value: "{{ include "rawfile-csi.node-image-registry" . }}"
             - name: IMAGE_REPOSITORY
               value: "{{ include "rawfile-csi.controller-image-repository" . }}"
-          {{- if regexMatch "^.*-ci$" (include "rawfile-csi.controller-image-tag" .) }}
             - name: IMAGE_TAG
               value: "{{ include "rawfile-csi.controller-image-tag" . }}"
-          {{- end }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
           volumeMounts:
             - name: socket-dir
               mountPath: /csi

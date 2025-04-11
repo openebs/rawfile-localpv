@@ -92,6 +92,10 @@ Some helpers to handle image global information
 {{- printf "%s" $imageTag }}
 {{- end }}
 
+{{- define "rawfile-csi.node-image-registry" -}}
+{{- printf "%s" .Values.image.registry | default .Values.global.imageRegistry }}
+{{- end }}
+
 {{- define "rawfile-csi.node-image-repository" -}}
 {{- printf "%s" .Values.node.image.repository | default .Values.image.repository }}
 {{- end }}
