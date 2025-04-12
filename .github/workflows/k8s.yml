@@ -5,8 +5,15 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest-8-cores
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s_version: 
+        - v1.32.3
+        - v1.31.6
+        - v1.30.10
     env:
-      K8S_VERSION: v1.32.3
+      K8S_VERSION: ${{ matrix.k8s_version }}
     steps:
       - uses: actions/checkout@v4
         with:
