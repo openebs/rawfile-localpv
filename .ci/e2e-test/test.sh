@@ -32,12 +32,14 @@ fi
 ./ginkgo -p -v \
   -focus='External.Storage' \
   -skip='\[Feature:|\[Disruptive\]|\[Serial\]' \
+  --fail-fast \
   ./e2e.test \
   -- \
   -storage.testdriver=rawfile-driver.yaml
 
 ./ginkgo -v \
   -focus='External.Storage.*(\[Feature:|\[Disruptive\]|\[Serial\])' \
+  --fail-fast \
   ./e2e.test \
   -- \
   -storage.testdriver=rawfile-driver.yaml
