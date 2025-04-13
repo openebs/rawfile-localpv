@@ -1,6 +1,7 @@
 let
   sources = import ./nix/sources.nix;
   pkgs = import sources.nixpkgs {};
+  unstable-pkgs = import sources.nixpkgs-unstable {};
 in
 pkgs.mkShell {
   name = "rawfile-shell";
@@ -10,7 +11,7 @@ pkgs.mkShell {
     kubernetes-helm-wrapped
     helm-docs
     nixos-shell
-    kind
+    unstable-pkgs.kind
     python313
     poetry # Python3.13 is not supported (Overriding python3 input will not work)
     gcc
