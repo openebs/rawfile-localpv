@@ -13,8 +13,7 @@ KUBECTL="kubectl"
 DOCKER="docker"
 CLEANUP="false"
 SUDO=${SUDO:-"sudo"}
-# todo: make configurable
-K8S_VERSION=${K8S_VERSION:-v1.27.0}
+K8S_VERSION=$(cat "$SCRIPT_DIR/../.kube-version")
 
 help() {
   cat <<EOF

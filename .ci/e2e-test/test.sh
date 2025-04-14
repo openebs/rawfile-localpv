@@ -4,7 +4,7 @@ SCRIPT_DIR="$(dirname "$0")"
 
 set -ex
 
-K8S_VERSION=${K8S_VERSION:-v1.27.0}
+K8S_VERSION=$(cat "$SCRIPT_DIR/../../.kube-version")
 K8S_CLUSTER=${K8S_CLUSTER:-"kind"}
 
 DOWNLOAD="true"
