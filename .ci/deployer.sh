@@ -15,6 +15,9 @@ CLEANUP="false"
 SUDO=${SUDO:-"sudo"}
 K8S_VERSION=$(cat "$SCRIPT_DIR/../.kube-version")
 
+command -v "$KIND" >/dev/null 2>&1 || { echo >&2 "kind is not installed. Aborting."; exit 1; }
+command -v "$KUBECTL" >/dev/null 2>&1 || { echo >&2 "kubectl is not installed. Aborting."; exit 1; }
+
 help() {
   cat <<EOF
 Usage: $(basename "$0") [COMMAND] [OPTIONS]

@@ -9,6 +9,7 @@ SKIP_GIT=${SKIP_GIT:-}
 
 set -euo pipefail
 
+command -v helm-docs >/dev/null 2>&1 || { echo >&2 "helm-docs is not installed. Aborting."; exit 1; }
 helm-docs -c "$ROOTDIR" -g "$CHART_DIR,$CRDS_CHART_DIR" -o $README
 
 if [ -z "$SKIP_GIT" ]; then

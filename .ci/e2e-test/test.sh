@@ -16,6 +16,7 @@ fi
 
 cd $(dirname $0)
 if [ "$DOWNLOAD" = "true" ]; then
+  command -v curl >/dev/null 2>&1 || { echo >&2 "curl is not installed. Aborting."; exit 1; }
   curl --location https://dl.k8s.io/$K8S_VERSION/kubernetes-test-linux-amd64.tar.gz | tar --strip-components=3 --no-same-owner -zxf - kubernetes/test/bin/e2e.test kubernetes/test/bin/ginkgo
 fi
 
