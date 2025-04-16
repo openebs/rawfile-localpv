@@ -4,11 +4,6 @@ on:
 
 jobs:
   e2e:
-    services:
-      registery:
-        image: registry:3
-        ports:
-          - 5000:5000
     runs-on: ubuntu-latest-8-cores
     steps:
       - uses: actions/checkout@v4
