@@ -1,0 +1,24 @@
+name: Feature Request
+description: Provide supporting details for a small feature request
+labels: ["kind/improvement"]
+body:
+  - type: textarea
+    id: feature
+    attributes:
+      label: Describe the problem/challenge you have
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Describe the solution you'd like
+      description: |
+        Large feature requests are unlikely to make progress as issues. Please consider raising an [OEP](https://github.com/openebs/openebs/blob/develop/designs/oep-process.md) instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: misc
+    attributes:
+      label: Anything else you would like to add?

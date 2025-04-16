@@ -1,0 +1,64 @@
+name: Bug Report
+description: Tell us about a problem you are experiencing
+labels: ["kind/bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: |
+        Please provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner.
+        If this matter is security related, please disclose it privately via https://github.com/openebs/rawfile-localpv/security/advisories/new
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Which version of rawfile are you using?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How can we reproduce it (as minimally and precisely as possible)?
+    validations:
+      required: true
+
+  - type: textarea
+    id: misc
+    attributes:
+      label: Anything else we need to know?
+
+  - type: textarea
+    id: support
+    attributes:
+      label: The output of the following commands will help us better understand what's going on
+      value: |
+        <logs>
+
+        ```console
+        $ kubectl -n openebs logs rawfile-csi-controller-0 -A
+        # paste output here
+        $ kubectl -n openebs logs rawfile-csi-node-[xxxx] -A
+        # paste output here
+        $ kubectl -n openebs get pods
+        # paste output here
+        ```
+
+        </logs>
+    validations:
+      required: true
