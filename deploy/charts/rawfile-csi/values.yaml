@@ -37,7 +37,7 @@ controller:
       # -- Image Repository for `csi-resizer`
       repository: sig-storage/csi-resizer
       # -- Image tag for `csi-resizer`
-      tag: v1.2.0
+      tag: v1.13.2
 
   # -- Sets compute resources for controller component
   resources: {}
@@ -74,7 +74,7 @@ node:
       # -- Image Repository for `csi-node-driver-registrar`
       repository: sig-storage/csi-node-driver-registrar
       # -- Image Tag for `csi-node-driver-registrar`
-      tag: v2.2.0
+      tag: v2.13.0
 
   externalProvisioner:
     image:
@@ -83,7 +83,7 @@ node:
       # -- Image Repository for `csi-provisioner`
       repository: sig-storage/csi-provisioner
       # -- Image Tag for `csi-provisioner`
-      tag: v4.0.1
+      tag: v5.2.0
 
   externalSnapshotter:
     image:
@@ -92,7 +92,7 @@ node:
       # -- Image Repository for `csi-snapshotter`
       repository: sig-storage/csi-snapshotter
       # -- Image Tag for `csi-snapshotter`
-      tag: v5.0.1
+      tag: v8.2.1
 
   # -- Data dir path for provisioner to be used by provisioner
   dataDirPath: /var/csi/rawfile

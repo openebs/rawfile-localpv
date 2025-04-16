@@ -5,7 +5,7 @@ import warnings
 
 import csi_pb2 as csi__pb2
 
-GRPC_GENERATED_VERSION = '1.70.0'
+GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -257,6 +257,11 @@ class ControllerStub(object):
                 request_serializer=csi__pb2.ControllerGetVolumeRequest.SerializeToString,
                 response_deserializer=csi__pb2.ControllerGetVolumeResponse.FromString,
                 _registered_method=True)
+        self.ControllerModifyVolume = channel.unary_unary(
+                '/csi.v1.Controller/ControllerModifyVolume',
+                request_serializer=csi__pb2.ControllerModifyVolumeRequest.SerializeToString,
+                response_deserializer=csi__pb2.ControllerModifyVolumeResponse.FromString,
+                _registered_method=True)
 
 
 class ControllerServicer(object):
@@ -340,6 +345,12 @@ class ControllerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ControllerModifyVolume(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ControllerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -407,6 +418,11 @@ def add_ControllerServicer_to_server(servicer, server):
                     servicer.ControllerGetVolume,
                     request_deserializer=csi__pb2.ControllerGetVolumeRequest.FromString,
                     response_serializer=csi__pb2.ControllerGetVolumeResponse.SerializeToString,
+            ),
+            'ControllerModifyVolume': grpc.unary_unary_rpc_method_handler(
+                    servicer.ControllerModifyVolume,
+                    request_deserializer=csi__pb2.ControllerModifyVolumeRequest.FromString,
+                    response_serializer=csi__pb2.ControllerModifyVolumeResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -760,6 +776,349 @@ class Controller(object):
             '/csi.v1.Controller/ControllerGetVolume',
             csi__pb2.ControllerGetVolumeRequest.SerializeToString,
             csi__pb2.ControllerGetVolumeResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ControllerModifyVolume(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/csi.v1.Controller/ControllerModifyVolume',
+            csi__pb2.ControllerModifyVolumeRequest.SerializeToString,
+            csi__pb2.ControllerModifyVolumeResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class GroupControllerStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.GroupControllerGetCapabilities = channel.unary_unary(
+                '/csi.v1.GroupController/GroupControllerGetCapabilities',
+                request_serializer=csi__pb2.GroupControllerGetCapabilitiesRequest.SerializeToString,
+                response_deserializer=csi__pb2.GroupControllerGetCapabilitiesResponse.FromString,
+                _registered_method=True)
+        self.CreateVolumeGroupSnapshot = channel.unary_unary(
+                '/csi.v1.GroupController/CreateVolumeGroupSnapshot',
+                request_serializer=csi__pb2.CreateVolumeGroupSnapshotRequest.SerializeToString,
+                response_deserializer=csi__pb2.CreateVolumeGroupSnapshotResponse.FromString,
+                _registered_method=True)
+        self.DeleteVolumeGroupSnapshot = channel.unary_unary(
+                '/csi.v1.GroupController/DeleteVolumeGroupSnapshot',
+                request_serializer=csi__pb2.DeleteVolumeGroupSnapshotRequest.SerializeToString,
+                response_deserializer=csi__pb2.DeleteVolumeGroupSnapshotResponse.FromString,
+                _registered_method=True)
+        self.GetVolumeGroupSnapshot = channel.unary_unary(
+                '/csi.v1.GroupController/GetVolumeGroupSnapshot',
+                request_serializer=csi__pb2.GetVolumeGroupSnapshotRequest.SerializeToString,
+                response_deserializer=csi__pb2.GetVolumeGroupSnapshotResponse.FromString,
+                _registered_method=True)
+
+
+class GroupControllerServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def GroupControllerGetCapabilities(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CreateVolumeGroupSnapshot(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteVolumeGroupSnapshot(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetVolumeGroupSnapshot(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_GroupControllerServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'GroupControllerGetCapabilities': grpc.unary_unary_rpc_method_handler(
+                    servicer.GroupControllerGetCapabilities,
+                    request_deserializer=csi__pb2.GroupControllerGetCapabilitiesRequest.FromString,
+                    response_serializer=csi__pb2.GroupControllerGetCapabilitiesResponse.SerializeToString,
+            ),
+            'CreateVolumeGroupSnapshot': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateVolumeGroupSnapshot,
+                    request_deserializer=csi__pb2.CreateVolumeGroupSnapshotRequest.FromString,
+                    response_serializer=csi__pb2.CreateVolumeGroupSnapshotResponse.SerializeToString,
+            ),
+            'DeleteVolumeGroupSnapshot': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteVolumeGroupSnapshot,
+                    request_deserializer=csi__pb2.DeleteVolumeGroupSnapshotRequest.FromString,
+                    response_serializer=csi__pb2.DeleteVolumeGroupSnapshotResponse.SerializeToString,
+            ),
+            'GetVolumeGroupSnapshot': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetVolumeGroupSnapshot,
+                    request_deserializer=csi__pb2.GetVolumeGroupSnapshotRequest.FromString,
+                    response_serializer=csi__pb2.GetVolumeGroupSnapshotResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'csi.v1.GroupController', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('csi.v1.GroupController', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class GroupController(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def GroupControllerGetCapabilities(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/csi.v1.GroupController/GroupControllerGetCapabilities',
+            csi__pb2.GroupControllerGetCapabilitiesRequest.SerializeToString,
+            csi__pb2.GroupControllerGetCapabilitiesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CreateVolumeGroupSnapshot(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/csi.v1.GroupController/CreateVolumeGroupSnapshot',
+            csi__pb2.CreateVolumeGroupSnapshotRequest.SerializeToString,
+            csi__pb2.CreateVolumeGroupSnapshotResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteVolumeGroupSnapshot(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/csi.v1.GroupController/DeleteVolumeGroupSnapshot',
+            csi__pb2.DeleteVolumeGroupSnapshotRequest.SerializeToString,
+            csi__pb2.DeleteVolumeGroupSnapshotResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetVolumeGroupSnapshot(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/csi.v1.GroupController/GetVolumeGroupSnapshot',
+            csi__pb2.GetVolumeGroupSnapshotRequest.SerializeToString,
+            csi__pb2.GetVolumeGroupSnapshotResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class SnapshotMetadataStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.GetMetadataAllocated = channel.unary_stream(
+                '/csi.v1.SnapshotMetadata/GetMetadataAllocated',
+                request_serializer=csi__pb2.GetMetadataAllocatedRequest.SerializeToString,
+                response_deserializer=csi__pb2.GetMetadataAllocatedResponse.FromString,
+                _registered_method=True)
+        self.GetMetadataDelta = channel.unary_stream(
+                '/csi.v1.SnapshotMetadata/GetMetadataDelta',
+                request_serializer=csi__pb2.GetMetadataDeltaRequest.SerializeToString,
+                response_deserializer=csi__pb2.GetMetadataDeltaResponse.FromString,
+                _registered_method=True)
+
+
+class SnapshotMetadataServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def GetMetadataAllocated(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMetadataDelta(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_SnapshotMetadataServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'GetMetadataAllocated': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetMetadataAllocated,
+                    request_deserializer=csi__pb2.GetMetadataAllocatedRequest.FromString,
+                    response_serializer=csi__pb2.GetMetadataAllocatedResponse.SerializeToString,
+            ),
+            'GetMetadataDelta': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetMetadataDelta,
+                    request_deserializer=csi__pb2.GetMetadataDeltaRequest.FromString,
+                    response_serializer=csi__pb2.GetMetadataDeltaResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'csi.v1.SnapshotMetadata', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('csi.v1.SnapshotMetadata', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class SnapshotMetadata(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def GetMetadataAllocated(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/csi.v1.SnapshotMetadata/GetMetadataAllocated',
+            csi__pb2.GetMetadataAllocatedRequest.SerializeToString,
+            csi__pb2.GetMetadataAllocatedResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMetadataDelta(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/csi.v1.SnapshotMetadata/GetMetadataDelta',
+            csi__pb2.GetMetadataDeltaRequest.SerializeToString,
+            csi__pb2.GetMetadataDeltaResponse.FromString,
             options,
             channel_credentials,
             insecure,

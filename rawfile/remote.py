@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
 from util import remote_fn
+from consts import D_PERMS
 
 
 def scrub(volume_id):
@@ -33,14 +34,14 @@ def init_rawfile(volume_id, size):
 
     import rawfile_util
     from volume_schema import LATEST_SCHEMA_VERSION
-    from util import run
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
 
     if rawfile_util.get_capacity() < size:
         raise CalledProcessError(returncode=RESOURCE_EXHAUSTED_EXIT_CODE, cmd="")
 
     img_dir = rawfile_util.img_dir(volume_id)
-    img_dir.mkdir(exist_ok=True)
+    img_dir.mkdir(mode=D_PERMS, exist_ok=True)
+
     img_file = Path(f"{img_dir}/disk.img")
     if img_file.exists():
         return
@@ -54,7 +55,7 @@ def init_rawfile(volume_id, size):
             "size": size,
         },
     )
-    run(f"truncate -s {size} {img_file}")
+    rawfile_util.truncate(img_file, size)
 
 
 def get_capacity():
@@ -68,7 +69,6 @@ def get_capacity():
 def expand_rawfile(volume_id, size):
     import rawfile_util
 
-    from util import run
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
 
     img_file = rawfile_util.img_file(volume_id)
@@ -82,7 +82,7 @@ def expand_rawfile(volume_id, size):
         volume_id,
         {"size": size},
     )
-    run(f"truncate -s {size} {img_file}")
+    rawfile_util.truncate(img_file, size)
 
 
 @contextmanager

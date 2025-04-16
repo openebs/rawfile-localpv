@@ -1,10 +1,13 @@
 import glob
 import json
+
+from contextlib import contextmanager
+from os import umask
 from os.path import basename, dirname
 from pathlib import Path
 import time
 
-from consts import DATA_DIR
+from consts import DATA_DIR, F_PERMS, D_PERMS, OWNER_UMASK
 from declarative import be_absent
 from fs_util import path_stats
 from volume_schema import migrate_to, LATEST_SCHEMA_VERSION
@@ -53,9 +56,29 @@ def gc_if_needed(volume_id, dry_run=True):
     return False
 
 
+@contextmanager
+def _owner_umask():
+    old_umask = umask(OWNER_UMASK)
+    try:
+        yield 
+    finally:
+        umask(old_umask)  # Restore original umask
+
+
 def update_metadata(volume_id: str, obj: dict) -> dict:
-    meta_file(volume_id).write_text(json.dumps(obj))
+    update_permissions(volume_id)
+    with _owner_umask():
+        meta_file(volume_id).write_text(json.dumps(obj))
     return obj
+
+
+def update_permissions(volume_id: str) -> None:
+    _img_dir = img_dir(volume_id)
+    if not _img_dir.exists():
+        return
+    _img_dir.chmod(D_PERMS)
+    for each in _img_dir.glob("**/*"):
+        each.chmod(F_PERMS)
 
 
 def patch_metadata(volume_id: str, obj: dict) -> dict:
@@ -70,7 +93,16 @@ def migrate_metadata(volume_id, target_version):
     return update_metadata(volume_id, new_data)
 
 
-def attached_loops(file: str) -> [str]:
+def truncate(img_file, size):
+    """Create the disk image file with the specified size.
+
+    Set the umask to restrict permissions to the owner only
+    """
+    with _owner_umask():
+        run(f"truncate -s {size} {img_file}")
+
+
+def attached_loops(file: str) -> list[str]:
     out = run_out(f"losetup -j {file}").stdout.decode()
     lines = out.splitlines()
     devs = [line.split(":", 1)[0] for line in lines]
