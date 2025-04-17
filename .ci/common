@@ -11,26 +11,15 @@ export COMMIT=$(git rev-parse --short HEAD)
 export BRANCH=${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 export BRANCH_SLUG=$(slugify $BRANCH)
 
-export CI_REGISTRY="localhost:5000"
-export CI_TAG="${COMMIT}-ci"
+export CI_REGISTRY="docker.io"
 export CI_IMAGE_REPO="${IMAGE}"
-export CI_IMAGE_URI="${CI_REGISTRY}/${CI_IMAGE_REPO}:${CI_TAG}"
+export CI_IMAGE_NAME="${CI_REGISTRY}/${CI_IMAGE_REPO}"
 ## See `docker system info --format '{{.ClientInfo.Os}}/{{.ClientInfo.Arch}}'` for default platform
 export CI_IMAGE_PLATFORMS="local"
 export CI_TEST="${CI_TEST:-true}"
 if [[ "${CI_TEST}" == "false" ]]; then
   export CI_IMAGE_PLATFORMS="linux/amd64,linux/arm64"
+else
+  export TAG_SUFFIX="-ci"
 fi
 
-command -v docker &>/dev/null || ( echo 'Docker is not installed. Aborting.'; exit 1 )
-docker buildx version &>/dev/null || ( echo 'Docker Buildx plugin is not installed. Aborting.'; exit 1 )
-
-function TagAndPushImage() {
-  REPO="$1"
-  TAG="$2"
-
-  IMAGE_URI="${REPO}:${TAG}${TAG_SUFFIX:-}";
-  docker tag ${CI_IMAGE_URI} ${IMAGE_URI};
-  echo " push ${IMAGE_URI}";
-  docker push ${IMAGE_URI};
-}
