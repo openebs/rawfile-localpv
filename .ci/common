@@ -17,9 +17,17 @@ export CI_IMAGE_NAME="${CI_REGISTRY}/${CI_IMAGE_REPO}"
 ## See `docker system info --format '{{.ClientInfo.Os}}/{{.ClientInfo.Arch}}'` for default platform
 export CI_IMAGE_PLATFORMS="local"
 export CI_TEST="${CI_TEST:-true}"
+export CI_TEST_IMAGE_TAG="${COMMIT}"
 if [[ "${CI_TEST}" == "false" ]]; then
   export CI_IMAGE_PLATFORMS="linux/amd64,linux/arm64"
 else
   export TAG_SUFFIX="-ci"
 fi
 
+build-image-tag() {
+  printf "${1}${TAG_SUFFIX:-}"
+}
+
+build-image-uri() {
+  printf "${CI_IMAGE_NAME}:$(build-image-tag $1)"
+}

@@ -9,7 +9,7 @@ command -v docker &>/dev/null || ( echo 'Docker is not installed. Aborting.'; ex
 docker buildx version &>/dev/null || ( echo 'Docker Buildx plugin is not installed. Aborting.'; exit 1 )
 
 export PUSH_OPTION=""
-export IMAGE_TAGS="${COMMIT}"
+export IMAGE_TAGS="${CI_TEST_IMAGE_TAG}"
 
 if [ "${CI_IMAGE_PLATFORMS}" = "local" ]; then
   export IMAGE_DESTINATION="docker"
@@ -23,7 +23,7 @@ else
 fi
 
 for t in ${IMAGE_TAGS}; do
-  TAGS_ARGS+=" -t ${CI_IMAGE_NAME}:${t}${TAG_SUFFIX:-}"
+  TAGS_ARGS+=" -t $(build-image-uri ${t})"
 done
 
 docker buildx build \
