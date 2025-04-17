@@ -10,6 +10,7 @@ docker buildx version &>/dev/null || ( echo 'Docker Buildx plugin is not install
 
 export PUSH_OPTION=""
 export IMAGE_TAGS="${CI_TEST_IMAGE_TAG}"
+export NO_CACHE_OPTIONS=""
 
 if [ "${CI_IMAGE_PLATFORMS}" = "local" ]; then
   export IMAGE_DESTINATION="docker"
@@ -20,6 +21,7 @@ else
     export PUSH_OPTION="--push"
   fi
   export IMAGE_TAGS="${COMMIT} ${BRANCH_SLUG}";
+  export NO_CACHE_OPTIONS="--pull --no-cache"
 fi
 
 for t in ${IMAGE_TAGS}; do
@@ -27,8 +29,9 @@ for t in ${IMAGE_TAGS}; do
 done
 
 docker buildx build \
-  --pull --no-cache ${PUSH_OPTION} \
   ${TAGS_ARGS} \
+  ${PUSH_OPTION} \
+  ${NO_CACHE_OPTIONS} \
   --output=type=${IMAGE_DESTINATION} \
   --platform="${CI_IMAGE_PLATFORMS}" \
   --build-arg "IMAGE_REPOSITORY=${IMAGE}" \
