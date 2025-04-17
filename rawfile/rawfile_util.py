@@ -1,17 +1,16 @@
 import glob
 import json
-
+import time
 from contextlib import contextmanager
 from os import umask
 from os.path import basename, dirname
 from pathlib import Path
-import time
 
-from consts import DATA_DIR, F_PERMS, D_PERMS, OWNER_UMASK
+from consts import D_PERMS, DATA_DIR, F_PERMS, OWNER_UMASK
 from declarative import be_absent
 from fs_util import path_stats
-from volume_schema import migrate_to, LATEST_SCHEMA_VERSION
 from util import run, run_out
+from volume_schema import LATEST_SCHEMA_VERSION, migrate_to
 
 
 def img_dir(volume_id):
@@ -60,7 +59,7 @@ def gc_if_needed(volume_id, dry_run=True):
 def _owner_umask():
     old_umask = umask(OWNER_UMASK)
     try:
-        yield 
+        yield
     finally:
         umask(old_umask)  # Restore original umask
 
@@ -111,7 +110,7 @@ def attached_loops(file: str) -> list[str]:
 
 def attach_loop(file) -> str:
     def next_loop():
-        loop_file = run_out(f"losetup -f").stdout.decode().strip()
+        loop_file = run_out("losetup -f").stdout.decode().strip()
         if not Path(loop_file).exists():
             pfx_len = len("/dev/loop")
             loop_dev_id = loop_file[pfx_len:]

@@ -3,4 +3,3 @@ name: crds
 version: 0.0.1
 description: |
   A Helm chart that collects CustomResourceDefinitions (CRDs).
-

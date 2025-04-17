@@ -3,24 +3,22 @@ from pathlib import Path
 import grpc
 from csi import csi_pb2, csi_pb2_grpc
 from csi.csi_pb2 import (
-    NodeStageVolumeRequest,
+    CreateVolumeRequest,
+    NodeExpandVolumeRequest,
     NodePublishVolumeRequest,
+    NodeStageVolumeRequest,
     NodeUnpublishVolumeRequest,
     NodeUnstageVolumeRequest,
-    NodeExpandVolumeRequest,
-    CreateVolumeRequest,
 )
-from google.protobuf.timestamp_pb2 import Timestamp
-
 from declarative import (
-    be_mounted,
-    be_unmounted,
     be_absent,
     be_formatted,
     be_fs_expanded,
+    be_mounted,
+    be_unmounted,
 )
-from fs_util import path_stats, mountpoint_to_dev
-from orchestrator.k8s import volume_to_node, run_on_node
+from fs_util import mountpoint_to_dev, path_stats
+from google.protobuf.timestamp_pb2 import Timestamp
 from remote import btrfs_create_snapshot, btrfs_delete_snapshot
 from util import log_grpc_request
 
@@ -78,21 +76,18 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
     def NodeStageVolume(self, request, context):
         bd_stage_request = NodeStageVolumeRequest()
         bd_stage_request.CopyFrom(request)
-        bd_stage_request.staging_target_path = f"{request.staging_target_path}/block"
-        Path(bd_stage_request.staging_target_path).mkdir(
-            exist_ok=True,
-            parents=True
-        )
+        block_path = f"{request.staging_target_path}/block"
+        device_path = f"{request.staging_target_path}/device"
+        bd_stage_request.staging_target_path = block_path
+        Path(bd_stage_request.staging_target_path).mkdir(exist_ok=True, parents=True)
         self.bds.NodeStageVolume(bd_stage_request, context)
 
         bd_publish_request = NodePublishVolumeRequest()
         bd_publish_request.volume_id = request.volume_id
         bd_publish_request.publish_context.update(request.publish_context)
         bd_publish_request.staging_target_path = bd_stage_request.staging_target_path
-        bd_publish_request.target_path = f"{request.staging_target_path}/device"
-        bd_publish_request.volume_capability.CopyFrom(
-            request.volume_capability
-        )
+        bd_publish_request.target_path = device_path
+        bd_publish_request.volume_capability.CopyFrom(request.volume_capability)
         bd_publish_request.readonly = False
         bd_publish_request.secrets.update(request.secrets)
         bd_publish_request.volume_context.update(request.volume_context)
@@ -114,12 +109,14 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
         bd_unpublish_request = NodeUnpublishVolumeRequest()
         bd_unpublish_request.volume_id = request.volume_id
-        bd_unpublish_request.target_path = f"{request.staging_target_path}/device"
+        device_path = f"{request.staging_target_path}/device"
+        bd_unpublish_request.target_path = device_path
         self.bds.NodeUnpublishVolume(bd_unpublish_request, context)
 
         bd_unstage_request = NodeUnstageVolumeRequest()
         bd_unstage_request.CopyFrom(request)
-        bd_unstage_request.staging_target_path = f"{request.staging_target_path}/block"
+        block_path = f"{request.staging_target_path}/block"
+        bd_unstage_request.staging_target_path = block_path
         self.bds.NodeUnstageVolume(bd_unstage_request, context)
         be_absent(bd_unstage_request.staging_target_path)
 
@@ -148,9 +145,12 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeExpandVolume(self, request, context):
-        # FIXME: hacky way to determine if `volume_path` is staged path, or the mount itself
+        # FIXME: hacky way to determine if `volume_path` is staged path,
+        # or the mount itself
         # Based on CSI 1.4.0 specifications:
-        # > The staging_target_path field is not required, for backwards compatibility, but the CO SHOULD supply it.
+        # > The staging_target_path field is not required,
+        # for backwards compatibility,
+        # but the CO SHOULD supply it.
         # Apparently, k8s 1.18 does not supply it. So:
         dev_path = mountpoint_to_dev(request.volume_path)
         volume_path = request.volume_path
@@ -197,9 +197,10 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
         if volume_capability.access_mode.mode not in [
             AccessModeEnum.SINGLE_NODE_WRITER
         ]:
+            access_mode = AccessModeEnum.Name(volume_capability.access_mode.mode)
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,
-                f"Unsupported access mode: {AccessModeEnum.Name(volume_capability.access_mode.mode)}",
+                f"Unsupported access mode: {access_mode}",
             )
 
         access_type = volume_capability.WhichOneof("access_type")

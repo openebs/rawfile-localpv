@@ -17,4 +17,3 @@ helm.sh/resource-policy: keep
   {{- toYaml . }}
 {{- end }}
 {{- end -}}
-

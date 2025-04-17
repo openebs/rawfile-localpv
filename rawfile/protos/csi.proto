@@ -6,7 +6,7 @@ import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package = 
+option go_package =
   "github.com/container-storage-interface/spec/lib/go/csi";
 
 extend google.protobuf.EnumOptions {
@@ -374,9 +374,9 @@ message CreateVolumeRequest {
   // This field is REQUIRED.
   repeated VolumeCapability volume_capabilities = 3;
 
-  // Plugin specific creation-time parameters passed in as opaque 
-  // key-value pairs. This field is OPTIONAL. The Plugin is responsible 
-  // for parsing and validating these parameters. COs will treat 
+  // Plugin specific creation-time parameters passed in as opaque
+  // key-value pairs. This field is OPTIONAL. The Plugin is responsible
+  // for parsing and validating these parameters. COs will treat
   // these as opaque.
   map<string, string> parameters = 4;
 
@@ -402,14 +402,14 @@ message CreateVolumeRequest {
   // choose where the provisioned volume is accessible from.
   TopologyRequirement accessibility_requirements = 7;
 
-  // Plugin specific creation-time parameters passed in as opaque 
+  // Plugin specific creation-time parameters passed in as opaque
   // key-value pairs. These mutable_parameteres MAY also be
   // changed during the lifetime of the volume via a subsequent
   // `ControllerModifyVolume` RPC. This field is OPTIONAL.
   // The Plugin is responsible for parsing and validating these
   // parameters. COs will treat these as opaque.
-  
-  // Plugins MUST treat these 
+
+  // Plugins MUST treat these
   // as if they take precedence over the parameters field.
   // This field SHALL NOT be specified unless the SP has the
   // MODIFY_VOLUME plugin capability.
@@ -1032,8 +1032,8 @@ message ControllerModifyVolumeRequest {
   // section on how to use this field.
   map<string, string> secrets = 2 [(csi_secret) = true];
 
-  // Plugin specific volume attributes to mutate, passed in as 
-  // opaque key-value pairs. 
+  // Plugin specific volume attributes to mutate, passed in as
+  // opaque key-value pairs.
   // This field is REQUIRED. The Plugin is responsible for
   // parsing and validating these parameters. COs will treat these
   // as opaque. The CO SHOULD specify the intended values of all mutable
@@ -1815,8 +1815,8 @@ message CreateVolumeGroupSnapshotRequest {
   // ControllerCreateVolumeGroupSnapshot request.
   // This field is OPTIONAL. Refer to the `Secrets Requirements`
   // section on how to use this field.
-  // The secrets provided in this field SHOULD be the same for 
-  // all group snapshot operations on the same group snapshot. 
+  // The secrets provided in this field SHOULD be the same for
+  // all group snapshot operations on the same group snapshot.
   map<string, string> secrets = 3 [(csi_secret) = true];
 
   // Plugin specific parameters passed in as opaque key-value pairs.

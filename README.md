@@ -28,10 +28,10 @@ The OpenEBS LocalPV-HostPath Data-Engine makes it pretty easy to automatically p
 
 <BR>
 
-#### All the above issues stem from the same root cause: 
+#### All the above issues stem from the same root cause:
    - hostPath/LocalPVs are simple bind-mounts from the host filesystem into the pod.
 
-### The idea behind RawFile-LocalPV 
+### The idea behind RawFile-LocalPV
 
 To use a Filesystem based 'extent file' as the emulated block device (i.e. a soft-LUN block device), and leverage the LINUX loop device to associate that soft-LUN file as a complete flexibe block device (i.e. an emulated soft disk device). At this point you can create a PV with a fileystem on it. This allows you to...
 
