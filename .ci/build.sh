@@ -41,4 +41,3 @@ docker buildx build \
 if [ "${CI_IMAGE_PLATFORMS}" != "local" ]; then
   docker pull "$CI_IMAGE_URI"
 fi
-

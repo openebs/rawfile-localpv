@@ -39,17 +39,14 @@ def csi_driver(endpoint, nodeid, enable_metrics, metrics_port):
         expose_metrics(nodeid, metrics_port)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     csi_pb2_grpc.add_IdentityServicer_to_server(
-        bd2fs.Bd2FsIdentityServicer(
-            rawfile_servicer.RawFileIdentityServicer()), server
+        bd2fs.Bd2FsIdentityServicer(rawfile_servicer.RawFileIdentityServicer()), server
     )
     csi_pb2_grpc.add_NodeServicer_to_server(
-        bd2fs.Bd2FsNodeServicer(
-            rawfile_servicer.RawFileNodeServicer(node_name=nodeid)),
+        bd2fs.Bd2FsNodeServicer(rawfile_servicer.RawFileNodeServicer(node_name=nodeid)),
         server,
     )
     csi_pb2_grpc.add_ControllerServicer_to_server(
-        bd2fs.Bd2FsControllerServicer(
-            rawfile_servicer.RawFileControllerServicer()),
+        bd2fs.Bd2FsControllerServicer(rawfile_servicer.RawFileControllerServicer()),
         server,
     )
     server.add_insecure_port(endpoint)
