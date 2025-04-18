@@ -2,21 +2,20 @@ from pathlib import Path
 from subprocess import CalledProcessError
 
 import grpc
-from google.protobuf.wrappers_pb2 import BoolValue
-
 import rawfile_util
 from consts import (
-    PROVISIONER_VERSION,
     PROVISIONER_NAME,
+    PROVISIONER_VERSION,
     RESOURCE_EXHAUSTED_EXIT_CODE,
     VOLUME_IN_USE_EXIT_CODE,
 )
 from csi import csi_pb2, csi_pb2_grpc
-from declarative import be_symlink, be_absent
+from declarative import be_absent, be_symlink
 from fs_util import device_stats, mountpoint_to_dev
-from orchestrator.k8s import volume_to_node, run_on_node
+from google.protobuf.wrappers_pb2 import BoolValue
+from orchestrator.k8s import run_on_node, volume_to_node
 from rawfile_util import attach_loop, detach_loops
-from remote import init_rawfile, scrub, get_capacity, expand_rawfile
+from remote import expand_rawfile, get_capacity, init_rawfile, scrub
 from util import log_grpc_request, run
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
@@ -193,7 +192,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
 
         try:
-            init_rawfile(volume_id=request.name, size=size),
+            (init_rawfile(volume_id=request.name, size=size),)
         except CalledProcessError as exc:
             if exc.returncode == RESOURCE_EXHAUSTED_EXIT_CODE:
                 context.abort(

@@ -6,9 +6,8 @@ from time import sleep
 
 import pykube
 import yaml
-from munch import Munch
-
 from consts import CONFIG
+from munch import Munch
 
 api = pykube.HTTPClient(pykube.KubeConfig.from_env())
 
@@ -51,9 +50,11 @@ def run_on_node(fn, node):
         "namespace": CONFIG["namespace"],
         "nodeSelector": json.dumps({"kubernetes.io/hostname": node}),
         "cmd": json.dumps(fn),
-        "image_repository": f"{registry}/{repository}" if registry is not None else repository,
+        "image_repository": (
+            f"{registry}/{repository}" if registry is not None else repository
+        ),
         "image_tag": CONFIG["image_tag"],
-        "datadir": CONFIG["node_datadir"]
+        "datadir": CONFIG["node_datadir"],
     }
     template = Path("./templates/task.yaml").read_bytes().decode()
     manifest = template.format(**ctx)

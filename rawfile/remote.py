@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
-from util import remote_fn
 from consts import D_PERMS
+from util import remote_fn
 
 
 def scrub(volume_id):
@@ -29,12 +29,12 @@ def scrub(volume_id):
 
 def init_rawfile(volume_id, size):
     import time
-    from subprocess import CalledProcessError
     from pathlib import Path
+    from subprocess import CalledProcessError
 
     import rawfile_util
-    from volume_schema import LATEST_SCHEMA_VERSION
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
+    from volume_schema import LATEST_SCHEMA_VERSION
 
     if rawfile_util.get_capacity() < size:
         raise CalledProcessError(returncode=RESOURCE_EXHAUSTED_EXIT_CODE, cmd="")
@@ -68,7 +68,6 @@ def get_capacity():
 @remote_fn
 def expand_rawfile(volume_id, size):
     import rawfile_util
-
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
 
     img_file = rawfile_util.img_file(volume_id)
@@ -87,8 +86,8 @@ def expand_rawfile(volume_id, size):
 
 @contextmanager
 def mount_root_subvol(volume_id):
-    import tempfile
     import pathlib
+    import tempfile
 
     import rawfile_util
     from util import run
@@ -116,9 +115,10 @@ def btrfs_delete_snapshot(volume_id, name):
 
 
 def btrfs_create_snapshot(volume_id, name):
-    import btrfsutil
-    import time
     import pathlib
+    import time
+
+    import btrfsutil
 
     # TODO: check fstype
 

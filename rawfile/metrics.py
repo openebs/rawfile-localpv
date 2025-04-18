@@ -1,7 +1,6 @@
 from prometheus_client.core import REGISTRY
 from prometheus_client.exposition import start_http_server
 from prometheus_client.metrics_core import GaugeMetricFamily
-
 from rawfile_util import get_capacity, get_volumes_stats
 
 

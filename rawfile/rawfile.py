@@ -2,15 +2,14 @@
 import logging
 from concurrent import futures
 
+import bd2fs
 import click
 import grpc
-
-import bd2fs
 import rawfile_servicer
 from consts import CONFIG
 from csi import csi_pb2_grpc
 from metrics import expose_metrics
-from rawfile_util import migrate_all_volume_schemas, gc_all_volumes
+from rawfile_util import gc_all_volumes, migrate_all_volume_schemas
 
 
 @click.group()

@@ -8,4 +8,3 @@ OpenEBS is an "umbrella project". Every project, repository and file in the Open
 <BR>
 
 This project follows the [OpenEBS Security Policy](https://github.com/openebs/community/blob/HEAD/SECURITY.md).
-

@@ -6,4 +6,3 @@ OpenEBS is an "umbrella project". Every project, repository and file in the Open
 <BR>
 
 This project follows the [OpenEBS Contributor Guidelines](https://github.com/openebs/community/blob/HEAD/CONTRIBUTING.md)
-

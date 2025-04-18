@@ -23,9 +23,9 @@ pkgs.mkShell {
     export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib"
     poetry install
     source $(poetry env info -p)/bin/activate
+    pre-commit install
   '';
   postShellHook = ''
     deactivate
   '';
 }
-
