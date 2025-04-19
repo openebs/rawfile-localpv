@@ -37,7 +37,3 @@ docker buildx build \
   --build-arg "IMAGE_REPOSITORY=${IMAGE}" \
   --build-arg "IMAGE_TAG=${COMMIT}" \
   "$SCRIPT_DIR/.."
-
-if [ "${CI_IMAGE_PLATFORMS}" != "local" ]; then
-  docker pull "$CI_IMAGE_URI"
-fi
