@@ -4,7 +4,7 @@
 [![LICENSE](https://img.shields.io/github/license/openebs/openebs.svg)](./LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/4137/badge)](https://www.bestpractices.dev/projects/4137)
 [![Slack](https://img.shields.io/badge/chat-slack-ff1493.svg?style=flat-square)](https://kubernetes.slack.com/messages/openebs)
-[![Community Meetings](https://img.shields.io/badge/Community-Meetings-blue)](https://us05web.zoom.us/j/87535654586?pwd=CigbXigJPn38USc6Vuzt7qSVFoO79X.1)
+[![Community Meetings](https://img.shields.io/badge/Community-Meetings-blue)](https://github.com/openebs/community/blob/HEAD/README.md#community)
 [![CLOMonitor](https://img.shields.io/endpoint?url=https://clomonitor.io/api/projects/cncf/openebs/badge)](https://clomonitor.io/projects/cncf/openebs)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/openebs/rawfile-localpv/develop.svg)](https://results.pre-commit.ci/latest/github/openebs/rawfile-localpv/develop)
 
