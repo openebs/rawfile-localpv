@@ -12,6 +12,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: fossas/fossa-action@v1.6.0
+      - uses: fossas/fossa-action@v1.7.0
         with:
           api-key: ${{ secrets.FOSSA_API_KEY }}
