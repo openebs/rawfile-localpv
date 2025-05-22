@@ -18,7 +18,7 @@ jobs:
       - id: changes
         run: |
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
-          NON_MD_FILES=$(echo "$CHANGED_FILES" | grep -vE '^([^/]+\.md)$')
+          NON_MD_FILES=$(echo "$CHANGED_FILES" | grep -vE '^([^/]+\.md)$' || true)
 
           if [ -z "$NON_MD_FILES" ]; then
             echo "docs-only=true" >> $GITHUB_OUTPUT
