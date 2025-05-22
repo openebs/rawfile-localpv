@@ -1,0 +1,27 @@
+name: Only Docs Modified
+on:
+  workflow_call:
+    outputs:
+      docs-only:
+        description: "Whether k8s-ci should run"
+        value: ${{ jobs.check.outputs.docs-only }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      docs-only: ${{ steps.changes.outputs.docs-only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: changes
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          NON_MD_FILES=$(echo "$CHANGED_FILES" | grep -vE '^([^/]+\.md)$')
+
+          if [ -z "$NON_MD_FILES" ]; then
+            echo "docs-only=true" >> $GITHUB_OUTPUT
+          else
+            echo "docs-only=false" >> $GITHUB_OUTPUT
+          fi
