@@ -14,11 +14,11 @@ jobs:
     uses: ./.github/workflows/docs-only.yml
   helm-ci:
     needs: changes
-    if: ${{ github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false' }}
     uses: ./.github/workflows/helm-chart.yml
   k8s-ci:
     needs: changes
-    if: ${{ github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false' }}
     uses: ./.github/workflows/k8s.yml
   ci:
     if: ${{ success() }}
