@@ -72,6 +72,7 @@ Features
 - [ ] Volume modes
   - [x] `Filesystem` mode
   - [x] `Block` mode
+    - The `readOnly` attribute in the PVC template is not currently handled properly
 - [x] Volume metrics
 - [x] Supports fsTypes: `ext4`, `btrfs`, `xfs`
 - [x] Online expansion: If fs supports it (e.g. ext4, btrfs, xfs)
