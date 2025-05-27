@@ -22,8 +22,12 @@ def meta_file(volume_id):
 
 
 def metadata(volume_id):
+    return json.loads(meta_file(volume_id).read_text())
+
+
+def metadata_or(volume_id):
     try:
-        return json.loads(meta_file(volume_id).read_text())
+        return metadata(volume_id)
     except FileNotFoundError:
         return {}
 
@@ -41,7 +45,7 @@ def destroy(volume_id, dry_run=True):
 
 
 def gc_if_needed(volume_id, dry_run=True):
-    meta = metadata(volume_id)
+    meta = metadata_or(volume_id)
 
     deleted_at = meta.get("deleted_at", None)
     gc_at = meta.get("gc_at", None)
@@ -81,13 +85,13 @@ def update_permissions(volume_id: str) -> None:
 
 
 def patch_metadata(volume_id: str, obj: dict) -> dict:
-    old_data = metadata(volume_id)
+    old_data = metadata_or(volume_id)
     new_data = {**old_data, **obj}
     return update_metadata(volume_id, new_data)
 
 
 def migrate_metadata(volume_id, target_version):
-    old_data = metadata(volume_id)
+    old_data = metadata_or(volume_id)
     new_data = migrate_to(old_data, target_version)
     return update_metadata(volume_id, new_data)
 
@@ -172,12 +176,15 @@ def gc_all_volumes(dry_run=True):
 def get_volumes_stats() -> [dict]:
     volumes_stats = {}
     for volume_id in list_all_volumes():
-        file = img_file(volume_id=volume_id)
-        stats = file.stat()
-        volumes_stats[volume_id] = {
-            "used": stats.st_blocks * 512,
-            "total": stats.st_size,
-        }
+        try:
+            file = img_file(volume_id=volume_id)
+            stats = file.stat()
+            volumes_stats[volume_id] = {
+                "used": stats.st_blocks * 512,
+                "total": stats.st_size,
+            }
+        except FileNotFoundError:
+            pass
     return volumes_stats
 
 
