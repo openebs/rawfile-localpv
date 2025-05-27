@@ -115,16 +115,36 @@ def attach_loop(file) -> str:
             pfx_len = len("/dev/loop")
             loop_dev_id = loop_file[pfx_len:]
             run(f"mknod {loop_file} b 7 {loop_dev_id}")
-        # sometimes a RO attribute is sticky on the loop device, for some reason
-        run_out(f"blockdev --setrw {loop_file}")
         return loop_file
 
-    while True:
-        devs = attached_loops(file)
-        if len(devs) > 0:
-            return devs[0]
-        next_loop()
-        run(f"losetup --direct-io=on -f {file}")
+    # if multiple pods are getting staged at the same time, and there's not enough loop nodes, then we
+    # could clash on the creation, thus leading into losetup -f failures...
+    max_attempts = 20
+    for _ in range(max_attempts):
+        try:
+            devs = attached_loops(file)
+            if len(devs) > 0:
+                # we could use -L to ensure there's no overlap, and thus having
+                # only 1 device at most a match and allowing us to simply use
+                # losetup --direct-io=on -fL --show {file}
+                dev = devs[0]
+                # sometimes a RO attribute is sticky on the loop device, for some reason
+                run(f"blockdev --setrw {dev}")
+                return dev
+            next_loop()
+            run(f"losetup --direct-io=on -f {file}")
+        except Exception as e:
+            # todo: add some jitter here?
+            last_exception = e
+
+    if last_exception:
+        raise Exception(
+            f"Failed to attach loop device for {file} after {max_attempts} attempts: {last_exception}"
+        )
+    else:
+        raise Exception(
+            f"Failed to attach loop device for {file} after {max_attempts} attempts"
+        )
 
 
 def detach_loops(file) -> None:
