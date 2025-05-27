@@ -35,6 +35,9 @@ jobs:
         run: nix-shell --run ".ci/e2e-test/setup.sh"
       - name: Run K8s tests
         run: nix-shell --run ".ci/e2e-test/test.sh"
+      - run: |
+          nix-shell --run "kubectl -n openebs logs -lcomponent=node -c csi-driver --tail=-1"
+          nix-shell --run "kubectl -n openebs logs -lcomponent=controller -c csi-driver --tail=-1"
       - name: Collect dump
         if: failure()
         run: |
