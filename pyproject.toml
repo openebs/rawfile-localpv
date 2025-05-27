@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rawfile"
-version = "0.8.0"
+version = "0.10.0"
 description = "Dynamically deploy Stateful Persistent Node-Local Volumes & Filesystems for Kubernetes that is provisioned from RAW-device file loop mounted Local-Hostpath storage."
 authors = ["OpenEBS <openebs-team@googlegroups.com>"]
 license = "apache"
