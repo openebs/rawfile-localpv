@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.13"
-grpcio-tools = "^1.70.0"
+grpcio-tools = "^1.72.1"
 grpcio = "^1.72.1"
 click = "^8.2.1"
 pyyaml = "^6.0.2"
