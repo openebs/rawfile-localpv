@@ -111,7 +111,10 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
     # @log_grpc_request
     def NodeGetVolumeStats(self, request, context):
         volume_path = request.volume_path
-        dev = mountpoint_to_dev(volume_path)
+        if Path(volume_path).is_block_device():
+            dev = volume_path
+        else:
+            dev = mountpoint_to_dev(volume_path)
         stats = device_stats(dev=dev)
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
@@ -163,16 +166,6 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
                 grpc.StatusCode.INVALID_ARGUMENT,
                 f"Unsupported access mode: {AccessModeEnum.Name(volume_capability.access_mode.mode)}",
             )
-
-        # FIXME: re-enable access_type after bd2fs is fixed
-        # access_type = volume_capability.WhichOneof("access_type")
-        # if access_type == "block":
-        #     pass
-        # else:
-        #     context.abort(
-        #         grpc.StatusCode.INVALID_ARGUMENT,
-        #         "PANIC! This should be handled by bd2fs!",
-        #     )
 
         MIN_SIZE = 16 * 1024 * 1024  # 16MiB: can't format xfs with smaller volumes
         size = max(MIN_SIZE, request.capacity_range.required_bytes)

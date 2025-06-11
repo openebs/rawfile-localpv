@@ -35,6 +35,10 @@ spec:
           hostPath:
             path: {{ .Values.node.dataDirPath }}
             type: DirectoryOrCreate
+        - name: device
+          hostPath:
+            path: /dev
+            type: Directory
       containers:
         - name: csi-driver
           image: "{{ include "rawfile-csi.node-image" . }}"
@@ -78,6 +82,8 @@ spec:
               mountPropagation: "Bidirectional"
             - name: data-dir
               mountPath: /data
+            - name: device
+              mountPath: /dev
           resources:
             {{- include "rawfile-csi.controller-resources" . | nindent 12 }}
         - name: node-driver-registrar

@@ -26,6 +26,7 @@ pkgs.mkShell {
   ] ++ pkgs.lib.optional (builtins.getEnv "IN_NIX_SHELL" == "pure") [ docker-client ];
   NIX_LD = builtins.readFile "${stdenv.cc}/nix-support/dynamic-linker";
   shellHook = ''
+    poetry env use $(which python)
     poetry install
     source $(poetry env info -p)/bin/activate
     pre-commit install

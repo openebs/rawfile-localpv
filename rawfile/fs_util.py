@@ -1,6 +1,13 @@
 import json
 import os
 import subprocess
+from enum import Enum
+from pathlib import Path
+
+
+class AccessType(Enum):
+    mount = 1
+    block = 2
 
 
 def path_stats(path):
@@ -36,6 +43,7 @@ def dev_to_mountpoint(dev_name):
 
 
 def mountpoint_to_dev(mountpoint):
+    assert Path(mountpoint).is_dir()
     res = subprocess.run(
         f"findmnt --json --first-only --nofsroot --mountpoint {mountpoint}",
         shell=True,

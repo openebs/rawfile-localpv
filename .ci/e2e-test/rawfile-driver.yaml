@@ -10,7 +10,7 @@ DriverInfo:
     xfs:
   Capabilities:
     persistence: true
-    block: false
+    block: true
     fsGroup: true
     exec: true
     snapshotDataSource: false

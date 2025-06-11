@@ -22,8 +22,12 @@ def meta_file(volume_id):
 
 
 def metadata(volume_id):
+    return json.loads(meta_file(volume_id).read_text())
+
+
+def metadata_or(volume_id):
     try:
-        return json.loads(meta_file(volume_id).read_text())
+        return metadata(volume_id)
     except FileNotFoundError:
         return {}
 
@@ -41,7 +45,7 @@ def destroy(volume_id, dry_run=True):
 
 
 def gc_if_needed(volume_id, dry_run=True):
-    meta = metadata(volume_id)
+    meta = metadata_or(volume_id)
 
     deleted_at = meta.get("deleted_at", None)
     gc_at = meta.get("gc_at", None)
@@ -81,13 +85,13 @@ def update_permissions(volume_id: str) -> None:
 
 
 def patch_metadata(volume_id: str, obj: dict) -> dict:
-    old_data = metadata(volume_id)
+    old_data = metadata_or(volume_id)
     new_data = {**old_data, **obj}
     return update_metadata(volume_id, new_data)
 
 
 def migrate_metadata(volume_id, target_version):
-    old_data = metadata(volume_id)
+    old_data = metadata_or(volume_id)
     new_data = migrate_to(old_data, target_version)
     return update_metadata(volume_id, new_data)
 
@@ -117,12 +121,34 @@ def attach_loop(file) -> str:
             run(f"mknod {loop_file} b 7 {loop_dev_id}")
         return loop_file
 
-    while True:
-        devs = attached_loops(file)
-        if len(devs) > 0:
-            return devs[0]
-        next_loop()
-        run(f"losetup --direct-io=on -f {file}")
+    # if multiple pods are getting staged at the same time, and there's not enough loop nodes, then we
+    # could clash on the creation, thus leading into losetup -f failures...
+    max_attempts = 20
+    for _ in range(max_attempts):
+        try:
+            devs = attached_loops(file)
+            if len(devs) > 0:
+                # we could use -L to ensure there's no overlap, and thus having
+                # only 1 device at most a match and allowing us to simply use
+                # losetup --direct-io=on -fL --show {file}
+                dev = devs[0]
+                # sometimes a RO attribute is sticky on the loop device, for some reason
+                run(f"blockdev --setrw {dev}")
+                return dev
+            next_loop()
+            run(f"losetup --direct-io=on -f {file}")
+        except Exception as e:
+            # todo: add some jitter here?
+            last_exception = e
+
+    if last_exception:
+        raise Exception(
+            f"Failed to attach loop device for {file} after {max_attempts} attempts: {last_exception}"
+        )
+    else:
+        raise Exception(
+            f"Failed to attach loop device for {file} after {max_attempts} attempts"
+        )
 
 
 def detach_loops(file) -> None:
@@ -150,12 +176,15 @@ def gc_all_volumes(dry_run=True):
 def get_volumes_stats() -> [dict]:
     volumes_stats = {}
     for volume_id in list_all_volumes():
-        file = img_file(volume_id=volume_id)
-        stats = file.stat()
-        volumes_stats[volume_id] = {
-            "used": stats.st_blocks * 512,
-            "total": stats.st_size,
-        }
+        try:
+            file = img_file(volume_id=volume_id)
+            stats = file.stat()
+            volumes_stats[volume_id] = {
+                "used": stats.st_blocks * 512,
+                "total": stats.st_size,
+            }
+        except FileNotFoundError:
+            pass
     return volumes_stats
 
 

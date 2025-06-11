@@ -37,3 +37,7 @@ docker buildx build \
   --build-arg "IMAGE_REPOSITORY=${IMAGE}" \
   --build-arg "IMAGE_TAG=${COMMIT}" \
   "$SCRIPT_DIR/.."
+
+if [ "$(kubectl config current-context)" = "kind-rawfile" ]; then
+  kind load docker-image $(build-image-uri ${CI_TEST_IMAGE_TAG}) --name "rawfile"
+fi

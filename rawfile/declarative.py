@@ -31,7 +31,7 @@ def be_symlink(path, to):
     path.symlink_to(to)
 
 
-def be_mounted(dev, mountpoint):
+def be_mounted(dev, mountpoint, readonly=False):
     dev = Path(dev).resolve()
     mountpoint = Path(mountpoint)
 
@@ -40,6 +40,14 @@ def be_mounted(dev, mountpoint):
             return
         # noinspection PyUnreachableCode
         be_unmounted(mountpoint)
+    elif mountpoint.resolve().is_file():
+        opts = ["bind"]
+        # todo: this is not sufficient, we need to create a separate loop device for RO
+        if readonly:
+            opts.append("ro")
+        opts_str = ",".join(opts)
+        run(f"mount -t none -o {opts_str} {dev} {mountpoint}")
+        return
 
     fs = current_fs(dev)
     if fs == "ext4":

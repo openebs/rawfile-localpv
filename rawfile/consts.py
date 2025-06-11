@@ -1,7 +1,7 @@
 import os
 
 PROVISIONER_NAME = os.getenv("PROVISIONER_NAME", "rawfile.csi.openebs.io")
-PROVISIONER_VERSION = "0.8.0"
+PROVISIONER_VERSION = "0.10.0"
 DATA_DIR = "/data"
 CONFIG = {}
 D_PERMS = 0o700

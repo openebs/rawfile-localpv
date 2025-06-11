@@ -3,31 +3,39 @@ import functools
 import inspect
 import pickle
 import subprocess
+import time
 
 
 def indent(obj, lvl):
     return "\n".join([(lvl * " ") + line for line in str(obj).splitlines()])
 
 
+def fmt_timestamp(ts):
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+
+
 def log_grpc_request(func):
     @functools.wraps(func)
     def wrap(self, request, context):
+        start = time.time()
         try:
             res = func(self, request, context)
+            end = time.time()
             print(
-                f"""{func.__name__}({{
+                f"""{fmt_timestamp(end)} => {func.__name__}({{
 {indent(request, 2)}
 }}) = {{
 {indent(res, 2)}
-}}"""
+}} <= {fmt_timestamp(end)} // {(end - start) * 1000:.2f}ms"""
             )
             return res
         except Exception as exc:
             ret = (str(context._state.code), context._state.details)
+            end = time.time()
             print(
-                f"""{func.__name__}({{
+                f"""{fmt_timestamp(end)} => {func.__name__}({{
 {indent(request, 2)}
-}}) = {ret}
+}}) = {ret} <= {fmt_timestamp(end)} // {(end - start) * 1000:.2f}ms
 """
             )
             raise exc
@@ -35,12 +43,12 @@ def log_grpc_request(func):
     return wrap
 
 
-def run(cmd):
-    return subprocess.run(cmd, shell=True, check=True)
+def run(cmd, check=True):
+    return subprocess.run(cmd, shell=True, check=check)
 
 
-def run_out(cmd: str):
-    p = subprocess.run(cmd, shell=True, capture_output=True)
+def run_out(cmd: str, check=False):
+    p = subprocess.run(cmd, shell=True, check=check, capture_output=True)
     return p
 
 

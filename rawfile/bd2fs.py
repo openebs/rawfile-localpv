@@ -17,7 +17,8 @@ from declarative import (
     be_mounted,
     be_unmounted,
 )
-from fs_util import mountpoint_to_dev, path_stats
+from fs_util import AccessType, mountpoint_to_dev, path_stats
+from rawfile_util import attached_loops
 from google.protobuf.timestamp_pb2 import Timestamp
 from remote import btrfs_create_snapshot, btrfs_delete_snapshot
 from util import log_grpc_request
@@ -28,6 +29,18 @@ def get_fs(request):
     if fs_type == "":
         fs_type = "ext4"
     return fs_type
+
+
+def get_access_type(request):
+    access_type = request.volume_capability.WhichOneof("access_type")
+    return check_access_type(access_type)
+
+
+def check_access_type(access_type):
+    try:
+        return AccessType[access_type]
+    except KeyError:
+        raise Exception(f"Unsupported access type: {access_type}")
 
 
 class Bd2FsIdentityServicer(csi_pb2_grpc.IdentityServicer):
@@ -58,8 +71,16 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
     @log_grpc_request
     def NodePublishVolume(self, request, context):
         staging_dev = f"{request.staging_target_path}/device"
-        Path(request.target_path).mkdir(exist_ok=True)
-        be_mounted(dev=staging_dev, mountpoint=request.target_path)
+
+        path = Path(request.target_path)
+        access_type_actions = {
+            AccessType.mount: path.mkdir,
+            AccessType.block: path.touch,
+        }
+        access_type_actions[get_access_type(request)](exist_ok=True)
+        be_mounted(
+            dev=staging_dev, mountpoint=request.target_path, readonly=request.readonly
+        )
         return csi_pb2.NodePublishVolumeResponse()
 
     @log_grpc_request
@@ -94,10 +115,11 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
         self.bds.NodePublishVolume(bd_publish_request, context)
 
-        mount_path = f"{request.staging_target_path}/mount"
-        Path(mount_path).mkdir(exist_ok=True)
-        be_formatted(dev=bd_publish_request.target_path, fs=get_fs(request))
-        be_mounted(dev=bd_publish_request.target_path, mountpoint=mount_path)
+        if get_access_type(request) is AccessType.mount:
+            mount_path = f"{request.staging_target_path}/mount"
+            Path(mount_path).mkdir(exist_ok=True)
+            be_formatted(dev=bd_publish_request.target_path, fs=get_fs(request))
+            be_mounted(dev=bd_publish_request.target_path, mountpoint=mount_path)
 
         return csi_pb2.NodeStageVolumeResponse()
 
@@ -125,6 +147,8 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
     # @log_grpc_request
     def NodeGetVolumeStats(self, request, context):
         volume_path = request.volume_path
+        if Path(volume_path).is_block_device():
+            return self.bds.NodeGetVolumeStats(request, context)
         stats = path_stats(volume_path)
         return csi_pb2.NodeGetVolumeStatsResponse(
             usage=[
@@ -145,6 +169,13 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeExpandVolume(self, request, context):
+        if get_access_type(request) is AccessType.block:
+            dev = attached_loops(request.volume_path)[0]
+            request.volume_path = dev
+            self.bds.NodeExpandVolume(request, context)
+            size = request.capacity_range.required_bytes
+            return csi_pb2.NodeExpandVolumeResponse(capacity_bytes=size)
+
         # FIXME: hacky way to determine if `volume_path` is staged path,
         # or the mount itself
         # Based on CSI 1.4.0 specifications:
@@ -204,7 +235,7 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
 
         access_type = volume_capability.WhichOneof("access_type")
-        assert access_type == "mount"
+        check_access_type(access_type)
 
         bd_request = CreateVolumeRequest()
         bd_request.CopyFrom(request)

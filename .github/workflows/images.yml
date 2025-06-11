@@ -21,7 +21,7 @@ jobs:
           if [ "${{ github.ref_type }}" == "tag" ]; then
             git fetch -f origin ${{ github.ref }}:${{ github.ref }}
           fi
-      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/nix-installer-action@v17
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
         with:

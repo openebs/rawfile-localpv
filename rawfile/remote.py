@@ -77,11 +77,11 @@ def expand_rawfile(volume_id, size):
     if rawfile_util.get_capacity() < size_inc:
         exit(RESOURCE_EXHAUSTED_EXIT_CODE)
 
+    rawfile_util.truncate(img_file, size)
     rawfile_util.patch_metadata(
         volume_id,
         {"size": size},
     )
-    rawfile_util.truncate(img_file, size)
 
 
 @contextmanager

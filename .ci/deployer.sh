@@ -132,6 +132,12 @@ for node_index in $(seq 1 $WORKERS); do
   cat <<EOF >> "$TMP_KIND_CONFIG"
 - role: worker
   image: kindest/node:$K8S_VERSION
+  # kubeadmConfigPatches:
+  # - |
+  #   kind: JoinConfiguration
+  #   nodeRegistration:
+  #     kubeletExtraArgs:
+  #       v: "5"
   extraMounts:
     - hostPath: /dev
       containerPath: /dev
