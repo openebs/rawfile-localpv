@@ -17,8 +17,21 @@ from orchestrator.k8s import run_on_node, volume_to_node
 from rawfile_util import attach_loop, detach_loops
 from remote import expand_rawfile, get_capacity, init_rawfile, scrub
 from util import log_grpc_request, run
+from fs_util import AccessType
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
+
+
+def get_access_type(request):
+    access_type = request.volume_capability.WhichOneof("access_type")
+    return check_access_type(access_type)
+
+
+def check_access_type(access_type):
+    try:
+        return AccessType[access_type]
+    except KeyError:
+        raise Exception(f"Unsupported access type: {access_type}")
 
 
 class RawFileIdentityServicer(csi_pb2_grpc.IdentityServicer):
@@ -227,7 +240,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         size = request.capacity_range.required_bytes
 
         try:
-            run_on_node(
+            is_attached = run_on_node(
                 expand_rawfile.as_cmd(volume_id=volume_id, size=size), node=node_name
             )
         except CalledProcessError as exc:
@@ -238,8 +251,12 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             else:
                 raise exc
 
+        node_expansion_required = True
+        if get_access_type(request) is AccessType.block and is_attached is not None:
+            node_expansion_required = is_attached
+
         return csi_pb2.ControllerExpandVolumeResponse(
             capacity_bytes=size,
-            # todo: unstaged block volumes don't require node expansion
-            node_expansion_required=True,
+            # unstaged block volumes don't require node expansion
+            node_expansion_required=node_expansion_required,
         )

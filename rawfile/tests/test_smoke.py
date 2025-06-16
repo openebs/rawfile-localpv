@@ -131,7 +131,6 @@ def _(expanded_pvc):
 @when("the PVC is expanded", target_fixture="expanded_pvc")
 def _(pvc):
     """the PVC is expanded."""
-    # pod = create_pod(f"expanded-x-{pvc.metadata.name}", pvc, True)
     pvc_name = pvc.metadata.name
     new_size = "1024Mi"
     patch = {"spec": {"resources": {"requests": {"storage": new_size}}}}
@@ -142,9 +141,23 @@ def _(pvc):
     yield pvc
 
 
-@when("the PVC status is pending node expansion")
+@then("the Block PVCs status reflect the expanded size")
+def _(expanded_pvc):
+    """the Block PVCs status reflect the expanded size."""
+    if expanded_pvc.spec.volume_mode == "Block":
+        new_size = expanded_pvc.spec.resources.requests["storage"]
+        logger.info(
+            f"Waiting PVC {expanded_pvc.metadata.name} to be expanded to {new_size}"
+        )
+        wait_pvc_expanded(expanded_pvc.metadata.name)
+        logger.info(
+            f"The PVC {expanded_pvc.metadata.name} has been expanded to {new_size}"
+        )
+
+
+@then("the Filesystem PVC is pending node expansion")
 def _():
-    """the PVC status is pending node expansion."""
+    """the Filesystem PVC is pending node expansion."""
     pass
 
 
@@ -164,6 +177,7 @@ def _(expanded_pvc, expanded_pod):
     """the POD sees the expanded size."""
     pvc_name = expanded_pvc.metadata.name
     pod_name = expanded_pod.metadata.name
+    wait_pod_running(pod_name)
     exec_command = (
         [
             "/bin/sh",
@@ -227,6 +241,17 @@ def wait_pod_success(name):
     message = f"Pod {name} not completed yet"
     logger.debug(message)
     assert pod.status.phase == "Succeeded", message
+
+
+@retry(
+    stop_max_attempt_number=200,
+    wait_fixed=100,
+)
+def wait_pod_running(name):
+    pod = client.CoreV1Api().read_namespaced_pod(name, namespace)
+    message = f"Pod {name} not completed yet"
+    logger.debug(message)
+    assert pod.status.phase == "Running", message
 
 
 @retry(

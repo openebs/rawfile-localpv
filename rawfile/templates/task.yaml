@@ -13,6 +13,10 @@ spec:
       hostPath:
         path: {datadir}
         type: DirectoryOrCreate
+    - name: device
+      hostPath:
+        path: /dev
+        type: Directory
   nodeSelector: {nodeSelector}
   containers:
     - name: task
@@ -21,6 +25,8 @@ spec:
       volumeMounts:
         - name: data-dir
           mountPath: /data
+        - name: device
+          mountPath: /dev
       resources:
         requests:
           cpu: 0m

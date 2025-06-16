@@ -5,8 +5,9 @@ from subprocess import CalledProcessError
 from time import sleep
 
 import pykube
+import re
 import yaml
-from consts import CONFIG
+from consts import CONFIG, VOLUME_IS_ATTACHED
 from munch import Munch
 
 api = pykube.HTTPClient(pykube.KubeConfig.from_env())
@@ -70,9 +71,15 @@ def run_on_node(fn, node):
         return False
 
     wait_for(is_finished, "task to finish")
+    logs = task_pod.logs()
     task_pod.delete()
+
     if task_pod.obj["status"]["phase"] != "Succeeded":
         exit_code = task_pod.obj["status"]["containerStatuses"][0]["state"][
             "terminated"
         ]["exitCode"]
         raise CalledProcessError(returncode=exit_code, cmd=f"Task: {name}")
+
+    match = re.search(f"{VOLUME_IS_ATTACHED}=(True|False)", logs)
+    is_attached = match.group(1) == "True" if match else None
+    return is_attached

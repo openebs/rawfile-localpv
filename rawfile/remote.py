@@ -65,15 +65,42 @@ def get_capacity():
     return max(0, cap)
 
 
+def is_attached(volume_id):
+    import rawfile_util
+
+    img_dir = rawfile_util.img_dir(volume_id)
+    if not img_dir.exists():
+        return False
+
+    img_file = rawfile_util.img_file(volume_id)
+    loops = rawfile_util.attached_loops(img_file)
+    return len(loops) > 0
+
+
+def log_attached(volume_id):
+    from consts import VOLUME_IS_ATTACHED
+
+    try:
+        attached = is_attached(volume_id)
+        print(f"{VOLUME_IS_ATTACHED}={attached}")
+    except Exception as e:
+        # Failed to figure this out, keep old behavior
+        print(f"Failed to check if volume was attached: {e}")
+        pass
+
+
 @remote_fn
 def expand_rawfile(volume_id, size):
     import rawfile_util
+    from remote import log_attached
     from consts import RESOURCE_EXHAUSTED_EXIT_CODE
 
     img_file = rawfile_util.img_file(volume_id)
     size_inc = size - rawfile_util.metadata(volume_id)["size"]
     if size_inc <= 0:
+        log_attached(volume_id)
         return
+
     if rawfile_util.get_capacity() < size_inc:
         exit(RESOURCE_EXHAUSTED_EXIT_CODE)
 
@@ -82,6 +109,7 @@ def expand_rawfile(volume_id, size):
         volume_id,
         {"size": size},
     )
+    log_attached(volume_id)
 
 
 @contextmanager

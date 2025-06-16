@@ -7,11 +7,12 @@ Feature: Basic Functionality
     When a pod is created with the above PVC
     Then the PVC should be bound
     And the pod should complete with success
-#    When the PVC is expanded
-#    And the PVC status is pending node expansion
-#    When another pod is created with the above PVC
-#    Then the PVC status reflects the expanded size
-#    And the POD sees the expanded size
+    When the PVC is expanded
+    Then the Block PVCs status reflect the expanded size
+    And the Filesystem PVC is pending node expansion
+    When another pod is created with the above PVC
+    Then the PVC status reflects the expanded size
+    And the POD sees the expanded size
 
   Examples:
     | binding_mode         | access_mode   | fs_type | volume_mode |

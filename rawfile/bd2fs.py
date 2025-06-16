@@ -21,6 +21,7 @@ from fs_util import AccessType, mountpoint_to_dev, path_stats
 from google.protobuf.timestamp_pb2 import Timestamp
 from remote import btrfs_create_snapshot, btrfs_delete_snapshot
 from util import log_grpc_request
+from rawfile_servicer import check_access_type, get_access_type
 
 
 def get_fs(request):
@@ -28,18 +29,6 @@ def get_fs(request):
     if fs_type == "":
         fs_type = "ext4"
     return fs_type
-
-
-def get_access_type(request):
-    access_type = request.volume_capability.WhichOneof("access_type")
-    return check_access_type(access_type)
-
-
-def check_access_type(access_type):
-    try:
-        return AccessType[access_type]
-    except KeyError:
-        raise Exception(f"Unsupported access type: {access_type}")
 
 
 class Bd2FsIdentityServicer(csi_pb2_grpc.IdentityServicer):
@@ -256,7 +245,6 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
     @log_grpc_request
     def ControllerExpandVolume(self, request, context):
         response = self.bds.ControllerExpandVolume(request, context)
-        assert response.node_expansion_required
         return response
 
     @log_grpc_request
