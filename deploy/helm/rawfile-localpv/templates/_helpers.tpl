@@ -66,7 +66,7 @@ Create the name of the service account to use
 Some helpers to handle image global information
 */}}
 {{- define "rawfile-localpv.controller-image-tag" -}}
-{{- $imageTag := .Values.controller.image.tag | default .Values.image.tag | default .Chart.AppVersion }}
+{{- $imageTag := .Values.controller.image.tag | default .Values.image.tag | default (printf "v%s" .Chart.AppVersion) }}
 {{- printf "%s" $imageTag }}
 {{- end }}
 
