@@ -4,3 +4,10 @@ queue_rules:
     allow_inplace_checks: true
     branch_protection_injection_mode: queue
     batch_size: 10
+merge_protections:
+  - name: Do not merge outdated PRs
+    description: Make sure PRs are almost up to date before merging
+    if:
+      - base = main
+    success_conditions:
+      - "#commits-behind <= 10"
