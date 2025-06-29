@@ -114,6 +114,7 @@ dmypy.json
 .ci/e2e-test/e2e.test
 .ci/e2e-test/ginkgo
 .ci/e2e-test/ssh_id
+.ci/kind
 
 /deploy/helm/rawfile-localpv/Chart.lock
 

@@ -26,6 +26,7 @@ on:
 
 env:
   CI: 1
+  TMP_KIND: .ci/kind/rawfile/
 
 jobs:
   smoke:
@@ -35,9 +36,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: |
-          lsblk
-          df -h
       - uses: DeterminateSystems/nix-installer-action@v17
         with:
           kvm: true
@@ -49,15 +47,11 @@ jobs:
         run: nix-shell --run "echo"
       - name: Build test images
         run: nix-shell --run "CI_TEST=true .ci/build.sh"
-      - run: |
-          lsblk
-          df -h
       - name: BootStrap k8s cluster
         run: |
           sudo debconf-communicate <<< "set man-db/auto-update false" || true
           sudo dpkg-reconfigure man-db || true
-          sudo chown $USER /mnt
-          nix-shell --run "TMP_KIND=/mnt/kind/rawfile/ .ci/deployer.sh start"
+          nix-shell --run ".ci/deployer.sh start"
       - name: Run K8s tests
         run: nix-shell --run ".ci/smoke.sh"
       - run: |
@@ -79,8 +73,6 @@ jobs:
       - name: Collect dump
         if: failure()
         run: |
-          lsblk
-          df -h
           nix-shell --run "kind export logs ./dump/kind --name rawfile"
           nix-shell --run "kubectl cluster-info dump --output-directory=./dump/k8s --namespaces=openebs,kube-system"
       - name: Upload cluster dump
@@ -115,8 +107,7 @@ jobs:
         run: |
           sudo debconf-communicate <<< "set man-db/auto-update false" || true
           sudo dpkg-reconfigure man-db || true
-          sudo chown $USER /mnt
-          nix-shell --run "TMP_KIND=/mnt/kind/rawfile/ .ci/deployer.sh start"
+          nix-shell --run ".ci/deployer.sh start"
       - name: Install HelmChart
         env:
           CI_REGISTRY: "${{ inputs.registry }}"
@@ -152,9 +143,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: |
-          lsblk
-          df -h
       - uses: DeterminateSystems/nix-installer-action@v17
         with:
           kvm: true
@@ -172,15 +160,11 @@ jobs:
       - name: Build test images
         if: ${{ !inputs.release }}
         run: nix-shell --run "CI_TEST=true .ci/build.sh"
-      - run: |
-          lsblk
-          df -h
       - name: BootStrap k8s cluster
         run: |
           sudo debconf-communicate <<< "set man-db/auto-update false" || true
           sudo dpkg-reconfigure man-db || true
-          sudo chown $USER /mnt
-          nix-shell --run "TMP_KIND=/mnt/kind/rawfile/ .ci/deployer.sh start"
+          nix-shell --run ".ci/deployer.sh start"
       - name: Release Sanity Check
         if: ${{ inputs.release }}
         run: |
