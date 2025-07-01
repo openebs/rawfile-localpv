@@ -165,6 +165,7 @@ jobs:
           sudo debconf-communicate <<< "set man-db/auto-update false" || true
           sudo dpkg-reconfigure man-db || true
           nix-shell --run ".ci/deployer.sh start"
+          exit 1
       - name: Release Sanity Check
         if: ${{ inputs.release }}
         run: |
@@ -201,7 +202,7 @@ jobs:
         with:
           name: k8s-dump
           path: dump
-      # - name: Setup tmate session
-      #   if: ${{ failure() }}
-      #   timeout-minutes: 120
-      #   uses: mxschmitt/action-tmate@v3
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        timeout-minutes: 120
+        uses: mxschmitt/action-tmate@v3
