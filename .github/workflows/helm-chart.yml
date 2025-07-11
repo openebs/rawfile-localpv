@@ -23,8 +23,6 @@ jobs:
           export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
           echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
           nix-shell --run "echo"
-      - name: HelmChart Readme
-        run: nix-shell --run ".ci/helm-docs.sh"
       - name: HelmChart Lint
         run: nix-shell --run ".ci/helm-lint.sh"
 

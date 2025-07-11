@@ -5,7 +5,7 @@ let
 in
 pkgs.mkShell {
   name = "rawfile-shell";
-
+  HELM_DOCS_SKIP_VERSION_FOOTER = "true";
   buildInputs = with pkgs; [
     kubectl
     kubernetes-helm-wrapped

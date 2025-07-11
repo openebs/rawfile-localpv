@@ -17,5 +17,12 @@ repos:
             rawfile/templates/.*
           )$
       - id: end-of-file-fixer
-        exclude: rawfile/csi/
+        exclude: ^(rawfile/csi/|deploy/helm/.*/README.md)
       - id: trailing-whitespace
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: "v1.14.2"
+    hooks:
+      - id: helm-docs-built
+        args:
+          - --chart-search-root=deploy/helm
+          - --skip-version-footer
