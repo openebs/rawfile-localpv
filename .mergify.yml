@@ -2,5 +2,4 @@ queue_rules:
   - name: default
     update_method: rebase
     allow_inplace_checks: true
-    branch_protection_injection_mode: queue
-    batch_size: 1
+    branch_protection_injection_mode: merge
