@@ -3,4 +3,3 @@ queue_rules:
     update_method: rebase
     allow_inplace_checks: true
     branch_protection_injection_mode: queue
-    batch_size: 1
