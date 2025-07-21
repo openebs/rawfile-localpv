@@ -2,117 +2,45 @@
 from concurrent import futures
 import signal
 import bd2fs
-import click
+from config.model import CSIDriverCmd
 import grpc
-import os
-from filesystem import FileSystemName
 import rawfile_servicer
 from datetime import datetime
-from consts import CONFIG, GA_ID, GA_KEY
 from csi import csi_pb2_grpc
 from metrics import expose_metrics
 from utils.rawfile import gc_all_volumes, migrate_all_volume_schemas
-from utils.logs import LoggingFormats, init as init_logging, logger
-from utils.units import pretty_size_to_bytes
+from utils.logs import init as init_logging, logger
+
+
 from analytics.ga4 import run_ping, shutdown_event_worker, run_event_worker
 
 
-@click.group()
-@click.option("--image-registry", envvar="IMAGE_REGISTRY")
-@click.option("--image-repository", envvar="IMAGE_REPOSITORY")
-@click.option("--image-tag", envvar="IMAGE_TAG")
-@click.option("--node-datadir", envvar="NODE_DATADIR")
-@click.option("--namespace", envvar="NAMESPACE")
-@click.option("--default-fs", envvar="DEFAULT_FS", default="ext4")
-@click.option("--log-format", envvar="LOG_FORMAT", default=LoggingFormats.JSON)
-@click.option("--log-level", envvar="LOG_LEVEL", default="INFO")
-@click.option("--reserved-capacity", envvar="RESERVED_CAPACITY", default="0")
-@click.option("--capacity-override", envvar="CAPACITY_OVERRIDE", default="0")
-@click.option(
-    "--ga-enabled/--ga-disabled",
-    default=os.getenv("GA_ENABLED", "false").lower() in ("1", "true", "yes", "on"),
-)
-@click.option("--ga-id", envvar="GA_ID", default=GA_ID)
-@click.option("--ga-key", envvar="GA_KEY", default=GA_KEY)
-@click.option("--ga-ping", envvar="GA_PING", default="24h")
-def cli(
-    image_registry,
-    image_repository,
-    image_tag,
-    node_datadir,
-    namespace,
-    default_fs,
-    log_format,
-    log_level,
-    reserved_capacity,
-    capacity_override,
-    ga_enabled,
-    ga_id,
-    ga_key,
-    ga_ping,
-):
-    CONFIG["image_registry"] = image_registry
-    CONFIG["image_repository"] = image_repository
-    CONFIG["image_tag"] = image_tag
-    CONFIG["node_datadir"] = node_datadir
-    CONFIG["namespace"] = namespace
-    CONFIG["default_fs"] = FileSystemName(default_fs)
-    if not reserved_capacity.endswith("%"):
-        CONFIG["reserved_capacity"] = pretty_size_to_bytes(reserved_capacity)
-    else:
-        CONFIG["reserved_capacity"] = reserved_capacity
-    _capacity_override = pretty_size_to_bytes(capacity_override)
-    if _capacity_override:
-        CONFIG["capacity_override"] = _capacity_override
+def csi_driver(driver_config: CSIDriverCmd):
+    if driver_config.enable_metrics:
+        expose_metrics(driver_config.nodeid, driver_config.metrics_port)
 
-    init_logging(_format=LoggingFormats(log_format), _level=log_level.upper())
-
-    CONFIG["ga_ping"] = ga_ping
-    CONFIG["ga_id"] = ga_id
-    CONFIG["ga_key"] = ga_key
-    if (len(ga_id) == 0 or len(ga_key) == 0) and ga_enabled:
-        logger.error("GA_ID and GA_KEY must be provided in order to enable analytics")
-        ga_enabled = False
-    CONFIG["ga_enabled"] = ga_enabled
-
-
-@cli.command()
-@click.option("--endpoint", envvar="CSI_ENDPOINT", default="0.0.0.0:5000")
-@click.option("--nodeid", envvar="NODE_ID")
-@click.option("--metrics-port", envvar="METRICS_PORT", default=9100)
-@click.option(
-    "--enable-metrics/--disable-metrics", envvar="ENABLE_METRICS", default=True
-)
-@click.option("--plugin-type", envvar="PLUGIN_TYPE")
-@click.option("--grpc-workers", envvar="GRPC_WORKERS", default="10")
-def csi_driver(
-    endpoint, nodeid, enable_metrics, metrics_port, plugin_type, grpc_workers
-):
-    CONFIG["nodeid"] = nodeid
-
-    if enable_metrics:
-        expose_metrics(nodeid, metrics_port)
-
-    if plugin_type == "controller":
+    if driver_config.plugin_type == "controller":
         run_ping()
 
     logger.debug(
         "Starting gRPC server",
-        endpoint=endpoint,
-        nodeid=nodeid,
-        enable_metrics=enable_metrics,
-        plugin_type=plugin_type,
+        endpoint=driver_config.endpoint,
+        nodeid=driver_config.nodeid,
+        enable_metrics=driver_config.enable_metrics,
+        plugin_type=driver_config.plugin_type,
     )
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=int(grpc_workers)))
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=int(driver_config.grpc_workers))
+    )
     csi_pb2_grpc.add_IdentityServicer_to_server(
         bd2fs.Bd2FsIdentityServicer(rawfile_servicer.RawFileIdentityServicer()), server
     )
 
-    if plugin_type == "node":
+    if driver_config.plugin_type == "node":
         migrate_all_volume_schemas()
         csi_pb2_grpc.add_NodeServicer_to_server(
             bd2fs.Bd2FsNodeServicer(
-                rawfile_servicer.RawFileNodeServicer(node_name=nodeid)
+                rawfile_servicer.RawFileNodeServicer(node_name=driver_config.nodeid)
             ),
             server,
         )
@@ -124,7 +52,7 @@ def csi_driver(
         bd2fs.Bd2FsControllerServicer(rawfile_servicer.RawFileControllerServicer()),
         server,
     )
-    server.add_insecure_port(endpoint)
+    server.add_insecure_port(str(driver_config.endpoint))
 
     def signal_handler(sig, _=None):
         grace_seconds = 20
@@ -151,11 +79,11 @@ def csi_driver(
     server.wait_for_termination()
 
 
-@cli.command()
-@click.option("--dry-run/--seriously", default=True)
-def gc(dry_run):
-    gc_all_volumes(dry_run=dry_run)
-
-
 if __name__ == "__main__":
-    cli()
+    from config import config
+
+    init_logging(_format=config.log_format, _level=config.log_level)
+    if config.gc:
+        gc_all_volumes(config.gc.dry_run)
+    elif config.csi_driver:
+        csi_driver(config.csi_driver)

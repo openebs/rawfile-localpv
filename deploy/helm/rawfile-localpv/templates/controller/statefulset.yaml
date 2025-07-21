@@ -26,11 +26,11 @@ spec:
           imagePullPolicy: "{{ include "rawfile-localpv.controller-pull-policy" . }}"
           args:
             - csi-driver
-            - --disable-metrics
+            - --enable-metrics=false
           env:
             - name: PROVISIONER_NAME
               value: "{{ .Values.provisionerName }}"
-            - name: CSI_ENDPOINT
+            - name: CSI_DRIVER__ENDPOINT
               value: unix:///csi/csi.sock
             - name: NODE_DATADIR
               value: "{{ .Values.node.dataDirPath }}"
@@ -40,7 +40,7 @@ spec:
               value: "{{ include "rawfile-localpv.controller-image-repository" . }}"
             - name: IMAGE_TAG
               value: "{{ include "rawfile-localpv.controller-image-tag" . }}"
-            - name: NODE_ID
+            - name: CSI_DRIVER__NODE_ID
               valueFrom:
                 fieldRef:
                   apiVersion: v1
@@ -51,13 +51,17 @@ spec:
               value: {{ .Values.logLevel }}
             - name: LOG_FORMAT
               value: {{ .Values.logFormat }}
-            - name: PLUGIN_TYPE
+            - name: CSI_DRIVER__PLUGIN_TYPE
               value: controller
+            {{- if .Values.reservedCapacity }}
             - name: RESERVED_CAPACITY
               value: {{ .Values.reservedCapacity | toString | quote }}
+            {{- end }}
+            {{- if .Values.capacityOverride }}
             - name: CAPACITY_OVERRIDE
               value: {{ .Values.capacityOverride | toString | quote }}
-            - name: GRPC_WORKERS
+            {{- end }}
+            - name: CSI_DRIVER__GRPC_WORKERS
               value: {{ .Values.controller.grpcWorkers | toString | quote }}
             - name: GA_ENABLED
               value: "{{ .Values.global.analytics.enabled }}"

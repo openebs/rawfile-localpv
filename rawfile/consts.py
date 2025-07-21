@@ -6,7 +6,6 @@ PROVISIONER_VERSION = os.getenv("PROVISIONER_VERSION") or importlib.metadata.ver
     "rawfile"
 )
 DATA_DIR = "/data"
-CONFIG = {}
 D_PERMS = 0o700
 F_PERMS = 0o600
 OWNER_UMASK = 0o077

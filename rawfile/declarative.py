@@ -2,7 +2,7 @@ from pathlib import Path
 from filesystem import from_device
 from filesystem.base import UnknownFileSystemError
 from filesystem.utils import get_device_for_mountpoint
-from utils.rawfile import (
+from utils.errors import (
     InvalidDeviceForMountpointError,
     UnknownDeviceForMountpointError,
 )
