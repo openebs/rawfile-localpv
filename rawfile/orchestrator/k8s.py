@@ -3,13 +3,13 @@ import uuid
 import os
 from subprocess import CalledProcessError
 from time import sleep
-
 import re
 from datetime import datetime
-from consts import CONFIG, VOLUME_IS_ATTACHED
+from consts import VOLUME_IS_ATTACHED
 from kubernetes import client as k8s_client, config as k8s_config
+from config import config
+from utils.logs import logger
 from kubernetes.client.rest import ApiException
-from utils.logs import LoggingFormats, logger, format as log_format, level as log_level
 
 
 def load_config():
@@ -29,10 +29,6 @@ class TaskPodInfo(TypedDict):
     node_selector: dict[str, str]
     image_repository: str
     image_tag: str
-    log_format: LoggingFormats
-    log_level: str
-    reserved_capacity: int | str
-    capacity_override: int
     command: str
 
 
@@ -66,21 +62,6 @@ def generate_task_pod_manifest(info: TaskPodInfo) -> dict[str, Any]:
                         "requests": {"cpu": "0m", "memory": "0Mi"},
                         "limits": {"cpu": "100m", "memory": "100Mi"},
                     },
-                    "env": [
-                        {
-                            "name": "LOG_FORMAT",
-                            "value": str(info["log_format"].value),
-                        },
-                        {"name": "LOG_LEVEL", "value": info["log_level"]},
-                        {
-                            "name": "reserved_capacity",
-                            "value": str(info["reserved_capacity"]),
-                        },
-                        {
-                            "name": "CAPACITY_OVERRIDE",
-                            "value": str(info["capacity_override"]),
-                        },
-                    ],
                     "command": ["/bin/sh", "-c"],
                     "args": [info["command"]],
                 }
@@ -128,44 +109,40 @@ def wait_for(pred, desc=""):
 def run_on_node(fn, node):
     api = k8s_client.CoreV1Api()
     name = f"task-{uuid.uuid4()}"
-    registry = CONFIG["image_registry"]
-    repository = CONFIG["image_repository"]
+    registry = config.image_registry
+    repository = config.image_repository
     ctx: TaskPodInfo = {
         "name": name,
-        "namespace": CONFIG["namespace"],
+        "namespace": config.namespace,
         "node_selector": {"kubernetes.io/hostname": node},
         "command": fn,
         "image_repository": (
             f"{registry}/{repository}" if registry is not None else repository
         ),
-        "image_tag": CONFIG["image_tag"],
-        "datadir": CONFIG["node_datadir"],
-        "log_format": log_format,
-        "log_level": log_level,
-        "reserved_capacity": CONFIG["reserved_capacity"],
-        "capacity_override": CONFIG.get("capacity_override", 0),
+        "image_tag": config.image_tag,
+        "datadir": config.node_datadir,
     }
     manifest = generate_task_pod_manifest(ctx)
     logger.debug("Creating task pod", manifest=manifest)
     api.create_namespaced_pod(
-        namespace=CONFIG["namespace"],
+        namespace=config.namespace,
         body=manifest,
     )
 
     def is_finished():
-        task_pod = api.read_namespaced_pod(name=name, namespace=CONFIG["namespace"])
+        task_pod = api.read_namespaced_pod(name=name, namespace=config.namespace)
         status = task_pod.status
         if status.phase in ("Succeeded", "Failed"):
             return True
         return False
 
     wait_for(is_finished, "task to finish")
-    task_pod = api.read_namespaced_pod(name=name, namespace=CONFIG["namespace"])
+    task_pod = api.read_namespaced_pod(name=name, namespace=config.namespace)
     status = task_pod.status
     logs = api.read_namespaced_pod_log(
-        name=name, namespace=CONFIG["namespace"], container="task"
+        name=name, namespace=config.namespace, container="task"
     )
-    api.delete_namespaced_pod(name=name, namespace=CONFIG["namespace"])
+    api.delete_namespaced_pod(name=name, namespace=config.namespace)
 
     if status.phase != "Succeeded":
         exit_code = status.container_statuses[0].state.terminated.exit_code
@@ -206,7 +183,7 @@ def node_count() -> int:
 def read_config_map(name: str):
     v1 = k8s_client.CoreV1Api()
     try:
-        config_map = v1.read_namespaced_config_map(name, namespace=CONFIG["namespace"])
+        config_map = v1.read_namespaced_config_map(name, namespace=config.namespace)
         return config_map.data or {}
     except ApiException as e:
         if e.status == 404:
@@ -216,7 +193,7 @@ def read_config_map(name: str):
 
 def write_config_map(name: str, key: str, value: str, overwrite=False):
     v1 = k8s_client.CoreV1Api()
-    namespace = CONFIG["namespace"]
+    namespace = config.namespace
 
     try:
         config_map = v1.read_namespaced_config_map(name, namespace)

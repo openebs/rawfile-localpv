@@ -59,7 +59,7 @@ jobs:
           sudo dpkg-reconfigure man-db || true
           nix-shell --run ".ci/deployer.sh start"
       - name: Run K8s tests
-        run: nix-shell --run ".ci/smoke.sh"
+        run: nix-shell --run ".ci/smoke.sh -x"
       - run: |
           nix-shell --run "kubectl -n openebs logs -lcomponent=node -c csi-driver --tail=-1"
           nix-shell --run "kubectl -n openebs logs -lcomponent=controller -c csi-driver --tail=-1"

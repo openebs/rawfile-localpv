@@ -22,9 +22,8 @@ from utils.rawfile import (
     AccessType,
     attach_loop,
     detach_loops,
-    device_stats,
-    mountpoint_to_dev,
 )
+from utils.devices import mountpoint_to_dev, device_stats
 from utils.units import normalize_parameters, str_to_bool
 from analytics.ga4 import send_event, Usage
 
@@ -260,7 +259,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
 
     def GetCapacity(self, request, context):
         return csi_pb2.GetCapacityResponse(
-            available_capacity=get_capacity(),
+            available_capacity=int(get_capacity()),
         )
 
     @log_grpc_request
