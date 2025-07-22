@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from config import config
 from consts import FORMAT_OPTIONS_KEY
 import grpc
 import time
@@ -26,9 +27,9 @@ from utils.rawfile import (
     img_file,
     attach_loop,
     AccessType,
-    path_stats,
     detach_loops,
 )
+from utils.devices import path_stats
 from filesystem.base import UnknownFileSystemError
 from utils.lock import VolLock
 
@@ -123,7 +124,7 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
                     format_options = format_options_str.split(" ")
                 default_fs = request.volume_capability.mount.fs_type
                 fs = get_from_device_or_fallback(
-                    bd_publish_request.target_path, default_fs
+                    bd_publish_request.target_path, (default_fs or config.default_fs)
                 )
                 fs.mountpoint = f"{request.staging_target_path}/mount"
                 fs.format_and_mount(

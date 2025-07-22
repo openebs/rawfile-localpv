@@ -9,94 +9,19 @@ from typing import Any
 
 from utils.logs import logger
 
-from consts import CONFIG, D_PERMS, DATA_DIR, F_PERMS, OWNER_UMASK
+from consts import D_PERMS, DATA_DIR, F_PERMS, OWNER_UMASK
 from volume_schema import LATEST_SCHEMA_VERSION, migrate_to
 import os
 from enum import Enum
 from utils.commands import run
 from utils.fallocate import fallocate as linux_fallocate
-import subprocess
-
-
-class UnknownDeviceForMountpointError(ValueError):
-    """
-    Exception raised when we where unable to find the device for given mountpoint.
-    """
-
-    def __init__(self, mountpoint: str):
-        self.mountpoint = mountpoint
-        self.message = (
-            f"Unable to determine the device for mountpoint '{self.mountpoint}'"
-        )
-        super().__init__(self.message)
-
-
-class InvalidDeviceForMountpointError(ValueError):
-    """
-    Exception raised when device that is connected to mountpoint is not a correct device
-    """
-
-    def __init__(self, device: str, mountpoint: str):
-        self.device = device
-        self.mountpoint = mountpoint
-        self.message = (
-            f"Device {self.device} is not valid for mountpoint {self.mountpoint}"
-        )
+from utils.devices import path_stats, device_to_mountpoint
+from config import config
 
 
 class AccessType(Enum):
     mount = 1
     block = 2
-
-
-def path_stats(path, capacity_override: int = 0):
-    fs_stat = os.statvfs(path)
-
-    total = capacity_override or (fs_stat.f_frsize * fs_stat.f_blocks)
-    avail = fs_stat.f_frsize * fs_stat.f_bavail
-    usage = total - avail
-
-    return {
-        "fs_size": total,
-        "fs_avail": total - usage,
-        "fs_usage": usage,
-        "fs_files": fs_stat.f_files,
-        "fs_files_avail": fs_stat.f_favail,
-    }
-
-
-def device_stats(dev):
-    output = run(
-        f"blockdev --getsize64 {dev}", check=True, capture_output=True
-    ).stdout.decode()
-    dev_size = int(output)
-    return {"dev_size": dev_size}
-
-
-def device_to_mountpoint(device: str) -> None | str:
-    try:
-        output = run(
-            f"findmnt --json --first-only {device}",
-            check=True,
-            capture_output=True,
-        ).stdout.decode()
-        data = json.loads(output)
-        return data["filesystems"][0]["target"]
-    except subprocess.CalledProcessError:
-        return None
-
-
-def mountpoint_to_dev(mountpoint):
-    assert Path(mountpoint).is_dir()
-    res = run(
-        f"findmnt --json --first-only --nofsroot --mountpoint {mountpoint}",
-        capture_output=True,
-        check=False,
-    )
-    if res.returncode != 0:
-        return None
-    data = json.loads(res.stdout.decode().strip())
-    return data["filesystems"][0]["source"]
 
 
 def img_dir(volume_id):
@@ -324,17 +249,14 @@ def get_volumes_stats() -> dict[str, dict[str, int]]:
 
 
 def get_capacity():
-    disk_free_size = path_stats(DATA_DIR, CONFIG.get("capacity_override", 0))[
-        "fs_avail"
-    ]
+    disk_free_size = path_stats(DATA_DIR, config.capacity_override)["fs_avail"]
     capacity = disk_free_size
     for volume_stat in get_volumes_stats().values():
         capacity -= volume_stat["total"] - volume_stat["used"]
-    reserved_capacity = CONFIG.get("reserved_capacity", 0)
-    if isinstance(reserved_capacity, int):
-        capacity -= CONFIG.get("reserved_capacity", 0)
-    elif str(reserved_capacity).endswith("%"):
-        capacity -= capacity * int(reserved_capacity[:-1]) / 100
+    if isinstance(config.reserved_capacity, str):
+        capacity -= capacity * int(config.reserved_capacity[:-1]) / 100
+    else:
+        capacity -= config.reserved_capacity.to("B")
     return max(capacity, 0)
 
 
