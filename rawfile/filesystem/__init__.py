@@ -1,25 +1,7 @@
-from enum import StrEnum
 from .base import FileSystem as FileSystemBase
-from .ext4 import EXT4
-from .btrfs import BTRFS
-from .xfs import XFS
 from .utils import get_device_fs
-from utils.rawfile import device_to_mountpoint
-from collections import defaultdict
-from consts import CONFIG
-
-
-class FileSystemName(StrEnum):
-    EXT4 = "ext4"
-    BTRFS = "btrfs"
-    XFS = "xfs"
-
-
-filesystems: dict[FileSystemName | None, type[FileSystemBase]] = {
-    FileSystemName.EXT4: EXT4,
-    FileSystemName.BTRFS: BTRFS,
-    FileSystemName.XFS: XFS,
-}
+from utils.devices import device_to_mountpoint
+from .types import FileSystemName, filesystems
 
 
 def from_device(device: str) -> FileSystemBase | None:
@@ -43,8 +25,6 @@ def get_from_device_or_fallback(device: str, fallback: FileSystemName):
     :param fallback: The filesystem type to use if the device's filesystem is not recognized.
     :return: An instance of the filesystem or the fallback filesystem.
     """
-    _filesystems = defaultdict(lambda: filesystems[CONFIG["default_fs"]])
-    _filesystems.update(filesystems)
-    return from_device(device) or _filesystems[fallback](
+    return from_device(device) or filesystems[fallback](
         device, device_to_mountpoint(device)
     )
