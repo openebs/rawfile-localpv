@@ -3,7 +3,7 @@ from .event import OpenEBSEventBuilder
 from .usage import Usage
 from .ping import Ping
 from .version_set import VersionSet
-from consts import CONFIG
+from config import config
 from utils.logs import logger, fmt_exception
 from utils.units import parse_time_delta
 
@@ -21,11 +21,11 @@ def get_usage():
     if version_info is None:
         # If K8s API is not working correctly at the start, then there's probably
         # no point proceeding anyway
-        version_info = VersionSet(CONFIG["nodeid"])
+        version_info = VersionSet(config.nodeid)
     event_usage = Usage(
-        api_secret=CONFIG["ga_key"],
-        measurement_id=CONFIG["ga_id"],
-        nodeid=CONFIG["nodeid"],
+        api_secret=config.ga_key,
+        measurement_id=config.ga_id,
+        nodeid=config.nodeid,
         version_info=version_info,
     )
     return event_usage
@@ -76,12 +76,12 @@ def run_event_worker():
 
 
 def enabled() -> bool:
-    return bool(CONFIG["ga_enabled"])
+    return config.ga_enabled
 
 
 def run_ping():
     if enabled():
-        ping_hours = parse_time_delta(CONFIG["ga_ping"])
+        ping_hours = parse_time_delta(config.ga_ping)
         background_thread = threading.Thread(
             daemon=True, target=Ping(get_usage(), ping_hours).run
         )

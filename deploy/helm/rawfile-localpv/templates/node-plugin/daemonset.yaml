@@ -50,7 +50,7 @@ spec:
               value: "{{ .Values.provisionerName }}"
             - name: NODE_DATADIR
               value: "{{ .Values.node.dataDirPath }}"
-            - name: CSI_ENDPOINT
+            - name: CSI_DRIVER__ENDPOINT
               value: unix:///csi/csi.sock
             - name: IMAGE_REGISTRY
               value: "{{ include "rawfile-localpv.node-image-registry" . }}"
@@ -58,14 +58,14 @@ spec:
               value: "{{ include "rawfile-localpv.node-image-repository" . }}"
             - name: IMAGE_TAG
               value: "{{ include "rawfile-localpv.node-image-tag" . }}"
-            - name: NODE_ID
+            - name: CSI_DRIVER__NODE_ID
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-            - name: ENABLE_METRICS
+            - name: CSI_DRIVER__ENABLE_METRICS
               value: {{ .Values.metrics.enabled | toString | quote }}
-            - name: METRICS_PORT
+            - name: CSI_DRIVER__METRICS_PORT
               value: {{ .Values.metrics.port | toString | quote }}
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
@@ -73,13 +73,17 @@ spec:
               value: {{ .Values.logLevel }}
             - name: LOG_FORMAT
               value: {{ .Values.logFormat }}
-            - name: PLUGIN_TYPE
+            - name: CSI_DRIVER__PLUGIN_TYPE
               value: node
+            {{- if .Values.reservedCapacity }}
             - name: RESERVED_CAPACITY
               value: {{ .Values.reservedCapacity | toString | quote }}
+            {{- end }}
+            {{- if .Values.capacityOverride }}
             - name: CAPACITY_OVERRIDE
               value: {{ .Values.capacityOverride | toString | quote }}
-            - name: GRPC_WORKERS
+            {{- end }}
+            - name: CSI_DRIVER__GRPC_WORKERS
               value: {{ .Values.node.grpcWorkers | toString | quote }}
             - name: GA_ENABLED
               value: "{{ .Values.global.analytics.enabled }}"
