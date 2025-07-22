@@ -8,8 +8,9 @@ except ImportError:
 
 
 class FallocateFailed(Exception):
-    def __init__(self):
-        self.message = "Fallocate failed"
+    def __init__(self, returncode):
+        self.returncode = returncode
+        self.message = f"Fallocate failed, Return code: {self.returncode}"
         super().__init__(self.message)
 
 

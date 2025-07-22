@@ -4,7 +4,7 @@ from .utils import get_device_for_mountpoint, get_device_fs
 from pathlib import Path
 from typing import Self
 from utils.commands import run
-from utils.rawfile import InvalidDeviceForMountpointError
+from utils.errors import InvalidDeviceForMountpointError
 
 
 class NotSupportedError(NotImplementedError):

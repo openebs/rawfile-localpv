@@ -2,6 +2,8 @@ import inspect
 import base64
 import pickle
 import os
+import sys
+import json
 
 from consts import D_PERMS
 from utils.lock import VolLock
@@ -17,16 +19,20 @@ class remote_fn(object):
 
         run_cmd = f"""
 python <<EOF
+import sys
+import json
+import os
+sys.argv = json.loads('''{json.dumps(sys.argv)}''')
+os.environ = json.loads('''{json.dumps(dict(os.environ))}''')
+
 import base64
 import pickle
-import os
 from utils.logs import LoggingFormats, init as init_logging, logger
-from consts import CONFIG
 
-CONFIG["reserved_capacity"] = int(os.getenv("reserved_capacity", "0"))
-CONFIG["capacity_override"] = int(os.getenv("CAPACITY_OVERRIDE", "0"))
+from config import config
 
-init_logging(LoggingFormats(os.getenv("LOG_FORMAT")), os.getenv("LOG_LEVEL"))
+
+init_logging(config.log_format, config.log_level)
 
 remote_fn = lambda fn: fn # FIXME: dirty hack
 call_data = pickle.loads(base64.b64decode({call_data_serialized}))
