@@ -26,17 +26,19 @@ jobs:
         with:
           submodules: 'recursive'
           fetch-depth: 0
-      - uses: DeterminateSystems/nix-installer-action@v19
+      - name: "Extract NIX_PATH"
+        id: nixpath
+        run: |
+          echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
+      - uses: cachix/install-nix-action@v25
+        with:
+          nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+      - run: nix-build shell.nix
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
         with:
           driver-opts: |
             network=host
-      - name: Pre-populate nix-shell
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-          nix-shell --run "echo"
       - name: Build
         env:
           CI_TEST: "false"

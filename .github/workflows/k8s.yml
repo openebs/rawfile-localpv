@@ -36,21 +36,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: DeterminateSystems/nix-installer-action@v19
+      - name: "Extract NIX_PATH"
+        id: nixpath
+        run: |
+          echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
+      - uses: cachix/install-nix-action@v25
         with:
-          kvm: true
+          nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+          enable_kvm: true
+      - run: nix-build shell.nix
       - run: sudo chown $USER /mnt
       - name: Erase /mnt
         run: |
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
           sudo rm -rf /mnt/* || true
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
-      - name: Setup Nix Path
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
-      - name: Pre-populate nix-shell
-        run: nix-shell --run "echo"
       - name: Build test images
         run: nix-shell --run "CI_TEST=true .ci/build.sh"
       - name: BootStrap k8s cluster
@@ -102,26 +102,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: DeterminateSystems/nix-installer-action@v19
+      - name: "Extract NIX_PATH"
+        id: nixpath
+        run: |
+          echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
+      - uses: cachix/install-nix-action@v25
         with:
-          kvm: true
+          nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+          enable_kvm: true
+      - run: nix-build shell.nix
       - run: sudo chown $USER /mnt
       - name: Erase /mnt
         run: |
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
           sudo rm -rf /mnt/* || true
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
-      - name: Setup Nix Path
-        run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
         with:
           driver-opts: |
             network=host
-      - name: Pre-populate nix-shell
-        run: nix-shell --run "echo"
       - name: BootStrap k8s cluster
         run: |
           sudo debconf-communicate <<< "set man-db/auto-update false" || true
@@ -162,26 +162,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: DeterminateSystems/nix-installer-action@v19
-        with:
-          kvm: true
       - run: sudo chown $USER /mnt
       - name: Erase /mnt
         run: |
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
           sudo rm -rf /mnt/* || true
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
-      - name: Setup Nix Path
+      - name: "Extract NIX_PATH"
+        id: nixpath
         run: |
-          export NIX_PATH=nixpkgs=$(jq '.nixpkgs.url' nix/sources.json -r)
-          echo "NIX_PATH=$NIX_PATH" >> $GITHUB_ENV
+          echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
+      - uses: cachix/install-nix-action@v25
+        with:
+          nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+          enable_kvm: true
+      - run: nix-build shell.nix
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
         with:
           driver-opts: |
             network=host
-      - name: Pre-populate nix-shell
-        run: nix-shell --run "echo"
       - name: Build test images
         if: ${{ !inputs.release }}
         run: nix-shell --run "CI_TEST=true .ci/build.sh"
