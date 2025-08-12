@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !inputs.release-check }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: "Extract NIX_PATH"
@@ -99,7 +99,7 @@ jobs:
     if: ${{ inputs.release-check }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: "Extract NIX_PATH"
@@ -159,7 +159,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !inputs.release-check }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - run: sudo chown $USER /mnt

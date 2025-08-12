@@ -12,7 +12,7 @@ jobs:
       registry: ${{ steps.needs.outputs.registry }}
       namespace: ${{ steps.needs.outputs.namespace }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - id: needs
