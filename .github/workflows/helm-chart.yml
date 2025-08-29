@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          submodules: "recursive"
       - name: "Extract NIX_PATH"
         id: nixpath
         run: |
@@ -24,6 +24,15 @@ jobs:
       - uses: cachix/install-nix-action@v31
         with:
           nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+          install_options: --no-daemon
+          extra_nix_config: |
+            keep-env-derivations = true
+            keep-outputs = true
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: helm-nix-${{ hashFiles('deploy/helm/shell.nix', 'nix/*') }}
+          restore-prefixes-first-match: helm-nix-
       - run: nix-build deploy/helm/shell.nix
       - name: HelmChart Lint
         run: nix-shell deploy/helm/shell.nix --run ".ci/helm-lint.sh"
@@ -35,24 +44,24 @@ jobs:
     needs: ["chart-test"]
     if: ${{ inputs.release }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
           fetch-depth: 0
 
-    - name: Configure Git
-      run: |
-        git config user.name "$GITHUB_ACTOR"
-        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-    - name: Run chart-releaser
-      uses: helm/chart-releaser-action@v1.7.0
-      with:
-        mark_as_latest: true
-        charts_dir: ./deploy/helm
-        # allows us to release again, only when the helm chart version is updated!
-        skip_existing: true
-      env:
-        CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        CR_RELEASE_NAME_TEMPLATE: 'v{{ .Version }}'
-        charts_dir: ./deploy/helm
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.7.0
+        with:
+          mark_as_latest: true
+          charts_dir: ./deploy/helm
+          # allows us to release again, only when the helm chart version is updated!
+          skip_existing: true
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          CR_RELEASE_NAME_TEMPLATE: "v{{ .Version }}"
+          charts_dir: ./deploy/helm

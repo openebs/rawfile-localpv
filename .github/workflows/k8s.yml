@@ -22,7 +22,7 @@ on:
       chart:
         required: false
         type: string
-        default: 'https://openebs.github.io/rawfile-localpv/'
+        default: "https://openebs.github.io/rawfile-localpv/"
 
 env:
   CI: 1
@@ -43,7 +43,16 @@ jobs:
       - uses: cachix/install-nix-action@v31
         with:
           nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+          install_options: --no-daemon
+          extra_nix_config: |
+            keep-env-derivations = true
+            keep-outputs = true
           enable_kvm: true
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
+          restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
       - run: sudo chown $USER /mnt
       - name: Erase /mnt
@@ -109,7 +118,16 @@ jobs:
       - uses: cachix/install-nix-action@v31
         with:
           nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+          install_options: --no-daemon
+          extra_nix_config: |
+            keep-env-derivations = true
+            keep-outputs = true
           enable_kvm: true
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
+          restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
       - run: sudo chown $USER /mnt
       - name: Erase /mnt
@@ -134,9 +152,9 @@ jobs:
           CI_CHART: "${{ inputs.chart }}"
           CI_IMAGE_NS: "${{ inputs.namespace }}"
         run: nix-shell --run ".ci/e2e-test/setup.sh"
-#      todo: We've already tested before, just want sanity check that the release is correctly packaged
-#      - name: Run K8s sanity
-#        run: nix-shell --run ".ci/e2e-test/test.sh"
+      #      todo: We've already tested before, just want sanity check that the release is correctly packaged
+      #      - name: Run K8s sanity
+      #        run: nix-shell --run ".ci/e2e-test/test.sh"
       - run: |
           nix-shell --run "kubectl -n openebs logs -lcomponent=node -c csi-driver --tail=-1"
           nix-shell --run "kubectl -n openebs logs -lcomponent=controller -c csi-driver --tail=-1"
@@ -175,7 +193,16 @@ jobs:
       - uses: cachix/install-nix-action@v31
         with:
           nix_path: "${{ steps.nixpath.outputs.nix_path }}"
+          install_options: --no-daemon
+          extra_nix_config: |
+            keep-env-derivations = true
+            keep-outputs = true
           enable_kvm: true
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
+          restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
