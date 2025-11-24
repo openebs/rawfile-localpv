@@ -33,7 +33,7 @@ retrying = "^1.4.2"
 kubernetes = "^34.1.0"
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^4.4.0"
+pre-commit = "^4.5.0"
 
 [build-system]
 requires = ["poetry-core"]
