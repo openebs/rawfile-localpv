@@ -29,7 +29,7 @@ ipaddress = "^1.0.23"
 rawfile = "rawfile.rawfile:cli"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^9.0.1"
+pytest = "^9.0.2"
 pytest-bdd = "^8.1.0"
 retrying = "^1.4.2"
 kubernetes = "^34.1.0"
