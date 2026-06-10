@@ -2,6 +2,33 @@ apiVersion: v1
 entries:
   rawfile-localpv:
   - apiVersion: v2
+    appVersion: 0.14.1
+    created: "2026-06-10T12:14:51.200218054Z"
+    dependencies:
+    - condition: crds.enabled
+      name: crds
+      repository: ""
+      version: 0.0.1
+    description: RawFile Driver Container Storage Interface
+    digest: 4bfd5399d6775d2490ae0477f5110f7eb182ce1a3b08c8c945602c08234b76e0
+    home: https://openebs.io/
+    icon: https://raw.githubusercontent.com/cncf/artwork/main/projects/openebs/icon/color/openebs-icon-color.png
+    keywords:
+    - cloud-native-storage
+    - filesystem
+    - sparse
+    - rawfile
+    - Local Persistent Volumes
+    - storage
+    kubeVersion: '>= 1.21'
+    name: rawfile-localpv
+    sources:
+    - https://github.com/openebs/rawfile-localpv
+    type: application
+    urls:
+    - https://github.com/openebs/rawfile-localpv/releases/download/v0.14.1/rawfile-localpv-0.14.1.tgz
+    version: 0.14.1
+  - apiVersion: v2
     appVersion: 0.14.0
     created: "2026-05-20T10:46:14.989454989Z"
     dependencies:
@@ -217,4 +244,4 @@ entries:
     urls:
     - https://github.com/openebs/rawfile-localpv/releases/download/v0.10.0/rawfile-localpv-0.10.0.tgz
     version: 0.10.0
-generated: "2026-05-20T10:46:14.989487559Z"
+generated: "2026-06-10T12:14:51.200246137Z"
