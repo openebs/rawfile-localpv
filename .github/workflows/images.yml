@@ -22,7 +22,7 @@ jobs:
   image-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
           fetch-depth: 0
@@ -38,13 +38,13 @@ jobs:
             keep-env-derivations = true
             keep-outputs = true
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
           restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
         with:
           driver-opts: |
             network=host
