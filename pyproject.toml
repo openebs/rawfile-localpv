@@ -24,8 +24,8 @@ tldextract = "^5.3.1"
 humanize = "^4.15.0"
 setproctitle = "^1.3.7"
 ipaddress = "^1.0.23"
-fastapi = {extras = ["standard"], version = "^0.128.0"}
-uvicorn = "^0.40.0"
+fastapi = {extras = ["standard"], version = ">=0.128,<0.139"}
+uvicorn = ">=0.40,<0.50"
 
 [tool.poetry.scripts]
 rawfile = "rawfile.rawfile:cli"
