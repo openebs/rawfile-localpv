@@ -78,6 +78,50 @@ jobs:
           echo "Release is already present"
           exit 1
 
+  openapi-spec:
+    if: ${{ success() }}
+    needs:
+      - needs-release
+      - chart-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v6
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Install project
+        run: poetry install --no-interaction
+
+      - name: Generate openapi spec
+        run: poetry run rawfile/rawfile.py --namespace ci export-openapi --output openapi.json
+
+      - name: Upload openapi spec
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload {{ needs.needs-release.outputs.version }} openapi.json --clobber
+
   release:
     if: ${{ success() }}
     needs:
@@ -85,6 +129,7 @@ jobs:
       - images
       - k8s
       - chart-release
+      - openapi-spec
     runs-on: ubuntu-latest
     steps:
       - name: Released

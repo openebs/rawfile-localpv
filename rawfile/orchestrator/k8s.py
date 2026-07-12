@@ -8,6 +8,7 @@ from kubernetes import client as k8s_client, config as k8s_config, watch
 from config import config
 from utils.logs import logger
 from kubernetes.client.rest import ApiException
+import functools
 
 
 class NodeUnavailableError(Exception):
@@ -16,14 +17,23 @@ class NodeUnavailableError(Exception):
         super().__init__(f"Node {self.node_name} is not available")
 
 
-def load_config():
-    if os.getenv("KUBERNETES_SERVICE_HOST"):
-        k8s_config.load_incluster_config()
-    else:
-        k8s_config.load_config()
+__config_loaded = False
 
 
-load_config()
+def load_config(func):
+    @functools.wraps(func)
+    def wrap(*args, **kwargs):
+        global __config_loaded
+        if __config_loaded:
+            return func(*args, **kwargs)
+        if os.getenv("KUBERNETES_SERVICE_HOST"):
+            k8s_config.load_incluster_config()
+        else:
+            k8s_config.load_config()
+        __config_loaded = True
+        return func(*args, **kwargs)
+
+    return wrap
 
 
 class K8sEventType(StrEnum):
@@ -34,6 +44,7 @@ class K8sEventType(StrEnum):
     ERROR = "ERROR"
 
 
+@load_config
 def volume_to_node(volume_id):
     api = k8s_client.CoreV1Api()
     pv: k8s_client.V1PersistentVolume = api.read_persistent_volume(name=volume_id)
@@ -70,17 +81,20 @@ def wait_for(pred, desc=""):
     )
 
 
+@load_config
 def namespace_uid(namespace: str) -> str:
     v1 = k8s_client.CoreV1Api()
     namespace = v1.read_namespace(name=namespace)
     return namespace.metadata.uid
 
 
+@load_config
 def version_code():
     version_api = k8s_client.VersionApi()
     return version_api.get_code()
 
 
+@load_config
 def read_node_info(nodeid):
     v1 = k8s_client.CoreV1Api()
     node = v1.read_node(name=nodeid)
@@ -88,12 +102,14 @@ def read_node_info(nodeid):
     return info
 
 
+@load_config
 def node_count() -> int:
     v1 = k8s_client.CoreV1Api()
     node_count = len(v1.list_node().items)
     return node_count
 
 
+@load_config
 def read_config_map(name: str):
     v1 = k8s_client.CoreV1Api()
     try:
@@ -105,6 +121,7 @@ def read_config_map(name: str):
         raise e
 
 
+@load_config
 def write_config_map(name: str, key: str, value: str, overwrite=False):
     v1 = k8s_client.CoreV1Api()
     namespace = config.namespace
@@ -147,6 +164,11 @@ def write_config_map(name: str, key: str, value: str, overwrite=False):
 
 class NodeIPMapping:
     def __init__(self):
+        self._stop_event = threading.Event()
+        self._thread = None
+
+    @load_config
+    def start(self):
         if not config.node_ds:
             raise Exception("Nodes DaemonSet not defined")
         self.apps_v1 = k8s_client.AppsV1Api()
@@ -159,9 +181,6 @@ class NodeIPMapping:
 
         self._mapping = {}
         self.reload_mapping()
-
-        # Start watcher in background
-        self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self.watch_daemonset_pods, daemon=True)
         self._thread.start()
 
@@ -227,8 +246,9 @@ class NodeIPMapping:
                 retrying = True
 
     def stop(self):
-        self._stop_event.set()
-        self._thread.join(timeout=2)
+        if self._thread:
+            self._stop_event.set()
+            self._thread.join(timeout=2)
 
 
 node_ip_mapping = NodeIPMapping()

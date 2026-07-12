@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import re
 import warnings
 from datetime import timedelta
@@ -74,6 +75,14 @@ class StoragePool(BaseModel):
         Effectively, `subtract-from-total` is analogous to "reserve for this pool only", while "plain"
         is "reserve for everything else but this pool".""",
     )
+
+
+class ExportOpenApiCmd(BaseModel):
+    output: Path = Field(
+        default=Path("openapi.json"),
+        description="File to write the OpenAPI spec to",
+    )
+    indent: int = Field(default=2, description="JSON indent width")
 
 
 class CSIDriverCmd(BaseModel):
@@ -271,6 +280,9 @@ class RawFileCmd(
     )
     api: CliSubCommand[APICmd] = Field(
         description="Starts API server",
+    )
+    export_openapi: CliSubCommand[ExportOpenApiCmd] = Field(
+        description="Exports the API server's OpenAPI spec and exits",
     )
 
     @model_validator(mode="after")
