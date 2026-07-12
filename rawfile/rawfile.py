@@ -70,6 +70,7 @@ def node_driver_preflight_checks(task_manager: task_manager.TaskManager):
 
 def csi_driver(config: RawFileCmd):
     driver_config = config.csi_driver
+    node_ip_mapping.start()
     if not driver_config:
         raise Exception("Should run from csi driver")
     setproctitle(
@@ -198,7 +199,14 @@ if __name__ == "__main__":
     from config import config
 
     init_logging(_format=config.log_format, _level=config.log_level)
-    if config.gc:
+    if config.export_openapi:
+        import json
+
+        spec = api_server.app.openapi()
+        config.export_openapi.output.write_text(
+            json.dumps(spec, indent=config.export_openapi.indent)
+        )
+    elif config.gc:
         volume_manager.gc_all_volumes(config.gc.dry_run)
     elif config.csi_driver:
         if config.csi_driver.plugin_type == "node":
