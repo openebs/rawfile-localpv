@@ -23,11 +23,13 @@ from pydantic_settings import (
     BaseSettings,
     CliSettingsSource,
     CliSubCommand,
+    NoDecode,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
 from utils.logs import LoggingFormats
 from utils.modeltypes import ReservedCapacityMode
+from utils.net import parse_nameservers
 
 NAME_REGEX: Final[re.Pattern] = re.compile(
     r"^(?=.{1,253}$)(?!.*\.\.)([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)(\.([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?))*$"
@@ -262,6 +264,24 @@ class RawFileCmd(
     node_ds: str | None = Field(
         default=None, description="Name of the node DS used for node discovery"
     )
+    # NoDecode: without it pydantic-settings JSON-decodes list env values *before*
+    # validators run, so a plain "GA_DNS=8.8.8.8:53" would raise SettingsError at
+    # startup. NoDecode hands the raw string to validate_ga_dns instead.
+    ga_dns: Annotated[list[str], NoDecode] = Field(
+        default=[],
+        description="""DNS nameservers used to resolve the Google Analytics collection endpoint.
+        Accepts a comma-separated string or a list; each entry may include a port, e.g.
+        "8.8.8.8:53" or "[2001:4860:4860::8888]:53". Leave empty to use the system/pod default
+        resolver (e.g. cluster CoreDNS).""",
+    )
+
+    @field_validator("ga_dns", mode="before")
+    @classmethod
+    def validate_ga_dns(cls, v):
+        # Validate up front so a typo surfaces at startup (as a warning) rather than
+        # as a swallowed per-request error later. See utils.net.parse_nameservers.
+        return parse_nameservers(v)
+
     gc: CliSubCommand[GCCmd] = Field(
         description="Runs GC for all volumes in the node",
     )
