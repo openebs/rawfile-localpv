@@ -172,6 +172,7 @@ spec:
             - "--csi-address=$(ADDRESS)"
             - "--handle-volume-inuse-error=false"
             - "--timeout=30s"
+            - "--automaxprocs=true"
           env:
             - name: ADDRESS
               value: /csi/csi.sock

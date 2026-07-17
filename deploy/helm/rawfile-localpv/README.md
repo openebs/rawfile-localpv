@@ -38,13 +38,13 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | controller.externalResizer.image.pullPolicy | string | `nil` | Image pull policy for `csi-resizer` |
 | controller.externalResizer.image.registry | string | `""` | Image registry for `csi-resizer` |
 | controller.externalResizer.image.repository | string | `"sig-storage/csi-resizer"` | Image Repository for `csi-resizer` |
-| controller.externalResizer.image.tag | string | `"v1.13.2"` | Image tag for `csi-resizer` |
+| controller.externalResizer.image.tag | string | `"v2.2.1"` | Image tag for `csi-resizer` |
 | controller.externalResizer.resources | object | `{}` | Sets compute resources for external-resizer container |
 | controller.grpcWorkers | int | `10` | Number of gRPC workers for controller component |
 | controller.nodeSelector | string | `nil` | nodeSelector for controller component |
 | controller.priorityClassName | string | `"system-cluster-critical"` | priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default |
 | controller.resources | object | `{}` | Sets compute resources for controller component |
-| controller.tolerations | list | `[{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Equal","value":"true"}]` | Tolerations for controller component |
+| controller.tolerations | list | `[{"effect":"NoSchedule","key":"node-role.kubernetes.io/control-plane","operator":"Exists"},{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Exists"}]` | Tolerations for controller component |
 | crds.csi.volumeSnapshots.enabled | bool | `true` | Install Volume Snapshot CRDs |
 | crds.enabled | bool | `true` | Disables the installation of all CRDs if set to false |
 | csiSideCars | object | `{"image":{"pullPolicy":"IfNotPresent","registry":"registry.k8s.io"}}` | Image registry for CSI Sidecars |
@@ -73,18 +73,18 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | node.driverRegistrar.image.pullPolicy | string | `nil` | Image pull policy for `csi-node-driver-registrar` |
 | node.driverRegistrar.image.registry | string | `""` | Image Registry for `csi-node-driver-registrar` |
 | node.driverRegistrar.image.repository | string | `"sig-storage/csi-node-driver-registrar"` | Image Repository for `csi-node-driver-registrar` |
-| node.driverRegistrar.image.tag | string | `"v2.13.0"` | Image Tag for `csi-node-driver-registrar` |
+| node.driverRegistrar.image.tag | string | `"v2.17.0"` | Image Tag for `csi-node-driver-registrar` |
 | node.driverRegistrar.resources | object | `{}` | Sets compute resources for driver-registrar container |
 | node.externalProvisioner.capacityPollInterval | string | `"1m"` | Sets capacity poll interval for `csi-provisioner`, determining how long the external-provisioner waits before checking for storage capacity changes. |
 | node.externalProvisioner.image.pullPolicy | string | `nil` | Image pull policy for `csi-provisioner` |
 | node.externalProvisioner.image.registry | string | `""` | Image Registry for `csi-provisioner` |
 | node.externalProvisioner.image.repository | string | `"sig-storage/csi-provisioner"` | Image Repository for `csi-provisioner` |
-| node.externalProvisioner.image.tag | string | `"v5.2.0"` | Image Tag for `csi-provisioner` |
+| node.externalProvisioner.image.tag | string | `"v6.3.0"` | Image Tag for `csi-provisioner` |
 | node.externalProvisioner.resources | object | `{}` | Sets compute resources for external-provisioner container |
 | node.externalSnapshotter.image.pullPolicy | string | `nil` | Image pull policy for `csi-snapshotter` |
 | node.externalSnapshotter.image.registry | string | `""` | Image Registry for `csi-snapshotter` |
 | node.externalSnapshotter.image.repository | string | `"sig-storage/csi-snapshotter"` | Image Repository for `csi-snapshotter` |
-| node.externalSnapshotter.image.tag | string | `"v8.2.1"` | Image Tag for `csi-snapshotter` |
+| node.externalSnapshotter.image.tag | string | `"v8.6.0"` | Image Tag for `csi-snapshotter` |
 | node.externalSnapshotter.resources | object | `{}` | Sets compute resources for external-snapshotter container |
 | node.grpcWorkers | int | `10` | Number of gRPC workers for node component |
 | node.hostNetwork | bool | `false` | Enables hostNetwork for node component |
@@ -100,7 +100,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | node.snapshotController.image.pullPolicy | string | `nil` | Image pull policy for `snapshot-controller` |
 | node.snapshotController.image.registry | string | `""` | Image Registry for `snapshot-controller` |
 | node.snapshotController.image.repository | string | `"sig-storage/snapshot-controller"` | Image Repository for `snapshot-controller` |
-| node.snapshotController.image.tag | string | `"v8.2.1"` | Image Tag for `snapshot-controller` |
+| node.snapshotController.image.tag | string | `"v8.6.0"` | Image Tag for `snapshot-controller` |
 | node.snapshotController.resources | object | `{}` | Sets compute resources for snapshot-controller container |
 | node.tolerations | string | `nil` | Tolerations for node component |
 | provisionerName | string | `"rawfile.csi.openebs.io"` | Name of the registered CSI Driver in the cluster |

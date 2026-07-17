@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !inputs.release-check }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: "Extract NIX_PATH"
@@ -53,7 +53,7 @@ jobs:
             keep-outputs = true
           enable_kvm: true
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
           restore-prefixes-first-match: nix-
@@ -76,7 +76,7 @@ jobs:
       - run: |
           nix-shell --run "kubectl -n openebs logs -lcomponent=node -c csi-driver --tail=-1"
           nix-shell --run "kubectl -n openebs logs -lcomponent=controller -c csi-driver --tail=-1"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: smoke-pytest.log
@@ -99,7 +99,7 @@ jobs:
           nix-shell --run "kubectl cluster-info dump --output-directory=./dump/k8s --namespaces=openebs,kube-system"
       - name: Upload cluster dump
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-k8s-dump
           path: dump
@@ -112,7 +112,7 @@ jobs:
     if: ${{ inputs.release-check }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: "Extract NIX_PATH"
@@ -128,7 +128,7 @@ jobs:
             keep-outputs = true
           enable_kvm: true
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
           restore-prefixes-first-match: nix-
@@ -139,8 +139,8 @@ jobs:
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
           sudo rm -rf /mnt/* || true
           sudo du -ah -d 6 --apparent-size /mnt | sort -hr
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
         with:
           driver-opts: |
             network=host
@@ -169,7 +169,7 @@ jobs:
           nix-shell --run "kubectl cluster-info dump --output-directory=./dump/k8s --namespaces=openebs,kube-system"
       - name: Upload cluster dump
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k8s-dump
           path: dump
@@ -181,7 +181,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !inputs.release-check }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - run: sudo chown $USER /mnt
@@ -203,13 +203,13 @@ jobs:
             keep-outputs = true
           enable_kvm: true
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
           restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
         with:
           driver-opts: |
             network=host
@@ -242,7 +242,7 @@ jobs:
       - name: Run K8s tests
         run: nix-shell --run ".ci/e2e-test/test.sh"
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         if: success() || failure()
         with:
           include_passed: "true"
@@ -265,7 +265,7 @@ jobs:
           nix-shell --run "kubectl cluster-info dump --output-directory=./dump/k8s --namespaces=openebs,kube-system"
       - name: Upload cluster dump
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k8s-dump
           path: dump
