@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added ✨
 
 - API Server with OpenAPI spec and Swagger UI
-- New endpoints for the Internal gRPC server
 
 ### Fixed 🐛
 
@@ -23,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed 🗑️ ⚠️
 
 ### Internal 🔧
+
+- New endpoints for the Internal gRPC server
+- Multiple dependency bumps across the stack, ensuring security and stability
 
 ### Known Issues 🚫
 
