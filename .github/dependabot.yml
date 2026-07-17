@@ -1,28 +1,32 @@
 version: 2
 
-multi-ecosystem-groups:
-  infrastructure:
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: ⬆
-
 updates:
   - package-ecosystem: "docker"
+    schedule:
+      interval: weekly
     directory: "/"
-    multi-ecosystem-group: "infrastructure"
-    patterns: ['*']
+    commit-message:
+      prefix: ":arrow_up:"
+    groups:
+      docker:
+        patterns: ["*"]
+
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: weekly
     groups:
       python-packages:
-        patterns:
-          - "*"
+        patterns: ["*"]
     commit-message:
-      prefix: ⬆
+      prefix: ":arrow_up:"
+
   - package-ecosystem: "github-actions"
+    schedule:
+      interval: weekly
     directory: "/"
-    multi-ecosystem-group: "infrastructure"
-    patterns: ['*']
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ":arrow_up:"
