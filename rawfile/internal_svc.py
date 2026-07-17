@@ -123,7 +123,12 @@ class InternalServicer(internal_pb2_grpc.InternalServicer):
     @log_grpc_request
     def GetVolumesStat(self, request: internal_pb2.GetVolumesStatRequest, context):
         stats = {}
-        for volname in volume_manager.list_all_volumes():
+        volumes = []
+        if request.volume_name:
+            volumes = [request.volume_name]
+        else:
+            volumes = volume_manager.list_all_volumes()
+        for volname in volumes:
             meta = metadata_or(volname)
             if not meta:
                 continue
@@ -144,9 +149,9 @@ class InternalServicer(internal_pb2_grpc.InternalServicer):
                 copy_on_write=copy_on_write,
                 thin_provision=meta["thin_provision"],
                 ready=meta["ready"],
-                deleted_at=meta["deleted_at"],
+                deleted_at=meta.get("deleted_at", None),
                 created_at=meta["created_at"],
-                gc_at=meta["gc_at"],
+                gc_at=meta.get("gc_at", None),
                 freezefs=meta.get("freezefs", False),
                 storage_pool=meta["storage_pool"],
                 img_file=meta["img_file"],

@@ -24,13 +24,12 @@ def load_config(func):
     @functools.wraps(func)
     def wrap(*args, **kwargs):
         global __config_loaded
-        if __config_loaded:
-            return func(*args, **kwargs)
-        if os.getenv("KUBERNETES_SERVICE_HOST"):
-            k8s_config.load_incluster_config()
-        else:
-            k8s_config.load_config()
-        __config_loaded = True
+        if not __config_loaded:
+            if os.getenv("KUBERNETES_SERVICE_HOST"):
+                k8s_config.load_incluster_config()
+            else:
+                k8s_config.load_config()
+            __config_loaded = True
         return func(*args, **kwargs)
 
     return wrap

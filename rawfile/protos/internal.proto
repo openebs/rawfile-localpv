@@ -84,11 +84,11 @@ message VolumeStat {
   // Is the volume Ready?
   bool ready = 5;
   // Indicates that if volume has been deleted or not (with it's time in timestamp)
-  float deleted_at = 6;
+  optional float deleted_at = 6;
   // Volume create time (with it's time in timestamp)
   float created_at = 7;
   // Indicates when volume should get Garbage Collected (with it's time in timestamp)
-  float gc_at = 8;
+  optional float gc_at = 8;
   // Name of the pool that volume has been stored on
   string storage_pool = 9;
   // Indicates that if freezefs has been enabled or not
@@ -106,6 +106,8 @@ message VolumeStat {
 message GetVolumesStatRequest {
   // Name of the pool to get stats of that volumes
   string pool_name = 1;
+  // Name of the volume to get stats of (Returns stats of all volumes if not provided)
+  optional string volume_name = 2;
 }
 
 message GetVolumesStatResponse {
