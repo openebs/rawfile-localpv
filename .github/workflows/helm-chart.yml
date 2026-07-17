@@ -14,7 +14,7 @@ jobs:
   chart-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: "Extract NIX_PATH"
@@ -29,7 +29,7 @@ jobs:
             keep-env-derivations = true
             keep-outputs = true
       - name: Restore and save Nix store
-        uses: nix-community/cache-nix-action@v6
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: helm-nix-${{ hashFiles('deploy/helm/shell.nix', 'nix/*') }}
           restore-prefixes-first-match: helm-nix-
@@ -46,7 +46,7 @@ jobs:
     if: ${{ inputs.release }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -71,7 +71,7 @@ jobs:
           echo "CHART_VERSION=$(awk -F': ' '/^version:/ {print $2}' ./deploy/helm/rawfile-localpv/Chart.yaml)" >> $GITHUB_ENV
 
       - name: Publish chart via OCI
-        uses: appany/helm-oci-chart-releaser@v0.4.2
+        uses: appany/helm-oci-chart-releaser@v0.5.0
         with:
           name: rawfile-localpv
           repository: ${{ github.repository_owner }}/charts

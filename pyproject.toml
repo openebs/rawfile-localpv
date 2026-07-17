@@ -7,7 +7,7 @@ license = "apache"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.14"
 grpcio-tools = "^1.80.0"
 grpcio = "^1.80.0"
 click = "^8.3.2"

@@ -63,14 +63,14 @@ Entering a shell with all the required packages is rather simple, simply with `n
 
 ```console
 > nix-shell
-Using virtualenv: /Users/tiagocastro/Library/Caches/pypoetry/virtualenvs/rawfile-MvDqJOgK-py3.13
+Using virtualenv: /Users/tiagocastro/Library/Caches/pypoetry/virtualenvs/rawfile-MvDqJOgK-py3.14
 Installing dependencies from lock file
 
 No dependencies to install or update
 
 Installing the current project: rawfile (0.10.0)
 pre-commit installed at .git/hooks/pre-commit
-(rawfile-py3.13)
+(rawfile-py3.14)
 >
 ```
 
@@ -383,11 +383,11 @@ test_smoke.py::test_create_pvcs_with_different_storage_parameters[Immediate-Read
 ....
 ===================================================================================================================================================== warnings summary =====================================================================================================================================================
 test_smoke.py: 977 warnings
-  /home/tiago/.cache/pypoetry/virtualenvs/rawfile-xNvq-e8_-py3.13/lib/python3.13/site-packages/retrying.py:267: DeprecationWarning: The 'warn' method is deprecated, use 'warning' instead
+  /home/tiago/.cache/pypoetry/virtualenvs/rawfile-xNvq-e8_-py3.14/lib/python3.13/site-packages/retrying.py:267: DeprecationWarning: The 'warn' method is deprecated, use 'warning' instead
     self._logger.warn(attempt)
 
 test_smoke.py: 38 warnings
-  /home/tiago/.cache/pypoetry/virtualenvs/rawfile-xNvq-e8_-py3.13/lib/python3.13/site-packages/kubernetes/client/rest.py:44: DeprecationWarning: HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.6.0. Instead access HTTPResponse.headers directly.
+  /home/tiago/.cache/pypoetry/virtualenvs/rawfile-xNvq-e8_-py3.14/lib/python3.13/site-packages/kubernetes/client/rest.py:44: DeprecationWarning: HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.6.0. Instead access HTTPResponse.headers directly.
     return self.urllib3_response.getheaders()
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

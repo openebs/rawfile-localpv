@@ -65,7 +65,7 @@ controller:
       # -- Image Repository for `csi-resizer`
       repository: sig-storage/csi-resizer
       # -- Image tag for `csi-resizer`
-      tag: v1.13.2
+      tag: v2.2.1
       # -- Image pull policy for `csi-resizer`
       pullPolicy:
 
@@ -84,10 +84,12 @@ controller:
 
   # -- Tolerations for controller component
   tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
     - key: "node-role.kubernetes.io/master"
-      operator: Equal
-      value: "true"
-      effect: NoSchedule
+      operator: "Exists"
+      effect: "NoSchedule"
 
   # -- nodeSelector for controller component
   nodeSelector:
@@ -111,7 +113,7 @@ node:
       # -- Image Repository for `csi-node-driver-registrar`
       repository: sig-storage/csi-node-driver-registrar
       # -- Image Tag for `csi-node-driver-registrar`
-      tag: v2.13.0
+      tag: v2.17.0
       # -- Image pull policy for `csi-node-driver-registrar`
       pullPolicy:
 
@@ -127,7 +129,7 @@ node:
       # -- Image Repository for `csi-provisioner`
       repository: sig-storage/csi-provisioner
       # -- Image Tag for `csi-provisioner`
-      tag: v5.2.0
+      tag: v6.3.0
       # -- Image pull policy for `csi-provisioner`
       pullPolicy:
     # -- Sets capacity poll interval for `csi-provisioner`, determining how long the external-provisioner waits before checking for storage capacity changes.
@@ -142,7 +144,7 @@ node:
       # -- Image Repository for `csi-snapshotter`
       repository: sig-storage/csi-snapshotter
       # -- Image Tag for `csi-snapshotter`
-      tag: v8.2.1
+      tag: v8.6.0
       # -- Image pull policy for `csi-snapshotter`
       pullPolicy:
 
@@ -155,7 +157,7 @@ node:
       # -- Image Repository for `snapshot-controller`
       repository: sig-storage/snapshot-controller
       # -- Image Tag for `snapshot-controller`
-      tag: v8.2.1
+      tag: v8.6.0
       # -- Image pull policy for `snapshot-controller`
       pullPolicy:
 

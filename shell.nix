@@ -20,8 +20,8 @@ pkgs.mkShell {
       vendorHash = "sha256-tRpylYpEGF6XqtBl7ESYlXKEEAt+Jws4x4VlUVW8SNI=";
     })) # kind 0.32.0 is not available in nixpkgs yet and we need it to be compatible with latest containerd
     git
-    python313
-    poetry # Python3.13 is not supported (Overriding python3 input will not work)
+    python314
+    poetry
     gcc
     gnumake
     stdenv.cc.cc.lib

@@ -201,6 +201,7 @@ spec:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
             - --health-port={{ .Values.node.driverRegistrar.healthzPort }}
+            - --automaxprocs=true
           env:
             - name: ADDRESS
               value: /csi/csi.sock
@@ -237,6 +238,7 @@ spec:
             - "--node-deployment=true"
             - "--extra-create-metadata=true"
             - "--capacity-poll-interval={{ .Values.node.externalProvisioner.capacityPollInterval }}"
+            - "--automaxprocs=true"
           env:
             - name: ADDRESS
               value: /csi/csi.sock
@@ -265,6 +267,7 @@ spec:
             - "--csi-address=$(ADDRESS)"
             - "--node-deployment=true"
             - "--extra-create-metadata=true"
+            - "--automaxprocs=true"
           env:
             - name: ADDRESS
               value: /csi/csi.sock
