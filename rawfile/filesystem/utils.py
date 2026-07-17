@@ -1,3 +1,4 @@
+import re
 import subprocess
 from pathlib import Path
 from utils.commands import run
@@ -14,13 +15,15 @@ def get_device_fs(device: str) -> str | None:
 def get_device_for_mountpoint(mountpoint: str) -> str | None:
     try:
         output = run(
-            f"mount | grep 'on {mountpoint}'",
+            f"findmnt -no SOURCE --mountpoint {mountpoint}",
             check=True,
             capture_output=True,
         )
     except subprocess.CalledProcessError:
         return None
-    lines = output.stdout.decode().strip().splitlines()
-    if not len(lines):
+    source = output.stdout.decode().strip()
+    if not source:
         return None
-    return Path(lines[0].split(" ")[0].strip()).resolve().as_posix()
+    # Strip bind-mount subpath notation, "/dev/loop1[/default]" -> "/dev/loop1"
+    device = re.sub(r"\[.*\]$", "", source)
+    return Path(device).resolve().as_posix()
