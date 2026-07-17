@@ -107,6 +107,13 @@ spec:
             - name: GA_KEY
               value: {{ .Values.analytics.gaKey | quote }}
             {{- end }}
+            {{- if .Values.global.analytics.gaDnsNameservers }}
+            - name: GA_DNS
+              value: {{ .Values.global.analytics.gaDnsNameservers | quote }}
+            {{- else if .Values.analytics.gaDnsNameservers }}
+            - name: GA_DNS
+              value: {{ .Values.analytics.gaDnsNameservers | quote }}
+            {{- end }}
             - name: CSI_DRIVER__INTERNAL_IP
               valueFrom:
                 fieldRef:

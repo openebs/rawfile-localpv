@@ -27,6 +27,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | analytics.enabled | bool | `true` | Enable OpenEBS analytics which help track engine traction and usage. |
+| analytics.gaDnsNameservers | string | `"8.8.8.8:53"` | Comma-separated DNS nameservers (each optionally `ip:port`) used to resolve the analytics endpoint. Leave empty to use the cluster's default resolver (CoreDNS). |
 | auth.enabled | bool | `true` | Enables authentication for internal gRPC server |
 | auth.secretName | string | `""` | If managing secrets outside the chart, use this to reference the secret name; otherwise, leave empty. |
 | auth.token | string | `""` | Sets authentication token for internal gRPC server, will generate one if nothing provided |
@@ -50,6 +51,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | csiSideCars.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy for csi sidecars |
 | csiSideCars.image.registry | string | `"registry.k8s.io"` | Image registry for csi sidecars |
 | global.analytics.enabled | string | `nil` | Global override for GA analytics |
+| global.analytics.gaDnsNameservers | string | `nil` | Global override for DNS nameservers used to resolve the analytics endpoint |
 | global.imagePullPolicy | string | `""` | Global override for image pull policy |
 | global.imagePullSecrets | list | `[]` | Global image pull secrets (merged with local imagePullSecrets and not overridden) - secret |
 | global.imageRegistry | string | `""` | Global override for image registry |

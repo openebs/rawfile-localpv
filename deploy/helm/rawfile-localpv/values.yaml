@@ -9,6 +9,8 @@ global:
   analytics:
     # -- Global override for GA analytics
     enabled:
+    # -- Global override for DNS nameservers used to resolve the analytics endpoint
+    gaDnsNameservers:
 
 # -- Image registry for CSI Sidecars
 csiSideCars:
@@ -50,6 +52,8 @@ image:
 analytics:
   # -- Enable OpenEBS analytics which help track engine traction and usage.
   enabled: true
+  # -- Comma-separated DNS nameservers (each optionally `ip:port`) used to resolve the analytics endpoint. Leave empty to use the cluster's default resolver (CoreDNS).
+  gaDnsNameservers: "8.8.8.8:53"
 
 controller:
   externalResizer:
