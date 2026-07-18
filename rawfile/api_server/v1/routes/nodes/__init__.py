@@ -61,14 +61,14 @@ async def build_node(node_name: str, node_ip: str) -> Node:
         return node
 
 
-@router.get("/")
+@router.get("")
 async def get_nodes() -> NodeList:
     node_ips = node_ip_mapping.get_all_nodes()
     tasks = [build_node(node_name, node_ip) for node_name, node_ip in node_ips.items()]
     return [item for item in await asyncio.gather(*tasks)]
 
 
-@router.get("/{node_name}/")
+@router.get("/{node_name}")
 async def get_single_node(node_name: str, response: Response) -> Node:
     ip = node_ip_mapping.get_node_ip(node_name)
     result = await build_node(node_name, ip)

@@ -10,7 +10,7 @@ from utils.remote import get_internal_grpc_stub, internal_auth_metadata
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("")
 async def get_node_tasks(node_name: str) -> TasksList:
     try:
         ip = node_ip_mapping.get_node_ip(node_name)

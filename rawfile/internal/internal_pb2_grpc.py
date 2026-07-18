@@ -5,7 +5,7 @@ import warnings
 
 import internal_pb2 as internal__pb2
 
-GRPC_GENERATED_VERSION = '1.80.0'
+GRPC_GENERATED_VERSION = '1.82.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class InternalStub(object):
+class InternalStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -61,7 +61,7 @@ class InternalStub(object):
                 _registered_method=True)
 
 
-class InternalServicer(object):
+class InternalServicer:
     """Missing associated documentation comment in .proto file."""
 
     def ExpandRawFile(self, request, context):
@@ -135,7 +135,7 @@ def add_InternalServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class Internal(object):
+class Internal:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod

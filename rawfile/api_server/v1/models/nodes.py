@@ -31,6 +31,13 @@ class VolumeStat(BaseModel):
     ready: bool
     deleted_at: float
     gc_at: float
+    created_at: float
+    freezefs: bool
+    storage_pool: str
+    img_file: str
+    used: int
+    logical_size: int
+    physical_size: int
 
 
 VolumesStat: TypeAlias = List[VolumeStat]

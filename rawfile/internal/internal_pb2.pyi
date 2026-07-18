@@ -29,7 +29,7 @@ class ExpandRawFileResponse(_message.Message):
     STATUS_FIELD_NUMBER: _ClassVar[int]
     is_attached: bool
     status: ExpandRawFileStatus
-    def __init__(self, is_attached: bool = ..., status: _Optional[_Union[ExpandRawFileStatus, str]] = ...) -> None: ...
+    def __init__(self, is_attached: _Optional[bool] = ..., status: _Optional[_Union[ExpandRawFileStatus, str]] = ...) -> None: ...
 
 class GetRawFileRequest(_message.Message):
     __slots__ = ("volume_id", "with_data", "snapshot_id")
@@ -39,7 +39,7 @@ class GetRawFileRequest(_message.Message):
     volume_id: str
     with_data: bool
     snapshot_id: str
-    def __init__(self, volume_id: _Optional[str] = ..., with_data: bool = ..., snapshot_id: _Optional[str] = ...) -> None: ...
+    def __init__(self, volume_id: _Optional[str] = ..., with_data: _Optional[bool] = ..., snapshot_id: _Optional[str] = ...) -> None: ...
 
 class GetRawFileResponse(_message.Message):
     __slots__ = ("metadata", "data")
@@ -72,7 +72,7 @@ class PoolStat(_message.Message):
     reserved_capacity_mode: str
     capacity: int
     copy_on_write_supported: bool
-    def __init__(self, reserved_capacity: _Optional[str] = ..., path: _Optional[str] = ..., reserved_capacity_mode: _Optional[str] = ..., capacity: _Optional[int] = ..., copy_on_write_supported: bool = ...) -> None: ...
+    def __init__(self, reserved_capacity: _Optional[str] = ..., path: _Optional[str] = ..., reserved_capacity_mode: _Optional[str] = ..., capacity: _Optional[int] = ..., copy_on_write_supported: _Optional[bool] = ...) -> None: ...
 
 class GetPoolsStatsResponse(_message.Message):
     __slots__ = ("stats",)
@@ -117,13 +117,15 @@ class VolumeStat(_message.Message):
     physical_size: int
     logical_size: int
     used: int
-    def __init__(self, name: _Optional[str] = ..., size: _Optional[int] = ..., copy_on_write: bool = ..., thin_provision: bool = ..., ready: bool = ..., deleted_at: _Optional[float] = ..., created_at: _Optional[float] = ..., gc_at: _Optional[float] = ..., storage_pool: _Optional[str] = ..., freezefs: bool = ..., img_file: _Optional[str] = ..., physical_size: _Optional[int] = ..., logical_size: _Optional[int] = ..., used: _Optional[int] = ...) -> None: ...
+    def __init__(self, name: _Optional[str] = ..., size: _Optional[int] = ..., copy_on_write: _Optional[bool] = ..., thin_provision: _Optional[bool] = ..., ready: _Optional[bool] = ..., deleted_at: _Optional[float] = ..., created_at: _Optional[float] = ..., gc_at: _Optional[float] = ..., storage_pool: _Optional[str] = ..., freezefs: _Optional[bool] = ..., img_file: _Optional[str] = ..., physical_size: _Optional[int] = ..., logical_size: _Optional[int] = ..., used: _Optional[int] = ...) -> None: ...
 
 class GetVolumesStatRequest(_message.Message):
-    __slots__ = ("pool_name",)
+    __slots__ = ("pool_name", "volume_name")
     POOL_NAME_FIELD_NUMBER: _ClassVar[int]
+    VOLUME_NAME_FIELD_NUMBER: _ClassVar[int]
     pool_name: str
-    def __init__(self, pool_name: _Optional[str] = ...) -> None: ...
+    volume_name: str
+    def __init__(self, pool_name: _Optional[str] = ..., volume_name: _Optional[str] = ...) -> None: ...
 
 class GetVolumesStatResponse(_message.Message):
     __slots__ = ("stats",)

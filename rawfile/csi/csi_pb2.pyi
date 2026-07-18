@@ -321,7 +321,7 @@ class ControllerPublishVolumeRequest(_message.Message):
     readonly: bool
     secrets: _containers.ScalarMap[str, str]
     volume_context: _containers.ScalarMap[str, str]
-    def __init__(self, volume_id: _Optional[str] = ..., node_id: _Optional[str] = ..., volume_capability: _Optional[_Union[VolumeCapability, _Mapping]] = ..., readonly: bool = ..., secrets: _Optional[_Mapping[str, str]] = ..., volume_context: _Optional[_Mapping[str, str]] = ...) -> None: ...
+    def __init__(self, volume_id: _Optional[str] = ..., node_id: _Optional[str] = ..., volume_capability: _Optional[_Union[VolumeCapability, _Mapping]] = ..., readonly: _Optional[bool] = ..., secrets: _Optional[_Mapping[str, str]] = ..., volume_context: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class ControllerPublishVolumeResponse(_message.Message):
     __slots__ = ("publish_context",)
@@ -646,7 +646,7 @@ class Snapshot(_message.Message):
     creation_time: _timestamp_pb2.Timestamp
     ready_to_use: bool
     group_snapshot_id: str
-    def __init__(self, size_bytes: _Optional[int] = ..., snapshot_id: _Optional[str] = ..., source_volume_id: _Optional[str] = ..., creation_time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., ready_to_use: bool = ..., group_snapshot_id: _Optional[str] = ...) -> None: ...
+    def __init__(self, size_bytes: _Optional[int] = ..., snapshot_id: _Optional[str] = ..., source_volume_id: _Optional[str] = ..., creation_time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., ready_to_use: _Optional[bool] = ..., group_snapshot_id: _Optional[str] = ...) -> None: ...
 
 class DeleteSnapshotRequest(_message.Message):
     __slots__ = ("snapshot_id", "secrets")
@@ -726,7 +726,7 @@ class ControllerExpandVolumeResponse(_message.Message):
     NODE_EXPANSION_REQUIRED_FIELD_NUMBER: _ClassVar[int]
     capacity_bytes: int
     node_expansion_required: bool
-    def __init__(self, capacity_bytes: _Optional[int] = ..., node_expansion_required: bool = ...) -> None: ...
+    def __init__(self, capacity_bytes: _Optional[int] = ..., node_expansion_required: _Optional[bool] = ...) -> None: ...
 
 class NodeStageVolumeRequest(_message.Message):
     __slots__ = ("volume_id", "publish_context", "staging_target_path", "volume_capability", "secrets", "volume_context")
@@ -820,7 +820,7 @@ class NodePublishVolumeRequest(_message.Message):
     readonly: bool
     secrets: _containers.ScalarMap[str, str]
     volume_context: _containers.ScalarMap[str, str]
-    def __init__(self, volume_id: _Optional[str] = ..., publish_context: _Optional[_Mapping[str, str]] = ..., staging_target_path: _Optional[str] = ..., target_path: _Optional[str] = ..., volume_capability: _Optional[_Union[VolumeCapability, _Mapping]] = ..., readonly: bool = ..., secrets: _Optional[_Mapping[str, str]] = ..., volume_context: _Optional[_Mapping[str, str]] = ...) -> None: ...
+    def __init__(self, volume_id: _Optional[str] = ..., publish_context: _Optional[_Mapping[str, str]] = ..., staging_target_path: _Optional[str] = ..., target_path: _Optional[str] = ..., volume_capability: _Optional[_Union[VolumeCapability, _Mapping]] = ..., readonly: _Optional[bool] = ..., secrets: _Optional[_Mapping[str, str]] = ..., volume_context: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class NodePublishVolumeResponse(_message.Message):
     __slots__ = ()
@@ -882,7 +882,7 @@ class VolumeCondition(_message.Message):
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     abnormal: bool
     message: str
-    def __init__(self, abnormal: bool = ..., message: _Optional[str] = ...) -> None: ...
+    def __init__(self, abnormal: _Optional[bool] = ..., message: _Optional[str] = ...) -> None: ...
 
 class NodeGetCapabilitiesRequest(_message.Message):
     __slots__ = ()
@@ -1033,7 +1033,7 @@ class VolumeGroupSnapshot(_message.Message):
     snapshots: _containers.RepeatedCompositeFieldContainer[Snapshot]
     creation_time: _timestamp_pb2.Timestamp
     ready_to_use: bool
-    def __init__(self, group_snapshot_id: _Optional[str] = ..., snapshots: _Optional[_Iterable[_Union[Snapshot, _Mapping]]] = ..., creation_time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., ready_to_use: bool = ...) -> None: ...
+    def __init__(self, group_snapshot_id: _Optional[str] = ..., snapshots: _Optional[_Iterable[_Union[Snapshot, _Mapping]]] = ..., creation_time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., ready_to_use: _Optional[bool] = ...) -> None: ...
 
 class DeleteVolumeGroupSnapshotRequest(_message.Message):
     __slots__ = ("group_snapshot_id", "snapshot_ids", "secrets")

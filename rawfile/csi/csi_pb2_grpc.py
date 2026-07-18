@@ -5,7 +5,7 @@ import warnings
 
 import csi_pb2 as csi__pb2
 
-GRPC_GENERATED_VERSION = '1.80.0'
+GRPC_GENERATED_VERSION = '1.82.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class IdentityStub(object):
+class IdentityStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -51,7 +51,7 @@ class IdentityStub(object):
                 _registered_method=True)
 
 
-class IdentityServicer(object):
+class IdentityServicer:
     """Missing associated documentation comment in .proto file."""
 
     def GetPluginInfo(self, request, context):
@@ -98,7 +98,7 @@ def add_IdentityServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class Identity(object):
+class Identity:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -183,7 +183,7 @@ class Identity(object):
             _registered_method=True)
 
 
-class ControllerStub(object):
+class ControllerStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -264,7 +264,7 @@ class ControllerStub(object):
                 _registered_method=True)
 
 
-class ControllerServicer(object):
+class ControllerServicer:
     """Missing associated documentation comment in .proto file."""
 
     def CreateVolume(self, request, context):
@@ -432,7 +432,7 @@ def add_ControllerServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class Controller(object):
+class Controller:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -814,7 +814,7 @@ class Controller(object):
             _registered_method=True)
 
 
-class GroupControllerStub(object):
+class GroupControllerStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -845,7 +845,7 @@ class GroupControllerStub(object):
                 _registered_method=True)
 
 
-class GroupControllerServicer(object):
+class GroupControllerServicer:
     """Missing associated documentation comment in .proto file."""
 
     def GroupControllerGetCapabilities(self, request, context):
@@ -903,7 +903,7 @@ def add_GroupControllerServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class GroupController(object):
+class GroupController:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -1015,7 +1015,7 @@ class GroupController(object):
             _registered_method=True)
 
 
-class SnapshotMetadataStub(object):
+class SnapshotMetadataStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -1036,7 +1036,7 @@ class SnapshotMetadataStub(object):
                 _registered_method=True)
 
 
-class SnapshotMetadataServicer(object):
+class SnapshotMetadataServicer:
     """Missing associated documentation comment in .proto file."""
 
     def GetMetadataAllocated(self, request, context):
@@ -1072,7 +1072,7 @@ def add_SnapshotMetadataServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class SnapshotMetadata(object):
+class SnapshotMetadata:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -1130,7 +1130,7 @@ class SnapshotMetadata(object):
             _registered_method=True)
 
 
-class NodeStub(object):
+class NodeStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -1181,7 +1181,7 @@ class NodeStub(object):
                 _registered_method=True)
 
 
-class NodeServicer(object):
+class NodeServicer:
     """Missing associated documentation comment in .proto file."""
 
     def NodeStageVolume(self, request, context):
@@ -1283,7 +1283,7 @@ def add_NodeServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class Node(object):
+class Node:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
