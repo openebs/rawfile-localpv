@@ -50,6 +50,19 @@ At this point you can create a PV with a filesystem on it, which adds the follow
 
 Please follow the instructions from the [Install Guide](./docs/install-guide.md).
 
+## Documentation
+
+Full documentation lives in the [docs](./docs/README.md) directory:
+
+- [Quickstart & User Guide](./docs/quickstart.md) — prerequisites, deployment, first volume
+- User guides: [Volumes](./docs/user-guide/volumes.md) · [Snapshots & Restore](./docs/user-guide/snapshots.md) · [Cloning](./docs/user-guide/cloning.md) · [Resize](./docs/user-guide/resize.md) · [Storage Pools](./docs/user-guide/storage-pools.md)
+- [Examples](./docs/examples.md) — PVCs, block mode, snapshots, clones, expansion
+- [StorageClass Configuration](./docs/storageclass.md) — all storage class parameters
+- [Features](./docs/features.md) — capability matrix and deep dives
+- [Monitoring & Metrics](./docs/monitoring.md) — Prometheus metrics reference
+- [Architecture](./docs/architecture.md) — components and volume lifecycle
+- [Helm Chart Values](./deploy/helm/rawfile-localpv/README.md)
+
 ## Features
 
 - [x] Direct I/O: Near-zero disk performance overhead
