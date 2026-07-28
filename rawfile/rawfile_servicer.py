@@ -1,37 +1,43 @@
-from pathlib import Path
 import time
+from pathlib import Path
 
 import grpc
-from config import config
-from utils.errors import VolumeInUseError, VolumeNotReadyError
 import utils.rawfile
+import utils.storage_pool
+from analytics.ga4 import Usage, send_event
+from config import config
 from consts import (
+    CSI_K8S_PVC_NAME_KEY,
     FORMAT_OPTIONS_KEY,
     PROVISIONER_NAME,
     PROVISIONER_VERSION,
-    CSI_K8S_PVC_NAME_KEY,
 )
-from internal import internal_pb2
 from csi import csi_pb2, csi_pb2_grpc
-from utils.rawfile import be_absent, be_symlink, metadata, metadata_or
 from google.protobuf.wrappers_pb2 import BoolValue
+from internal import internal_pb2
 from orchestrator.k8s import node_ip_mapping, volume_to_node
-from utils.remote import get_capacity
-from utils.logs import GRPCLogger, logger
 from utils.commands import run
+from utils.devices import device_stats, mountpoint_to_dev
+from utils.errors import (
+    UnsupportedAccessTypeError,
+    VolumeInUseError,
+    VolumeNotReadyError,
+)
+from utils.logs import GRPCLogger, logger
 from utils.rawfile import (
     AccessType,
     attach_loop,
+    be_absent,
+    be_symlink,
     detach_loops,
+    metadata,
+    metadata_or,
 )
-from utils.devices import mountpoint_to_dev, device_stats
+from utils.remote import get_capacity, get_internal_grpc_stub, internal_auth_metadata
 from utils.task_manager import TaskManager, TaskName
 from utils.units import normalize_parameters, str_to_bool
-from analytics.ga4 import send_event, Usage
-from utils.volume_manager import VolumeSource, manager as volume_manager
-import utils.storage_pool
-from utils.remote import get_internal_grpc_stub, internal_auth_metadata
-
+from utils.volume_manager import VolumeSource
+from utils.volume_manager import manager as volume_manager
 
 NODE_NAME_TOPOLOGY_KEY = "hostname"
 log_grpc_request = GRPCLogger(server_name="rawfile-servicer")
@@ -46,7 +52,7 @@ def check_access_type(access_type):
     try:
         return AccessType[access_type]
     except KeyError:
-        raise Exception(f"Unsupported access type: {access_type}")
+        raise UnsupportedAccessTypeError(access_type)
 
 
 class RawFileIdentityServicer(csi_pb2_grpc.IdentityServicer):
@@ -216,7 +222,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
             copy_on_write = str_to_bool(copy_on_write_param)
         freezefs = str_to_bool(params.get("freezefs", "no"))
         storage_pool = params.get("storagepool", config.csi_driver.default_pool)
-        if storage_pool not in config.csi_driver.storage_pools.keys():
+        if storage_pool not in config.csi_driver.storage_pools:
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,
                 f"Invalid storage pool '{storage_pool}'. Available pools: {list(config.csi_driver.storage_pools.keys())}",
@@ -334,7 +340,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
     def GetCapacity(self, request: csi_pb2.GetCapacityRequest, context):
         params = normalize_parameters(request.parameters)
         storage_pool = params.get("storagepool", config.csi_driver.default_pool)
-        if storage_pool not in config.csi_driver.storage_pools.keys():
+        if storage_pool not in config.csi_driver.storage_pools:
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,
                 f"Invalid storage pool '{storage_pool}'. Available pools: {list(config.csi_driver.storage_pools.keys())}",

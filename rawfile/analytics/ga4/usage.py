@@ -1,7 +1,8 @@
+from utils.logs import logger
+
 from .client import GA4Client
 from .event import OpenEBSEventBuilder
 from .version_set import VersionSet
-from utils.logs import logger
 
 
 class Usage:

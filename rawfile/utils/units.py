@@ -1,6 +1,7 @@
-from typing import Any, Mapping
 import re
+from collections.abc import Mapping
 from datetime import timedelta
+from typing import Any
 
 
 def pretty_size_to_bytes(pretty_size: str):

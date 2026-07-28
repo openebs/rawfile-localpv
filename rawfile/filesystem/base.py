@@ -1,12 +1,14 @@
-from abc import ABC, ABCMeta, abstractmethod
-from warnings import deprecated
-from utils.logs import logger
 import subprocess
-from .utils import get_device_for_mountpoint, get_device_fs
+from abc import ABC, ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Self
+from warnings import deprecated
+
 from utils.commands import run
 from utils.errors import InvalidDeviceForMountpointError
+from utils.logs import logger
+
+from .utils import get_device_for_mountpoint, get_device_fs
 
 fs_snapshot_deprecated = deprecated(
     "Filesystem level snapshots are not supported anymore"
@@ -165,7 +167,7 @@ class FileSystem(ABC, metaclass=ABCMeta):
                 return False
         return True
 
-    def format_fs(self, options: list[str] = []) -> str | None:
+    def format_fs(self, options: list[str] | None = None) -> str | None:
         """
         Format the file system.
 
@@ -173,7 +175,7 @@ class FileSystem(ABC, metaclass=ABCMeta):
         """
         try:
             output = run(
-                f"mkfs.{self.__filesystem__} {' '.join(options)} {self.device}",
+                f"mkfs.{self.__filesystem__} {' '.join(options or [])} {self.device}",
                 check=True,
                 capture_output=True,
             )
@@ -182,7 +184,7 @@ class FileSystem(ABC, metaclass=ABCMeta):
             raise FileSystemFormatError.from_exc(e, self.__filesystem__)
 
     def mount(
-        self, mountpoint: str | None = None, options: list[str] = []
+        self, mountpoint: str | None = None, options: list[str] | None = None
     ) -> str | None:
         """
         Mount the file system.
@@ -207,7 +209,7 @@ class FileSystem(ABC, metaclass=ABCMeta):
             )
         try:
             Path(mountpoint).mkdir(exist_ok=True)
-            opt_str = f"-o {','.join(options)} " if len(options) else ""
+            opt_str = f"-o {','.join(options)} " if options else ""
             output = run(
                 f"mount -t {self.__filesystem__} {opt_str}{self.device} {mountpoint}",
                 check=True,
@@ -268,8 +270,8 @@ class FileSystem(ABC, metaclass=ABCMeta):
     def format_and_mount(
         self,
         mountpoint: str | None = None,
-        mount_options: list[str] = [],
-        format_options: list[str] = [],
+        mount_options: list[str] | None = None,
+        format_options: list[str] | None = None,
     ):
         if not get_device_fs(self.device):
             self.format_fs(format_options)

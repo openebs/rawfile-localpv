@@ -1,16 +1,19 @@
-import time
-import pytest
-from pytest_bdd import scenario, given, when, then, parsers
-from kubernetes import client, config
-from kubernetes.client.rest import ApiException
-from retrying import retry
-from kubernetes.stream import stream
+# ruff: noqa: TRY002
+
 import logging
+import subprocess
+import time
+
+import pytest
+from common import fixture_cleanup
 from common.helm import HelmReleaseClient
 from common.k8s_deployer import Deployer
-from common import fixture_cleanup
+from kubernetes import client, config
+from kubernetes.client.rest import ApiException
+from kubernetes.stream import stream
+from pytest_bdd import given, parsers, scenario, then, when
+from retrying import retry
 from utils.units import str_to_bool
-import subprocess
 
 logger = logging.getLogger(__name__)
 helm = HelmReleaseClient()
@@ -72,7 +75,7 @@ def cluster():
         api.delete_namespace(name=namespace)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     wait_ns_deleted(namespace)
     api.create_namespace(body)
 
@@ -80,7 +83,6 @@ def cluster():
 @given("a Kubernetes cluster with rawfile-localpv installed")
 def _(cluster):
     """a Kubernetes cluster with rawfile-localpv installed."""
-    pass
 
 
 @when(
@@ -108,7 +110,7 @@ def _(binding_mode, access_mode, fs_type, volume_mode, mount_options):
         stor_v1.delete_storage_class(name=sc_name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     stor_v1.create_storage_class(body=sc)
 
     pvc = client.V1PersistentVolumeClaim(
@@ -136,7 +138,7 @@ def _(binding_mode, access_mode, fs_type, volume_mode, mount_options):
         wait_pvc_deleted(pvc_name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @when("a pod is created with the above PVC", target_fixture="pod")
@@ -153,7 +155,7 @@ def _(pvc):
         wait_pod_deleted(name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @when("another pod is created with the above PVC", target_fixture="expanded_pod")
@@ -169,7 +171,7 @@ def _(expanded_pvc):
         client.CoreV1Api().delete_namespaced_pod(name, namespace)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     wait_pod_deleted(name)
 
 
@@ -203,7 +205,6 @@ def _(expanded_pvc):
 @then("the Filesystem PVC is pending node expansion")
 def _():
     """the Filesystem PVC is pending node expansion."""
-    pass
 
 
 @then("the PVC status reflects the expanded size")
@@ -381,7 +382,7 @@ def wait_ns_deleted(name):
         raise Exception(message)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @retry(
@@ -400,7 +401,7 @@ def wait_pvc_deleted(name):
         raise Exception(message)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @retry(
@@ -418,7 +419,7 @@ def wait_pod_deleted(name):
         raise Exception(message)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 def create_pod(name, pvc, infinite=False):
@@ -491,7 +492,7 @@ def wait_snapshot_deleted(name):
         raise Exception(message)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @when(
@@ -520,7 +521,7 @@ def _(copy_on_write, fsfreeze):
         stor_v1.delete_storage_class(name=sc_name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     stor_v1.create_storage_class(body=sc)
 
     pvc = client.V1PersistentVolumeClaim(
@@ -553,7 +554,7 @@ def _(copy_on_write, fsfreeze):
         wait_pvc_deleted(pvc_name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @then("we create a pod which mounts the PVC", target_fixture="source_writer_pod")
@@ -569,7 +570,7 @@ def _(source_pvc):
         client.CoreV1Api().delete_namespaced_pod(name, namespace)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     wait_pod_deleted(name)
 
 
@@ -612,7 +613,7 @@ def _(source_writer_pod, source_pvc):
             client.CoreV1Api().delete_namespaced_pod(pod_name, namespace)
         except ApiException as e:
             if e.status != 404:
-                raise e
+                raise
         wait_pod_deleted(pod_name)
 
 
@@ -630,7 +631,7 @@ def _(source_pvc):
         )
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     body = {
         "apiVersion": "snapshot.storage.k8s.io/v1",
         "kind": "VolumeSnapshotClass",
@@ -686,7 +687,7 @@ def _(source_pvc):
         wait_snapshot_deleted(snap_name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @then("the snapshot is eventually ready")
@@ -729,7 +730,7 @@ def _(source_pvc, snapshot):
         wait_pvc_deleted(pvc_name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @when("we create a pod which mounts the restore PVC", target_fixture="restore_pod")
@@ -744,7 +745,7 @@ def _(restore_pvc):
         client.CoreV1Api().delete_namespaced_pod(name, namespace)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     wait_pod_deleted(name)
 
 
@@ -828,7 +829,7 @@ def _(source_pvc):
         wait_pvc_deleted(pvc_name)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @when("we create a pod which mounts the cloned PVC", target_fixture="clone_pod")
@@ -843,7 +844,7 @@ def _(clone_pvc):
         client.CoreV1Api().delete_namespaced_pod(name, namespace)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
     wait_pod_deleted(name)
 
 
@@ -883,7 +884,7 @@ def _(source_pvc):
         )
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @then("source PVC should be eventually be deleted")
@@ -905,7 +906,7 @@ def _(clone_pvc):
         )
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @then("cloned PVC should be eventually be deleted")
@@ -925,7 +926,7 @@ def _(source_writer_pod):
         core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @then("source writer pod should be eventually be deleted")
@@ -945,7 +946,7 @@ def _(clone_pod):
         core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
     except ApiException as e:
         if e.status != 404:
-            raise e
+            raise
 
 
 @then("clone pod should be eventually be deleted")

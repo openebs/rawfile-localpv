@@ -1,13 +1,12 @@
 from typing import Final
+
 import dns.resolver
-from dns.nameserver import Do53Nameserver
-from requests.adapters import HTTPAdapter
 import requests
 import tldextract
-
 from config import config
+from dns.nameserver import Do53Nameserver
+from requests.adapters import HTTPAdapter
 from utils.net import split_host_port
-
 
 _GA4_COLLECT_URL: Final[str] = "https://www.google-analytics.com/mp/collect"
 
@@ -39,7 +38,7 @@ class DNSAdapter(HTTPAdapter):
         if not request.url:
             raise ValueError("request URL is not set")
         ext = tldextract.extract(request.url)
-        fqdn = ".".join([ext.subdomain, ext.domain, ext.suffix])
+        fqdn = f"{ext.subdomain}.{ext.domain}.{ext.suffix}"
         a_record = self.resolve(fqdn, "A")
         if not a_record:
             raise RuntimeError(f"DNS resolution returned no A record for {fqdn}")

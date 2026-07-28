@@ -1,11 +1,19 @@
-from enum import Enum
+import shutil
 import time
+from enum import Enum
+from glob import glob
+from os.path import basename, dirname, getsize
+from pathlib import Path
 from typing import TypedDict
+
 import consts
-from utils.devices import device_to_mountpoint, statvfs, stat
+from config import config
+from volume_schema import LATEST_SCHEMA_VERSION, migrate_to
+
+from utils.devices import device_to_mountpoint, stat, statvfs
 from utils.errors import SourceTypeRequired, VolumeInUseError, VolumeSourceIsNotReady
 from utils.lock import VolLock
-from config import config
+from utils.logs import logger
 from utils.rawfile import (
     attached_loops,
     fallocate,
@@ -19,13 +27,7 @@ from utils.rawfile import (
     truncate,
     update_metadata,
 )
-from pathlib import Path
 from utils.snapshot_manager import manager as snapshot_manager
-from os.path import basename, dirname, getsize
-from utils.logs import logger
-from volume_schema import LATEST_SCHEMA_VERSION, migrate_to
-from glob import glob
-import shutil
 
 
 class VolumeSource(int, Enum):

@@ -1,4 +1,5 @@
-from typing import Any, List, TypeAlias
+from typing import Any, TypeAlias
+
 from pydantic import BaseModel, IPvAnyAddress
 
 
@@ -20,7 +21,7 @@ class Node(BaseModel):
     online: bool
 
 
-NodeList: TypeAlias = List[Node]
+NodeList: TypeAlias = list[Node]
 
 
 class VolumeStat(BaseModel):
@@ -40,7 +41,7 @@ class VolumeStat(BaseModel):
     physical_size: int
 
 
-VolumesStat: TypeAlias = List[VolumeStat]
+VolumesStat: TypeAlias = list[VolumeStat]
 
 
 class Task(BaseModel):

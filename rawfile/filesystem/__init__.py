@@ -1,7 +1,8 @@
-from .base import FileSystem as FileSystemBase
-from .utils import get_device_fs
 from utils.devices import device_to_mountpoint
+
+from .base import FileSystem as FileSystemBase
 from .types import FileSystemName, filesystems
+from .utils import get_device_fs
 
 
 def from_device(device: str) -> FileSystemBase | None:

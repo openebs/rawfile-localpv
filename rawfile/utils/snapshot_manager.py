@@ -1,10 +1,14 @@
 import os
-from pathlib import Path
 import time
 from dataclasses import dataclass
+from glob import glob
+from pathlib import Path
+
 import consts
-from utils.commands import run
 from config import config
+from filesystem import from_device as fs_from_device
+
+from utils.commands import run
 from utils.errors import FsFreezeNotSupportedOnBlockVolumes, SnapshotCreateVolumeInUse
 from utils.lock import VolLock
 from utils.rawfile import (
@@ -14,8 +18,6 @@ from utils.rawfile import (
     metadata,
     snapshots_dir,
 )
-from glob import glob
-from filesystem import from_device as fs_from_device
 
 
 @dataclass
@@ -82,9 +84,9 @@ class SnapshotManager:
                     ready=True,
                     temporary=temporary,
                 )
-            except Exception as e:
+            except Exception:
                 Path(snap_path).unlink(missing_ok=True)
-                raise e
+                raise
             finally:
                 if freeze_fs and loop_devs:
                     for dev in loop_devs:

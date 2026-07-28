@@ -1,7 +1,6 @@
+import json
 import os
 import subprocess
-import json
-
 from pathlib import Path
 
 from utils.commands import run

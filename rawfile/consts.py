@@ -1,5 +1,5 @@
-import os
 import importlib.metadata
+import os
 
 PROVISIONER_NAME = os.getenv("PROVISIONER_NAME", "rawfile.csi.openebs.io")
 PROVISIONER_VERSION = os.getenv("PROVISIONER_VERSION") or importlib.metadata.version(

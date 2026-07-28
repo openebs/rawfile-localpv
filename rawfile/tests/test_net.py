@@ -1,5 +1,4 @@
 import pytest
-
 from utils.net import parse_nameservers, split_host_port
 
 

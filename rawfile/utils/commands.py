@@ -1,13 +1,14 @@
 import subprocess
-from .logs import logger
+from datetime import UTC, datetime
 from typing import Any
-from datetime import datetime
+
+from .logs import logger
 
 
 def run(
     cmd: str, executable: str | None = None, check=True, capture_output=True, log=True
 ):
-    start = datetime.now()
+    start = datetime.now(UTC)
     kwargs: dict[str, Any] = {
         "check": check,
         "capture_output": capture_output,
@@ -23,8 +24,8 @@ def run(
         kwargs["executable"] = executable
         log_ctx["executable"] = executable
 
-    output = subprocess.run(cmd, **kwargs)
-    end = datetime.now()
+    output = subprocess.run(cmd, **kwargs)  # noqa: PLW1510 ## check is in kwargs
+    end = datetime.now(UTC)
     log_ctx.update(
         {
             "returncode": output.returncode,

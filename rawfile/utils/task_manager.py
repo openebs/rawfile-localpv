@@ -1,18 +1,21 @@
-from concurrent.futures import Executor, Future
-from enum import StrEnum
+import hashlib
+import json
+import os
 import shutil
-from typing import Callable, TypedDict, NotRequired
 import time
+from collections.abc import Callable
+from concurrent.futures import Executor, Future
+from datetime import UTC, datetime
+from enum import StrEnum
+from pathlib import Path
+from threading import Lock
+from typing import NotRequired, TypedDict
+
 from config import config
+
+from utils.logs import logger
 from utils.snapshot_manager import manager as snapshot_manager
 from utils.volume_manager import manager as volume_manager
-from datetime import datetime
-from pathlib import Path
-import json
-import hashlib
-from threading import Lock
-from utils.logs import logger
-import os
 
 
 class TaskManagerShuttingDown(Exception):
@@ -80,9 +83,9 @@ class TaskManager:
         while not self._shutting_down:
             try:
                 self.retry_all()
-                for task_id, _ in self.get_tasks(retriable=False).items():
+                for task_id in self.get_tasks(retriable=False):
                     self.remove_task(task_id)
-                for task_id, _ in self.get_tasks(state=TaskState.COMPLETED).items():
+                for task_id in self.get_tasks(state=TaskState.COMPLETED):
                     self.remove_task(task_id)
             except Exception as e:
                 # Note that this should not happen unless there's an I/O reading the
@@ -110,29 +113,27 @@ class TaskManager:
     def get_tasks(
         self, state: TaskState | None = None, retriable: bool | None = None
     ) -> dict[str, TaskInfo]:
-        with self._lock:
-            with open(self._tasks_store_path) as tasks_file:
-                data = json.loads(tasks_file.read() or "{}")
-                if retriable is not None:
-                    if retriable:
-                        data = {
-                            k: v
-                            for k, v in data.items()
-                            if v.get("retry_count", -1) < self._max_retry
-                            and v["state"] == TaskState.FAILED
-                        }
-                    else:
-                        data = {
-                            k: v
-                            for k, v in data.items()
-                            if v.get("retry_count", self._max_retry + 1)
-                            >= self._max_retry
-                        }
-                if state is not None:
-                    data = {k: v for k, v in data.items() if v["state"] == state}
-                for k, v in list(data.items()):
-                    data[k] = self.decode_task(v)
-                return data
+        with self._lock, open(self._tasks_store_path) as tasks_file:
+            data = json.loads(tasks_file.read() or "{}")
+            if retriable is not None:
+                if retriable:
+                    data = {
+                        k: v
+                        for k, v in data.items()
+                        if v.get("retry_count", -1) < self._max_retry
+                        and v["state"] == TaskState.FAILED
+                    }
+                else:
+                    data = {
+                        k: v
+                        for k, v in data.items()
+                        if v.get("retry_count", self._max_retry + 1) >= self._max_retry
+                    }
+            if state is not None:
+                data = {k: v for k, v in data.items() if v["state"] == state}
+            for k, v in list(data.items()):
+                data[k] = self.decode_task(v)
+            return data
 
     def get_task(self, task_id) -> None:
         self.get_tasks().get(task_id)
@@ -163,14 +164,13 @@ class TaskManager:
 
     def remove_task(self, task_id: str):
         logger.debug("Removing task", task_id=task_id)
-        with self._lock:
-            with open(self._tasks_store_path, "r+") as tasks_file:
-                current: dict[str, TaskInfo] = json.loads(tasks_file.read() or "{}")
-                current.pop(task_id)
-                tasks_file.truncate(0)
-                tasks_file.seek(0)
-                json.dump(current, tasks_file)
-                os.fsync(tasks_file.fileno())
+        with self._lock, open(self._tasks_store_path, "r+") as tasks_file:
+            current: dict[str, TaskInfo] = json.loads(tasks_file.read() or "{}")
+            current.pop(task_id)
+            tasks_file.truncate(0)
+            tasks_file.seek(0)
+            json.dump(current, tasks_file)
+            os.fsync(tasks_file.fileno())
 
     def done_callback(self, task_id: str):
         task_entry = self._tasks.pop(task_id, None)
@@ -211,7 +211,7 @@ class TaskManager:
     def save_task(self, task_id: str, task_info: TaskInfo):
         with self._lock:
             logger.debug("Saving task", task_id=task_id, task=task_info)
-            task_info["saved_ts"] = datetime.now()
+            task_info["saved_ts"] = datetime.now(UTC)
             with open(self._tasks_store_path, "r+") as tasks_file:
                 current: dict[str, TaskInfo] = json.loads(tasks_file.read() or "{}")
                 current[task_id] = self.encode_task(task_info)
@@ -253,10 +253,10 @@ class TaskManager:
             "args": list(args),
             "retry_count": retry_count,
             "state": TaskState.PENDING,
-            "created_ts": datetime.now(),
+            "created_ts": datetime.now(UTC),
         }
         if retry and current.get("state", None):
-            info["retry_ts"] = datetime.now()
+            info["retry_ts"] = datetime.now(UTC)
             if last_error is not None:
                 info["last_error"] = last_error
 

@@ -1,10 +1,10 @@
+from config import config
 from prometheus_client.core import REGISTRY
 from prometheus_client.exposition import start_http_server
 from prometheus_client.metrics_core import GaugeMetricFamily
 from utils.devices import statvfs
 from utils.storage_pool import get_capacity, reserved_capacity_handlers
 from utils.volume_manager import manager as volume_manager
-from config import config
 
 
 def get_remaining_capacity():
@@ -12,12 +12,12 @@ def get_remaining_capacity():
     storage_pools = getattr(getattr(config, "csi_driver", None), "storage_pools", None)
     if not storage_pools:
         return 0
-    for pool in storage_pools.keys():
+    for pool in storage_pools:
         val += get_capacity(pool)
     return val
 
 
-class VolumeStatsCollector(object):
+class VolumeStatsCollector:
     def __init__(self, node):
         self.node = node
 

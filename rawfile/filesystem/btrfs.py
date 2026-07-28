@@ -1,11 +1,15 @@
+from tempfile import TemporaryDirectory
+
+from utils.commands import run
+
 from .base import (
     FileSystem as FileSystemBase,
+)
+from .base import (
+    FileSystemDeleteSnapshotError,
     FileSystemFormatError,
     FileSystemResizeError,
-    FileSystemDeleteSnapshotError,
 )
-from tempfile import TemporaryDirectory
-from utils.commands import run
 from .utils import get_device_for_mountpoint
 
 
@@ -47,7 +51,7 @@ class BTRFS(FileSystemBase):
         except Exception as e:
             raise FileSystemDeleteSnapshotError.from_exc(e, self.__filesystem__)
 
-    def format_fs(self, options: list[str] = []):
+    def format_fs(self, options: list[str] | None = None):
         with TemporaryDirectory(
             prefix=f"rawfile.{self.__filesystem__}.fs-bootstrap."
         ) as tmp_dir:
@@ -56,7 +60,7 @@ class BTRFS(FileSystemBase):
                 output = run(
                     f"""
                     set -exo pipefail
-                    mkfs.{self.__filesystem__} {" ".join(options)} {self.device}
+                    mkfs.{self.__filesystem__} {" ".join(options or [])} {self.device}
                     mount -t btrfs {self.device} {tmp_dir}
                     btrfs subvolume create {default_subvol}
                     btrfs subvolume set-default {default_subvol}

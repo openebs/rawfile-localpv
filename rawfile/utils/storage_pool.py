@@ -1,11 +1,11 @@
-from pydantic import ByteSize
+from collections.abc import Callable
 
 from config import config
-from utils.devices import statvfs
-from utils.volume_manager import manager as volume_manager
-from utils.modeltypes import ReservedCapacityMode
+from pydantic import ByteSize
 
-from collections.abc import Callable
+from utils.devices import statvfs
+from utils.modeltypes import ReservedCapacityMode
+from utils.volume_manager import manager as volume_manager
 
 
 # if the mode is "plain", reserved capacity is taken as specified in config

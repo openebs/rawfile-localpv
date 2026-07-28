@@ -1,9 +1,11 @@
-from utils.logs import logger, fmt_exception
-from datetime import datetime, timezone, timedelta
-from orchestrator.k8s import read_config_map, write_config_map
-from .usage import Usage
 import time
+from datetime import datetime, timedelta, timezone
+
 import humanize
+from orchestrator.k8s import read_config_map, write_config_map
+from utils.logs import fmt_exception, logger
+
+from .usage import Usage
 
 time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
@@ -45,7 +47,6 @@ class Ping:
                 logger.error("Analytics Error", exception=fmt_exception(e))
                 # todo: add backoff ramp up
                 time.sleep(60 * 60)
-                pass
 
     def send_install_once(self):
         if self.ping_ts:

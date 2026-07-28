@@ -1,19 +1,21 @@
+from copy import deepcopy
 from pathlib import Path
+
 from filesystem import from_device
 from filesystem.base import UnknownFileSystemError
 from filesystem.utils import get_device_for_mountpoint
+from utils.commands import run
 from utils.errors import (
     InvalidDeviceForMountpointError,
     UnknownDeviceForMountpointError,
 )
-from utils.commands import run
-from copy import deepcopy
 
 
-def mount(device, mountpoint, readonly=False, options: list[str] = []):
+def mount(device, mountpoint, readonly=False, options: list[str] | None = None):
     current_dev = get_device_for_mountpoint(mountpoint)
     device = Path(device).resolve().as_posix()
     _options = deepcopy(options)
+    _options = _options or []
 
     if current_dev:
         current_dev = Path(current_dev).resolve().as_posix()

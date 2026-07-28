@@ -1,6 +1,7 @@
-from .version_set import VersionSet
-from consts import PROVISIONER_VERSION
 import humanize
+from consts import PROVISIONER_VERSION
+
+from .version_set import VersionSet
 
 
 class OpenEBSEventBuilder:

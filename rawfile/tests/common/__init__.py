@@ -1,8 +1,8 @@
-import os
 import logging
+import os
 import subprocess
-from pathlib import Path
 import sys
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -14,20 +14,16 @@ def root_dir():
 
 def env_cleanup():
     clean = os.getenv("CLEAN")
-    if clean is not None and clean.lower() in ("no", "false", "f", "0"):
-        return False
-    return True
+    return not (clean is not None and clean.lower() in ("no", "false", "f", "0"))
 
 
 def fixture_cleanup():
-    if hasattr(sys, "last_traceback"):
-        return False
-    return True
+    return not hasattr(sys, "last_traceback")
 
 
 def run(
     command: str,
-    args: list[str] = None,
+    args: list[str] | None = None,
     capture_output=True,
     log_run=True,
     **kwargs,
@@ -53,8 +49,8 @@ def run(
         logger.error(
             f"Command '{command}' failed with exit code {e.returncode}\nStdErr Output: {e.stderr}\nStdOut Output: {e.stdout}"
         )
-        raise e
+        raise
 
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
-        raise e
+        raise
