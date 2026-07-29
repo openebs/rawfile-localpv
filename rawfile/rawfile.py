@@ -1,31 +1,34 @@
 #!/usr/bin/env python3
 import asyncio
+import ipaddress
+import os
+import signal
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
+from datetime import UTC, datetime
 from pathlib import Path
-import signal
+
 import api_server
 import bd2fs
-from config.model import RawFileCmd
+import consts
 import grpc
 import rawfile_servicer
-from datetime import datetime
+from analytics.ga4 import run_event_worker, run_ping, shutdown_event_worker
+from config.model import RawFileCmd
 from csi import csi_pb2_grpc
 from internal import internal_pb2_grpc
-from metrics import expose_metrics
-from utils import task_manager
-from utils.logs import init as init_logging, logger
 from internal_svc import InternalServicer, SignatureInterceptor
-import consts
-from analytics.ga4 import run_ping, shutdown_event_worker, run_event_worker
+from metrics import expose_metrics
 from orchestrator.k8s import node_ip_mapping
+from setproctitle import setproctitle
+from utils import task_manager
+from utils.devices import stat
+from utils.errors import DriverConfigNotAvailable
+from utils.logs import init as init_logging
+from utils.logs import logger
 from utils.rawfile import is_cow_supported
 from utils.remote import shutdown_grpc_channels
 from utils.volume_manager import manager as volume_manager
-from utils.devices import stat
-from setproctitle import setproctitle
-import ipaddress
-import os
 
 
 def __create_and_check_directory(dir: Path):
@@ -72,7 +75,7 @@ def csi_driver(config: RawFileCmd):
     driver_config = config.csi_driver
     node_ip_mapping.start()
     if not driver_config:
-        raise Exception("Should run from csi driver")
+        raise DriverConfigNotAvailable()
     setproctitle(
         f"RawFile LocalPV CSI Driver {driver_config.plugin_type} Plugin {driver_config.nodeid}"
     )
@@ -151,21 +154,21 @@ def csi_driver(config: RawFileCmd):
             "Stopping the CSI server with a grace period", grace_seconds=grace_seconds
         )
 
-        start = datetime.now()
+        start = datetime.now(UTC)
         server.stop(grace_seconds)
         if internal_server:
             internal_server.stop(grace_seconds)
         _task_manager.shutdown(grace_seconds)
-        end = datetime.now()
+        end = datetime.now(UTC)
         elapsed = end - start
 
         logger.info(
             "CSI Server has been stopped", elapsed=elapsed, start=start, end=end
         )
         logger.info("Stopping node plugin DS watcher")
-        start = datetime.now()
+        start = datetime.now(UTC)
         node_ip_mapping.stop()
-        end = datetime.now()
+        end = datetime.now(UTC)
         elapsed = end - start
         logger.info(
             "Node plugin DS watcher has been stopped",

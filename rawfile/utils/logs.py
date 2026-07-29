@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta
 import functools
-import sys
 import json
+import sys
+from datetime import UTC, datetime, timedelta
+from enum import StrEnum
+
+from google.protobuf.json_format import MessageToDict
 from loguru import logger as _logger
 from loguru._defaults import LOGURU_FORMAT
-from enum import StrEnum
-from google.protobuf.json_format import MessageToDict
 
 logger = _logger
 
@@ -108,7 +109,7 @@ def init(_format: LoggingFormats, _level: str):
     logger.add(**_logging_handlers[format], level=level)
 
 
-class GRPCLogger(object):
+class GRPCLogger:
     def __init__(self, server_name: str) -> None:
         self._server_name = server_name
 
@@ -117,7 +118,7 @@ class GRPCLogger(object):
 
         @functools.wraps(func)
         def wrap(self, request, context):
-            start = datetime.now()
+            start = datetime.now(UTC)
             is_json = format == LoggingFormats.JSON
             args = {
                 "server_name": _server_name,
@@ -127,7 +128,7 @@ class GRPCLogger(object):
             res = None
             try:
                 res = func(self, request, context)
-                end = datetime.now()
+                end = datetime.now(UTC)
                 args.update(
                     {
                         "latency": end - start,
@@ -137,8 +138,8 @@ class GRPCLogger(object):
                 )
                 logger.success("GRPC Server Access Log", **args)
                 return res
-            except Exception as exc:
-                end = datetime.now()
+            except Exception:
+                end = datetime.now(UTC)
                 args.update(
                     {
                         "response": (MessageToDict(res) if is_json else res)
@@ -163,9 +164,9 @@ class GRPCLogger(object):
                     }
                 )
                 logger.exception("GRPC Server Exception", **args)
-                raise exc
+                raise
 
         return wrap
 
 
-__all__ = ["GRPCLogger", "logger", "init", "format"]
+__all__ = ["GRPCLogger", "format", "init", "logger"]

@@ -1,8 +1,9 @@
 from enum import StrEnum
+
+from .base import FileSystem as FileSystemBase
 from .btrfs import BTRFS
 from .ext4 import EXT4
 from .xfs import XFS
-from .base import FileSystem as FileSystemBase
 
 
 class FileSystemName(StrEnum):

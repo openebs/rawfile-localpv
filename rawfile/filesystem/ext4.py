@@ -1,8 +1,11 @@
+from utils.commands import run
+
 from .base import (
     FileSystem as FileSystemBase,
+)
+from .base import (
     FileSystemResizeError,
 )
-from utils.commands import run
 
 
 class EXT4(FileSystemBase):

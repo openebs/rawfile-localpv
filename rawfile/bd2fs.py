@@ -1,9 +1,10 @@
+import time
 from pathlib import Path
 
+import consts
+import grpc
 from config import config
 from consts import FORMAT_OPTIONS_KEY
-import grpc
-import time
 from csi import csi_pb2, csi_pb2_grpc
 from csi.csi_pb2 import (
     CreateVolumeRequest,
@@ -19,9 +20,18 @@ from declarative import (
     mount,
     unmount,
 )
+from filesystem import from_device, get_from_device_or_fallback
+from filesystem.base import UnknownFileSystemError
+from filesystem.utils import get_device_for_mountpoint
+from google.protobuf.timestamp_pb2 import Timestamp
+from rawfile_servicer import check_access_type, get_access_type
 from utils import task_manager
+from utils.devices import statvfs
 from utils.errors import VolumeNotReadyError
+from utils.lock import VolLock
+from utils.logs import GRPCLogger
 from utils.rawfile import (
+    AccessType,
     attach_loop,
     be_absent,
     detach_loops,
@@ -29,21 +39,9 @@ from utils.rawfile import (
     metadata,
     metadata_or,
 )
-from google.protobuf.timestamp_pb2 import Timestamp
-from utils.logs import GRPCLogger
-from filesystem import get_from_device_or_fallback, from_device
-from filesystem.utils import get_device_for_mountpoint
-from rawfile_servicer import check_access_type, get_access_type
-from utils.rawfile import (
-    AccessType,
-)
-from utils.devices import statvfs
-from filesystem.base import UnknownFileSystemError
-from utils.lock import VolLock
-from utils.task_manager import TaskManager
 from utils.snapshot_manager import manager as snapshot_manager
+from utils.task_manager import TaskManager
 from utils.volume_manager import manager as volume_manager
-import consts
 
 log_grpc_request = GRPCLogger(server_name="Bd2FS")
 

@@ -1,15 +1,17 @@
 import json
+import os
 from contextlib import contextmanager
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from utils.logs import logger
 from config import config
 from consts import D_PERMS, F_PERMS, OWNER_UMASK
-import os
-from enum import Enum
+
 from utils.commands import run
+from utils.errors import LoopDeviceAttachError, UnknownFileTypeError
 from utils.fallocate import fallocate as linux_fallocate
+from utils.logs import logger
 
 
 class AccessType(Enum):
@@ -96,8 +98,9 @@ def update_metadata(volume_id: str, storage_pool: str, obj: dict) -> dict:
 
 
 def update_permissions(volume_id: str, storage_pool: str) -> None:
-    from utils.volume_manager import manager as volume_manager
     from itertools import chain
+
+    from utils.volume_manager import manager as volume_manager
 
     _img_dir = volume_manager._get_volume_path(storage_pool, volume_id)
     if not _img_dir.exists():
@@ -122,10 +125,9 @@ def truncate(img_file, size):
 
     Set the umask to restrict permissions to the owner only
     """
-    with _owner_umask():
-        with open(img_file, "a+b") as f:
-            f.truncate(size)
-            os.fsync(f.fileno())
+    with _owner_umask(), open(img_file, "a+b") as f:
+        f.truncate(size)
+        os.fsync(f.fileno())
 
 
 def fallocate(img_file, size):
@@ -133,10 +135,9 @@ def fallocate(img_file, size):
 
     Set the umask to restrict permissions to the owner only
     """
-    with _owner_umask():
-        with open(img_file, "a+b") as f:
-            linux_fallocate(f.fileno(), 0, 0, size)
-            os.fsync(f.fileno())
+    with _owner_umask(), open(img_file, "a+b") as f:
+        linux_fallocate(f.fileno(), 0, 0, size)
+        os.fsync(f.fileno())
 
 
 def attached_loops(file: str) -> list[str]:
@@ -175,15 +176,12 @@ def attach_loop(file) -> str:
         except Exception as e:
             # todo: add some jitter here?
             last_exception = e
-
     if last_exception:
-        raise Exception(
-            f"Failed to attach loop device for {file} after {max_attempts} attempts: {last_exception}"
-        )
+        raise LoopDeviceAttachError(
+            file, max_attempts, last_exception
+        ) from last_exception
     else:
-        raise Exception(
-            f"Failed to attach loop device for {file} after {max_attempts} attempts"
-        )
+        raise LoopDeviceAttachError(file, max_attempts)
 
 
 def detach_loops(file) -> None:
@@ -194,9 +192,7 @@ def detach_loops(file) -> None:
 
 def be_absent(path):
     path = Path(path)
-    if path.is_symlink():
-        path.unlink()
-    elif path.is_file():
+    if path.is_symlink() or path.is_file():
         path.unlink()
     elif path.is_dir():
         path.rmdir()
@@ -204,15 +200,14 @@ def be_absent(path):
     elif not path.exists():
         return
     else:
-        raise Exception("Unknown file type")
+        raise UnknownFileTypeError(path)
 
 
 def be_symlink(path, to):
     path = Path(path)
     to = Path(to)
-    if path.is_symlink():
-        if os.readlink(path) == str(to):
-            return
+    if path.is_symlink() and os.readlink(path) == str(to):
+        return
     be_absent(path)
     path.symlink_to(to)
 

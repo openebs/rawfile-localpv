@@ -1,7 +1,8 @@
 import json
 import logging
-import common
 from shutil import which
+
+import common
 
 logger = logging.getLogger(__name__)
 

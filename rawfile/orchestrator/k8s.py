@@ -1,14 +1,18 @@
-from enum import StrEnum
-import os
-from time import sleep
-from datetime import datetime
-import threading
-from typing import Callable
-from kubernetes import client as k8s_client, config as k8s_config, watch
-from config import config
-from utils.logs import logger
-from kubernetes.client.rest import ApiException
 import functools
+import os
+import threading
+from collections.abc import Callable
+from datetime import UTC, datetime
+from enum import StrEnum
+from time import sleep
+
+from config import config
+from kubernetes import client as k8s_client
+from kubernetes import config as k8s_config
+from kubernetes import watch
+from kubernetes.client.rest import ApiException
+from utils.errors import NodeDaemonSetNotDefined
+from utils.logs import logger
 
 
 class NodeUnavailableError(Exception):
@@ -71,10 +75,10 @@ def volume_to_node(volume_id):
 
 
 def wait_for(pred, desc=""):
-    start = datetime.now()
+    start = datetime.now(UTC)
     while not pred():
         sleep(0.5)
-    end = datetime.now()
+    end = datetime.now(UTC)
     logger.info(
         f"Finished waiting for {desc}", start=start, end=end, latency=end - start
     )
@@ -117,7 +121,7 @@ def read_config_map(name: str):
     except ApiException as e:
         if e.status == 404:
             return {}
-        raise e
+        raise
 
 
 @load_config
@@ -158,7 +162,7 @@ def write_config_map(name: str, key: str, value: str, overwrite=False):
             v1.create_namespaced_config_map(namespace, body=config_map)
             logger.trace("Created configmap with key", name=name, key=key, value=value)
         else:
-            raise e
+            raise
 
 
 class NodeIPMapping:
@@ -169,7 +173,7 @@ class NodeIPMapping:
     @load_config
     def start(self):
         if not config.node_ds:
-            raise Exception("Nodes DaemonSet not defined")
+            raise NodeDaemonSetNotDefined()
         self.apps_v1 = k8s_client.AppsV1Api()
         self.core_v1 = k8s_client.CoreV1Api()
         ds = self.apps_v1.read_namespaced_daemon_set(
@@ -221,16 +225,20 @@ class NodeIPMapping:
                         w.stop()
                         break
                     actions: dict[K8sEventType, Callable] = {
-                        K8sEventType.DELETED: lambda: self._mapping.pop(
+                        K8sEventType.DELETED: lambda event=event: self._mapping.pop(
                             event["object"].spec.node_name
                         ),
-                        K8sEventType.ADDED: lambda: self._mapping.__setitem__(
-                            event["object"].spec.node_name,
-                            event["object"].status.pod_ip,
+                        K8sEventType.ADDED: lambda event=event: (
+                            self._mapping.__setitem__(
+                                event["object"].spec.node_name,
+                                event["object"].status.pod_ip,
+                            )
                         ),
-                        K8sEventType.MODIFIED: lambda: self._mapping.__setitem__(
-                            event["object"].spec.node_name,
-                            event["object"].status.pod_ip,
+                        K8sEventType.MODIFIED: lambda event=event: (
+                            self._mapping.__setitem__(
+                                event["object"].spec.node_name,
+                                event["object"].status.pod_ip,
+                            )
                         ),
                         K8sEventType.ERROR: lambda: self._reload_and_raise(
                             Exception("Got Error Event on wather")

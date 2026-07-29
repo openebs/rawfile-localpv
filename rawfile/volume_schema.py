@@ -50,12 +50,21 @@ def migrate_6_to_7(data: dict) -> dict:
     return data
 
 
+class SchemaVersionTooNewError(Exception):
+    """Raised when the current schema version is newer than the target schema version."""
+
+    def __init__(self, current, target):
+        self.current = current
+        self.target = target
+        super().__init__(
+            f"Current schema version ({current}) is newer than target schema version ({target})"
+        )
+
+
 def migrate_to(data: dict, version: int) -> dict:
     current = data.get("schema_version", 0)
     if current > version:
-        raise Exception(
-            f"Current schema version ({current}) is newer than target schema version ({version})"
-        )
+        raise SchemaVersionTooNewError(current=current, target=version)
     for i in range(current, version):
         migrate_fn = getattr(sys.modules[__name__], f"migrate_{i}_to_{i + 1}")
         data = migrate_fn(data)

@@ -2,8 +2,9 @@ from contextlib import asynccontextmanager
 
 from consts import PROVISIONER_VERSION
 from fastapi import FastAPI
-from api_server.v1.routes import router as v1_router
 from orchestrator.k8s import node_ip_mapping
+
+from api_server.v1.routes import router as v1_router
 
 
 @asynccontextmanager

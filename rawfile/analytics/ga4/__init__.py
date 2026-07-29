@@ -1,14 +1,15 @@
+import queue
+import threading
+import time
+
+from config import config
+from utils.logs import fmt_exception, logger
+
 from .client import GA4Client
 from .event import OpenEBSEventBuilder
-from .usage import Usage
 from .ping import Ping
+from .usage import Usage
 from .version_set import VersionSet
-from config import config
-from utils.logs import logger, fmt_exception
-
-import threading
-import queue
-import time
 
 task_queue = queue.Queue()
 stop_event = threading.Event()
@@ -57,7 +58,6 @@ def worker():
         except Exception as e:
             # todo retry?
             logger.error("Event Worker Error", exception=fmt_exception(e))
-            pass
         task_queue.task_done()
     logger.info("Event Worker Exited")
 

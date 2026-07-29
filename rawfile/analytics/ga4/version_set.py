@@ -1,5 +1,5 @@
 from consts import PROVISIONER_VERSION
-from orchestrator.k8s import node_count, read_node_info, version_code, namespace_uid
+from orchestrator.k8s import namespace_uid, node_count, read_node_info, version_code
 
 
 class VersionSet:
