@@ -32,10 +32,7 @@ from utils.lock import VolLock
 from utils.logs import GRPCLogger
 from utils.rawfile import (
     AccessType,
-    attach_loop,
     be_absent,
-    detach_loops,
-    img_file,
     metadata,
     metadata_or,
 )
@@ -378,27 +375,6 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
             )
         snapshot_id = request.snapshot_id
         volume_id, name = snapshot_id.rsplit("/", 1)
-        if (
-            len(
-                snapshot_manager.list_snapshots(
-                    volume_id=volume_id, snapshot_name=name
-                ).data
-            )
-            < 0
-        ):
-            with VolLock(volume_id):
-                file = img_file(volume_id)
-
-                loop_dev = attach_loop(file)
-                fs = from_device(loop_dev)
-                if not fs:
-                    raise UnknownFileSystemError(device=loop_dev, volume_id=volume_id)
-                fs.delete_snapshot(name=name)
-
-                if fs.mountpoint is None:
-                    detach_loops(file)
-
-                return csi_pb2.DeleteSnapshotResponse()
         snapshot_manager.delete_snapshot(volume_id, name)
         volume_manager.gc_if_needed(volume_id)
         return csi_pb2.DeleteSnapshotResponse()

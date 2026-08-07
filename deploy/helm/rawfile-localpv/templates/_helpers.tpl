@@ -103,12 +103,6 @@ Some helpers to handle image global information
 {{- end }}
 
 {{- define "rawfile-localpv.pool-volumes" -}}
-{{- if not .Values.node.storagePools }}
-- name: data-dir
-  hostPath:
-    path: {{ tpl .Values.node.dataDirPath . }}
-    type: DirectoryOrCreate
-{{- else }}
 {{- range $name, $pool := .Values.node.storagePools }}
 - name: pool-{{ $name }}
   hostPath:
@@ -116,17 +110,11 @@ Some helpers to handle image global information
     type: DirectoryOrCreate
 {{- end }}
 {{- end }}
-{{- end }}
 
 {{- define "rawfile-localpv.pool-volume-mounts" -}}
-{{- if not .Values.node.storagePools }}
-- name: data-dir
-  mountPath: {{ tpl .Values.node.dataDirPath . }}
-{{- else }}
 {{- range $name, $pool := .Values.node.storagePools }}
 - name: pool-{{ $name }}
   mountPath: {{ tpl $pool.path . }}
-{{- end }}
 {{- end }}
 {{- end }}
 

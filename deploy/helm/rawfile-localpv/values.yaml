@@ -28,9 +28,6 @@ logLevel: INFO
 # -- Format of the logs (json, pretty)
 logFormat: json
 
-# -- Used to reserve capacity on each node for data dir storage on each host (Supports percentage and size) [e.g. `25%` or `50GB` or `10MiB`] (Deprecated, use storagePools.reservedCapacity instead)
-reservedCapacity: ""
-
 auth:
   # -- Enables authentication for internal gRPC server
   enabled: true
@@ -169,15 +166,12 @@ node:
   # -- Default filesystem type for rawfile volumes (Currently supports `btrfs`, `xfs` and `ext4` [which is default])
   defaultFs: ext4
 
-  # -- Path to store data dir (Deprecated, use storagePools.path instead)
-  dataDirPath: /var/csi/rawfile
-
   # -- Default storage pool name
-  # defaultPool: default
+  defaultPool: default
   # -- Storage pools configuration
-  # storagePools:
-  #   default:
-  #     path: /var/local/openebs/rawfile/default-pool/
+  storagePools:
+    default:
+      path: /var/local/openebs/rawfile/default-pool/
   # -- Reserved capacity outside of the storage pool, can be specified in bytes or percentage of the underlying device capacity
   #     reservedCapacity: ""
   # -- Reserved capacity mode. `Plain` means it's taken as-is, `subtract-from-total` means it's subtracted from underlying device capacity. Example: if reservedCapacity is 100GiB, then `plain` means the pool can grow until 100GiB is left, and `subtract-from-total` means it can grow up to 100GiB. Default: `plain`

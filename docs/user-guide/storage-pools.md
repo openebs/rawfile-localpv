@@ -44,10 +44,10 @@ The node plugin validates pools at startup:
 | Default pool | `node.defaultPool` is required and must name one of the pools |
 
 > [!NOTE]
-> `node.dataDirPath` and the top-level `reservedCapacity` are **deprecated**. If you
-> still use them, a pool named `data-dir` is auto-created; migrate to
+> `node.dataDirPath` and the top-level `reservedCapacity` are **Removed**. If you
+> still use them, Consider migrating to
 > `node.storagePools` (see the
-> [v0.13.0 upgrade notes](../install-guide.md#upgrading-to-v0130)).
+> [v0.13.0 upgrade notes](../install-guide.md#upgrading-to-v0130)) Before upgrading to the latest version.
 
 ### Reserved capacity semantics
 

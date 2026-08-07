@@ -67,8 +67,8 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | metrics.serviceMonitor.enabled | bool | `false` | Enables prometheus service monitor |
 | metrics.serviceMonitor.interval | string | `"1m"` | Sets prometheus target interval |
 | node.affinity | string | `nil` | Affinities for node component |
-| node.dataDirPath | string | `"/var/csi/rawfile"` | Path to store data dir (Deprecated, use storagePools.path instead) |
 | node.defaultFs | string | `"ext4"` | Default filesystem type for rawfile volumes (Currently supports `btrfs`, `xfs` and `ext4` [which is default]) |
+| node.defaultPool | string | `"default"` | Default storage pool name |
 | node.driverRegistrar.healthzPort | int | `9809` | Healthcheck port for driver-registrar |
 | node.driverRegistrar.image.pullPolicy | string | `nil` | Image pull policy for `csi-node-driver-registrar` |
 | node.driverRegistrar.image.registry | string | `""` | Image Registry for `csi-node-driver-registrar` |
@@ -103,9 +103,9 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | node.snapshotController.image.repository | string | `"sig-storage/snapshot-controller"` | Image Repository for `snapshot-controller` |
 | node.snapshotController.image.tag | string | `"v8.6.0"` | Image Tag for `snapshot-controller` |
 | node.snapshotController.resources | object | `{}` | Sets compute resources for snapshot-controller container |
+| node.storagePools | object | `{"default":{"path":"/var/local/openebs/rawfile/default-pool/"}}` | Storage pools configuration |
 | node.tolerations | string | `nil` | Tolerations for node component |
 | provisionerName | string | `"rawfile.csi.openebs.io"` | Name of the registered CSI Driver in the cluster |
-| reservedCapacity | string | `""` | Used to reserve capacity on each node for data dir storage on each host (Supports percentage and size) [e.g. `25%` or `50GB` or `10MiB`] (Deprecated, use storagePools.reservedCapacity instead) |
 | snapshotClasses[0].deletionPolicy | string | `"Delete"` | Sets deletion policy for snapshots created using this class (Delete or Retain) |
 | snapshotClasses[0].enabled | bool | `true` | Enable or disable SnapshotClass |
 | snapshotClasses[0].isDefault | bool | `false` | Make the snapshot class as default |
