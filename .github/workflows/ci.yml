@@ -6,8 +6,6 @@ on:
     branches:
       - develop
       - "release/**"
-  schedule:
-    - cron: "0 0 * * *"
 
 jobs:
   changes:
