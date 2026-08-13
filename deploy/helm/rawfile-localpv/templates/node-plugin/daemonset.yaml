@@ -281,11 +281,13 @@ spec:
           resources:
             {{- include "rawfile-localpv.node-external-snapshotter-resources" . | nindent 12 }}
         {{- end }}
-        {{- if .Values.capabilities.snapshots.enabled }}
+        {{- if and .Values.capabilities.snapshots.enabled .Values.node.snapshotController.enabled }}
         - name: snapshot-controller
           args:
             - "--v=2"
             - "--enable-distributed-snapshotting=true"
+            # runs as Daemonset, but only one should be active per cluster
+            - "--leader-election=true"
           resources:
             {{- include "rawfile-localpv.node-snapshot-controller-resources" . | nindent 12 }}
           image: {{ include "rawfile-localpv.common.image" (dict "imageRoot" .Values.node.snapshotController.image "csiSideCars" .Values.csiSideCars.image "global" .Values.global) | quote }}

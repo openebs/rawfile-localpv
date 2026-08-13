@@ -149,6 +149,11 @@ node:
       pullPolicy:
 
   snapshotController:
+    # -- Runs the snapshot-controller container. There should only be one snapshot-controller per cluster,
+    # so disable this if the cluster already runs one. That controller must be started with
+    # `--enable-distributed-snapshotting=true`, or rawfile snapshots will never be provisioned.
+    # Requires `capabilities.snapshots.enabled`.
+    enabled: true
     # -- Sets compute resources for snapshot-controller container
     resources: {}
     image:
