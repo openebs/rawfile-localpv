@@ -2,17 +2,12 @@ import subprocess
 from abc import ABC, ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Self
-from warnings import deprecated
 
 from utils.commands import run
 from utils.errors import InvalidDeviceForMountpointError
 from utils.logs import logger
 
 from .utils import get_device_for_mountpoint, get_device_fs
-
-fs_snapshot_deprecated = deprecated(
-    "Filesystem level snapshots are not supported anymore"
-)
 
 
 class NotSupportedError(NotImplementedError):
@@ -92,15 +87,6 @@ class FileSystemResizeError(FileSystemOperationError):
     """
 
     operation = "resize"
-
-
-@fs_snapshot_deprecated
-class FileSystemDeleteSnapshotError(FileSystemOperationError):
-    """
-    Exception raised when filesystem delete snapshot has been failed.
-    """
-
-    operation = "delete snapshot"
 
 
 class UnknownFileSystemError(ValueError):
@@ -249,13 +235,6 @@ class FileSystem(ABC, metaclass=ABCMeta):
         except Exception as e:
             raise FileSystemUnmountError.from_exc(e, self.__filesystem__)
         return output
-
-    @fs_snapshot_deprecated
-    def delete_snapshot(self, name: str):
-        """
-        Delete the selected snapshot of the file system.
-        """
-        raise NotSupportedError("delete_snapshot")
 
     @abstractmethod
     def resize(self) -> str | None:

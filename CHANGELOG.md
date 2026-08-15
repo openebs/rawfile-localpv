@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed 🗑️ ⚠️
 
+- Deprecated configurations/Features removed
+    - Top Level dataDirPath and reservedCapacity in Helm Chart Values
+    - FileSystem-Level (BTRfs) Snapshots, Snapshots are not removed, but not available anymore (Remove them before upgrading)
+
 ### Internal 🔧
 
 - New endpoints for the Internal gRPC server

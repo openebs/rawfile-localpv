@@ -81,10 +81,6 @@ spec:
               value: {{ .Values.logFormat }}
             - name: CSI_DRIVER__PLUGIN_TYPE
               value: node
-            {{- if .Values.reservedCapacity }}
-            - name: RESERVED_CAPACITY
-              value: {{ .Values.reservedCapacity | toString | quote }}
-            {{- end }}
             - name: CSI_DRIVER__GRPC_WORKERS
               value: {{ .Values.node.grpcWorkers | toString | quote }}
             - name: GA_ENABLED
@@ -147,14 +143,6 @@ spec:
             - name: CSI_DRIVER__STORAGE_POOLS
               value: |
                 {
-                  {{- if not .Values.node.storagePools }}
-                  "data-dir": {
-                    "path": "{{ .Values.node.dataDirPath }}"
-                    {{- with .Values.reservedCapacity }}
-                    , "reserved_capacity": "{{ . | toString }}"
-                    {{- end }}
-                    }
-                  {{- else }}
                   {{- $keys := keys .Values.node.storagePools | sortAlpha }}
                   {{- range $i, $name := $keys }}
                   "{{ $name }}": {
@@ -171,7 +159,6 @@ spec:
                     {{- end }}
                     {{- end }}
                   }{{ if lt (add1 $i) (len $keys) }},{{ end }}
-                  {{- end }}
                   {{- end }}
                 }
             - name: CSI_DRIVER__CAPABILITIES__SNAPSHOTS__ENABLED

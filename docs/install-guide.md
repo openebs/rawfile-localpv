@@ -26,6 +26,13 @@ Don't blind upgrade to a potentially breaking version as additional steps may be
 
 We try to do our best to follow [semantic versioning](https://semver.org/), but mistakes can happen. If you encounter any unexpected breaking change from our part, please do let us know!
 
+### Upgrading to v0.15.0
+
+This version introduces the following breaking changes:
+
+- ⚠️ Removed deprecated `node.dataDirPath` and `reservedCapacity` in favor of storage pool specific values (See [Upgrade](#upgrading-to-v0130) for more details) to avoid data unavailability after upgrade
+- ⚠️ Removed filesystem-level snapshot support, Snapshots are not removed, but not available anymore (Remove them before upgrading you can access data inside the snapshot using by accessing img file of the volume directly)
+
 ### Upgrading to v0.14.1
 
 This version introduces the following breaking changes:

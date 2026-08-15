@@ -14,9 +14,7 @@ RawFile LocalPV volume.
 - **Snapshot CRDs**: installed automatically by the chart
   (`crds.csi.volumeSnapshots.enabled=true`); disable if your cluster already provides
   them.
-- **Disk space** on each node under the configured storage-pool path(s)
-  (default `/var/csi/rawfile` via the deprecated `node.dataDirPath`; prefer configuring
-  `node.storagePools`).
+- **Disk space** on each node under the configured storage-pool path(s).
 - **CoW-capable pool filesystem** (optional, recommended for snapshots/clones): cheap
   copy-on-write snapshots and clones require the pool's backing filesystem to support
   reflinks — e.g. btrfs, or XFS created with `mkfs.xfs -m reflink=1`. See

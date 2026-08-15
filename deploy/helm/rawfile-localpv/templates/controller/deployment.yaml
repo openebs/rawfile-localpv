@@ -43,10 +43,6 @@ spec:
               value: {{ .Values.logLevel }}
             - name: LOG_FORMAT
               value: {{ .Values.logFormat }}
-            {{- if .Values.reservedCapacity }}
-            - name: RESERVED_CAPACITY
-              value: {{ .Values.reservedCapacity | toString | quote }}
-            {{- end }}
             - name: GA_ENABLED
               {{- if kindIs "bool" .Values.global.analytics.enabled }}
               value: "{{ .Values.global.analytics.enabled }}"
@@ -108,10 +104,6 @@ spec:
               value: {{ .Values.logFormat }}
             - name: CSI_DRIVER__PLUGIN_TYPE
               value: controller
-            {{- if .Values.reservedCapacity }}
-            - name: RESERVED_CAPACITY
-              value: {{ .Values.reservedCapacity | toString | quote }}
-            {{- end }}
             - name: CSI_DRIVER__GRPC_WORKERS
               value: {{ .Values.controller.grpcWorkers | toString | quote }}
             - name: GA_ENABLED
