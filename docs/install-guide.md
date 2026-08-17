@@ -38,10 +38,12 @@ This version introduces the following breaking changes:
 This version introduces the following breaking changes:
 
 - ⚠️ Removed `rawfile_pool_available_bytes` and `rawfile_pool_usage_bytes`. They were introduced in v0.14.0 with an inconsistent name (used the `rawfile_pool_*` prefix despite measuring the **backing filesystem** including non-rawfile tenants). Use the equivalently-valued replacements:
-  ```
+
+  ```text
   rawfile_pool_available_bytes  →  rawfile_pool_backing_fs_available_bytes
   rawfile_pool_usage_bytes      →  rawfile_pool_backing_fs_usage_bytes
   ```
+
   Anyone using these in dashboards or alerts will need to do a metric-name find/replace.
 
 We believe these changes, despite being technically breaking, are small enough to not warrant minor version bump.
@@ -50,7 +52,7 @@ We believe these changes, despite being technically breaking, are small enough t
 
 This version introduces the following breaking changes:
 
-  - Support for `global.k8sImageRegistry` has been removed. \
+- Support for `global.k8sImageRegistry` has been removed. \
   Use `global.imageRegistry` to override all image registries. \
   Alternatively, configure local registry values or use `csiSideCarImageRegistry` for CSI sidecar images if needed.
 
@@ -58,12 +60,12 @@ This version introduces the following breaking changes:
 
 This version introduces the following breaking changes:
 
-  - Deprecate `node.dataDirPath` and `reservedCapacity` in favor of storage pool specific values \
+- Deprecate `node.dataDirPath` and `reservedCapacity` in favor of storage pool specific values \
   If you defined these to be different than defaults, migrate them to `node.storagePools.default` (or any other pool you create and choose to be your default pool, along with defined storage classes). \
   If you continue to use `node.dataDirPath`, a default pool named "data-dir" will be created for you, however this will be removed in the future versions.
-  - Capacity calculations account only for actual allocated blocks as opposed to logical size of the files. This changes the calculations for thin (i.e. sparse) backing files and enables overprovisioning \
+- Capacity calculations account only for actual allocated blocks as opposed to logical size of the files. This changes the calculations for thin (i.e. sparse) backing files and enables overprovisioning \
   If you relied on the fact overprovisioning is impossible even when using thin provisioning, this release changes that. If you'd like to opt out of overprovisioning, use thick provisioning without discarding blocks during formatting (for more, see this [issue](https://github.com/openebs/rawfile-localpv/issues/295)). On the other hand, if you wanted to overprovision, just use thin provisioning.
-  - Reserved capacity is calculated based on total space as opposed to free \
+- Reserved capacity is calculated based on total space as opposed to free \
   Be cautios that available capacity calculations will change after the upgrade if `reservedCapacity` was non-zero.
 
 ### Upgrading to v0.12.0
