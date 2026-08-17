@@ -22,8 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed 🗑️ ⚠️
 
 - Deprecated configurations/Features removed
-    - Top Level dataDirPath and reservedCapacity in Helm Chart Values
-    - FileSystem-Level (BTRfs) Snapshots, Snapshots are not removed, but not available anymore (Remove them before upgrading)
+  - Top Level dataDirPath and reservedCapacity in Helm Chart Values
+  - FileSystem-Level (BTRfs) Snapshots, Snapshots are not removed, but not available anymore (Remove them before upgrading)
 
 ### Internal 🔧
 
@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.14.1] - 2026-06-10
 
 ### Added ✨
+
 - Added `rawfile_pool_backing_fs_available_bytes` and `rawfile_pool_backing_fs_usage_bytes` metrics, exposing `statvfs(fs_avail)` and `statvfs(fs_size - fs_avail)` for the storage pool's backing filesystem. Replace the (v0.14.0) `rawfile_pool_available_bytes` / `rawfile_pool_usage_bytes`. The rename completes the `rawfile_pool_backing_fs_*` naming convention introduced in v0.14.0 with `rawfile_pool_backing_fs_capacity_bytes`: any metric measuring the whole backing filesystem (not just the rawfile-allocated slice) carries the `_backing_fs_` infix, so a single look at a metric name tells you whether it's pool-scoped or backing-FS-scoped.
 
 - Helm chart:
@@ -56,11 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed ♻️
 
 ### Removed 🗑️ ⚠️
+
 - ⚠️ Removed `rawfile_pool_available_bytes` and `rawfile_pool_usage_bytes`. They were introduced in v0.14.0 with an inconsistent name (used the `rawfile_pool_*` prefix despite measuring the **backing filesystem** including non-rawfile tenants). Use the equivalently-valued replacements:
-  ```
+
+  ```text
   rawfile_pool_available_bytes  →  rawfile_pool_backing_fs_available_bytes
   rawfile_pool_usage_bytes      →  rawfile_pool_backing_fs_usage_bytes
   ```
+
   Anyone using these in dashboards or alerts will need to do a metric-name find/replace.
 
 ### Internal 🔧
@@ -76,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.14.0] - 2026-05-19
 
 ### Added ✨
+
 - Added `csiSideCars.image.registry` and `csiSideCars.image.pullPolicy` to configure CSI sidecar container images
 - Added `analytics.enabled` to enable/disable analytics locally
 - Added `node.podAnnotations` to set custom annotations on the node DaemonSet pods
@@ -84,9 +89,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed 🐛
 
 ### Changed ♻️
+
 - `global.imageRegistry` now overrides all image registries when set
 
 ### Removed 🗑️
+
 - This release introduces a breaking change by removing `global.k8sImageRegistry` , `node.image` and `controller.image`
 
 ### Internal 🔧
@@ -120,11 +127,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Internal 🔧
 
 Task Manager:
- - add metadata to task information (create/save/retry timestamps, last error)
- - store task in memory before adding done callback (fixing aforementioned race)
+
+- add metadata to task information (create/save/retry timestamps, last error)
+- store task in memory before adding done callback (fixing aforementioned race)
 
 Tests:
- - better logging
+
+- better logging
 
 ### Known Issues 🚫
 
@@ -138,6 +147,7 @@ Tests:
 ## [v0.13.0] - 2026-03-03 ⚠️ Breaking Changes
 
 ### Added ✨
+
 - Application:
   - Introduce storage pools, allowing to have multiple filesystems backing provisioned volumes on a single node ⚠️
     - Deprecate `node.dataDirPath` and `reservedCapacity` in favor of storage pool specific values ⚠️
