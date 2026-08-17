@@ -11,13 +11,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added ✨
 
-- API Server with OpenAPI spec and Swagger UI
-
 ### Fixed 🐛
 
 ### Changed ♻️
 
+### Removed 🗑️ ⚠️
+
+### Internal 🔧
+
+### Known Issues 🚫
+
+- ReadOnly attribute in PVC template not fully handled
+- When using thin provisioning, user must specify the format options preventing `mkfs` from discarding blocks (`-K` for xfs/btrfs, `-E nodiscard` for ext4). Also see this [issue](https://github.com/openebs/rawfile-localpv/issues/295)
+- For ext4, volumes available space might be smaller than intended due to defaulting to reserve 5% of the blocks for privileged users. This can be circumvented via format options (`-m 0`)
+
+---
+
+## [v0.15.0] - 2026-08-17 ⚠️ Breaking Changes
+
+### Added ✨
+
+- API Server with OpenAPI spec and Swagger UI
+- Complete documentation [in-tree](https://github.com/openebs/rawfile-localpv/blob/v0.15.0/docs/README.md)
+- [OpenEBS Website](https://openebs.io/docs) documentation for [rawfile-localpv](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-rawfile/rawfile-overview)
+
+### Fixed 🐛
+
+- Volume expansion failure by using findmnt with more stable output instead of using mount
+
+### Changed ♻️
+
 - Uses CoW when it's enabled and supported between source and destination on snapshot restore
+- Conditional snapshot-controller with leader-election
 
 ### Removed 🗑️ ⚠️
 
@@ -29,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New endpoints for the Internal gRPC server
 - Multiple dependency bumps across the stack, ensuring security and stability
+- GA DNS is now configurable
 
 ### Known Issues 🚫
 
