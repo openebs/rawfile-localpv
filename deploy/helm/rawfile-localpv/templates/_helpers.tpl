@@ -74,6 +74,10 @@ Some helpers to handle image global information
 {{- toYaml (.Values.controller.externalResizer.resources) }}
 {{- end }}
 
+{{- define "rawfile-localpv.api-server-resources" -}}
+{{- toYaml (.Values.controller.apiServer.resources) }}
+{{- end }}
+
 {{- define "rawfile-localpv.node-resources" -}}
 {{- toYaml (.Values.node.resources) }}
 {{- end }}

@@ -76,6 +76,17 @@ controller:
     #   cpu: 10m
     #   memory: 100Mi
 
+  apiServer:
+    # -- Sets compute resources for apiServer component
+    resources:
+      {}
+      # limits:
+      #   cpu: 1
+      #   memory: 100Mi
+      # requests:
+      #   cpu: 10m
+      #   memory: 100Mi
+
   # -- priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default
   priorityClassName: system-cluster-critical
 
