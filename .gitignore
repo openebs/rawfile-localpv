@@ -121,5 +121,6 @@ dmypy.json
 pytest.log
 report.xml
 
+openapi.json
 rawfile/_fallocate*
 /.vscode

@@ -35,6 +35,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | capabilities.resize.enabled | bool | `true` | Sets whether volume resizing is enabled. If disabled, don't deploy controller component |
 | capabilities.snapshots.enabled | bool | `true` | Sets whether taking volume snapshots is enabled. Required for volume cloning. Runs externalSnapshotter and snapshotController containers. |
 | controller.affinity | string | `nil` | Affinities for controller component |
+| controller.apiServer.resources | object | `{}` | Sets compute resources for apiServer component |
 | controller.externalResizer.image.pullPolicy | string | `nil` | Image pull policy for `csi-resizer` |
 | controller.externalResizer.image.registry | string | `""` | Image registry for `csi-resizer` |
 | controller.externalResizer.image.repository | string | `"sig-storage/csi-resizer"` | Image Repository for `csi-resizer` |
