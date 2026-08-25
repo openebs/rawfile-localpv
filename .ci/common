@@ -34,6 +34,10 @@ else
 	export TAG_SUFFIX="-ci"
 fi
 
+# override this for easy testing of a release tag
+#export CI_TEST_IMAGE_TAG="v0.15.0"
+#export TAG_SUFFIX=""
+
 build-image-tag() {
 	printf "%s%s" "${1}" "${TAG_SUFFIX:-}"
 }

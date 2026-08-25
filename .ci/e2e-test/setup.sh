@@ -20,8 +20,9 @@ if [ -n "${CI_RELEASE_TAG:-}" ]; then
 	docker pull "$URI"
 fi
 
-if [ "$(kubectl config current-context)" = "kind-rawfile" ]; then
-	kind load docker-image "$URI" --name "rawfile"
+CLUSTER_NAME="$(kubectl config current-context)"
+if [[ "$CLUSTER_NAME" =~ ^kind-rawfile.* ]]; then
+	kind load docker-image "$URI" --name "${CLUSTER_NAME#kind-}"
 fi
 
 CHART="$SCRIPT_DIR/../../deploy/helm/rawfile-localpv/"
