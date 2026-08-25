@@ -21,6 +21,7 @@ snapshots, cloning, expansion and rich metrics.
 - [Cloning Volumes](./user-guide/cloning.md) — PVC-to-PVC copies
 - [Resizing Volumes](./user-guide/resize.md) — online volume expansion
 - [Storage Pools](./user-guide/storage-pools.md) — multiple pools, capacity reservation, tiering
+- [Async Replication with VolSync](./user-guide/replication.md) — cross-node/cross-cluster replication
 
 ### Reference
 
