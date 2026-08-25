@@ -6,7 +6,7 @@ kind: VolumeSnapshotClass
 metadata:
   name: {{ $class.name }}
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "-5"
     {{- if $class.isDefault }}snapshot.storage.kubernetes.io/is-default-class: "true"{{ end }}
 driver: {{ $vals.provisionerName }}
