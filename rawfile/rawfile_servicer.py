@@ -216,7 +216,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         params = normalize_parameters(request.parameters)
         thin_provision = str_to_bool(params.get("thinprovision", "no"))
         format_options = params.get("formatoptions", "").strip()
-        copy_on_write_param = params.get("copyonwrite", None)
+        copy_on_write_param = params.get("copyonwrite", None) or None
         copy_on_write = None
         if copy_on_write_param is not None:
             copy_on_write = str_to_bool(copy_on_write_param)
