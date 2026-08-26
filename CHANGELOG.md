@@ -12,14 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added ✨
 
 - Add Support for setting Compute Resources for API Server
+- Add documentation for async volume replication with [VolSync](https://volsync.readthedocs.io/)
 
 ### Fixed 🐛
 
+- StorageClass CopyOnWrite with value `""` now correctly defaults to auto-detected as opposed to `false`
+
 ### Changed ♻️
+
+- StorageClass and VolumeSnapshotClass are now updatable with helm upgrade command
 
 ### Removed 🗑️ ⚠️
 
 ### Internal 🔧
+
+- Support for creating multiple local [kind](https://kind.sigs.k8s.io/) rawfile clusters
 
 ### Known Issues 🚫
 
