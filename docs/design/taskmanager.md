@@ -20,11 +20,11 @@ class TaskState(StrEnum):
 
 ```python
 class TaskInfo(TypedDict):
-    task: str          # Task name/identifier
-    args: list         # Positional arguments
-    kwargs: dict       # Keyword arguments
-    retry_count: int   # Number of retry attempts
-    state: TaskState   # Current state of task
+    task: str  # Task name/identifier
+    args: list  # Positional arguments
+    kwargs: dict  # Keyword arguments
+    retry_count: int  # Number of retry attempts
+    state: TaskState  # Current state of task
 ```
 
 ### 3. Key Features
@@ -88,9 +88,5 @@ class TaskInfo(TypedDict):
 
 ```python
 task_manager = TaskManager(executor, retry_interval=5, max_retry=5)
-task_id = task_manager.run_task(
-    TaskName.CREATE_SNAPSHOT,
-    *args,
-    **kwargs
-)
+task_id = task_manager.run_task(TaskName.CREATE_SNAPSHOT, *args, **kwargs)
 ```
