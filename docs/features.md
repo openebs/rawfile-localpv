@@ -113,7 +113,9 @@ a pool via the `storagePool` parameter, enabling storage tiering. See
 ## Current limitations
 
 - Volumes are strictly node-local — no replication; node loss means data loss for
-  volumes on that node.
+  volumes on that node. For cross-node/cross-cluster async replication, see
+  [Async Replication with VolSync](./user-guide/replication.md) (`Filesystem`-mode
+  volumes only — `Block` mode isn't replicable end-to-end by any VolSync mover today).
 - `ReadWriteOnce` only; `readOnly` attribute of block PVCs not honored.
 - No shrinking.
 - Cross-node cloning not yet available.

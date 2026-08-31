@@ -6,8 +6,7 @@ SCRIPT_DIR="$(dirname "$0")"
 
 source "${SCRIPT_DIR}/common"
 
-TMP_KIND=${TMP_KIND:-"/tmp/kind/rawfile/"}
-TMP_KIND_CONFIG="$TMP_KIND/config.yaml"
+CLUSTER_NAME="rawfile"
 WORKERS=1
 DRY_RUN=
 KIND="kind"
@@ -17,6 +16,7 @@ CLEANUP="false"
 SUDO=${SUDO:-"sudo"}
 RAW_SIZE="100GiB"
 K8S_VERSION=$(cat "$SCRIPT_DIR/../.kube-version")
+INS_SSH="true"
 
 command -v "$KIND" >/dev/null 2>&1 || die "kind is not installed. Aborting."
 command -v "$KUBECTL" >/dev/null 2>&1 || die "kubectl is not installed. Aborting."
@@ -31,6 +31,8 @@ Options:
   --dry-run                         Don't do anything, just output steps.
   --cleanup                         Prior to starting, stops the running instance of the deployer.
   --loop-size     <size>            Size of the rawfile backend for each worker node (Default: $RAW_SIZE).
+  --name          <string>          Name of the cluster to issue commands on.
+  --no-ssh                          Don't install SSH on the worker nodes (Default: false).
 
 Command:
   start                             Start the k8s cluster.
@@ -65,6 +67,16 @@ while [ "$#" -gt 0 ]; do
 	*)
 		[ -z "$DO_ARGS" ] && die "Must specify command before args"
 		case $1 in
+		--name)
+			shift
+			test $# -lt 1 && die "Missing Name of the Cluster"
+			CLUSTER_NAME=$1
+			shift
+			;;
+		--no-ssh)
+			INS_SSH="false"
+			shift
+			;;
 		--workers)
 			shift
 			test $# -lt 1 && die "Missing Number of Workers"
@@ -100,12 +112,15 @@ while [ "$#" -gt 0 ]; do
 	esac
 done
 
+TMP_KIND=${TMP_KIND:-"/tmp/kind/$CLUSTER_NAME"}
+TMP_KIND_CONFIG="$TMP_KIND/config.yaml"
+
 if [ -z "$COMMAND" ]; then
 	die "No command specified!\n$(help)"
 fi
 
 if [ "$COMMAND" = "stop" ] || [ "$CLEANUP" = "true" ]; then
-	$KIND delete cluster --name "rawfile"
+	$KIND delete cluster --name "$CLUSTER_NAME"
 	if [ "$COMMAND" = "stop" ]; then
 		exit 0
 	fi
@@ -134,9 +149,9 @@ start_core=1
 nodes=()
 for node_index in $(seq 1 $WORKERS); do
 	if [ "$node_index" == 1 ]; then
-		node="rawfile-worker"
+		node="$CLUSTER_NAME-worker"
 	else
-		node="rawfile-worker$node_index"
+		node="$CLUSTER_NAME-worker$node_index"
 	fi
 	nodes+=($node)
 
@@ -169,13 +184,12 @@ if [ -n "$DRY_RUN" ]; then
 	cat "$TMP_KIND_CONFIG"
 fi
 
-$KIND create cluster --config "$TMP_KIND_CONFIG" --name "rawfile"
+$KIND create cluster --config "$TMP_KIND_CONFIG" --name "$CLUSTER_NAME"
 
-$KUBECTL cluster-info --context kind-rawfile
-if [ -z "$DRY_RUN" ]; then
-	host_ip=$($DOCKER network inspect kind | jq -r 'first (.[0].IPAM.Config[].Gateway | select(.))')
-fi
-echo "HostIP: $host_ip"
+export KUBECONFIG="$TMP_KIND/kubeconfig"
+$KIND export kubeconfig --name "$CLUSTER_NAME"
+
+$KUBECTL cluster-info --context "kind-$CLUSTER_NAME"
 
 # shellcheck disable=SC2068
 for node in ${nodes[@]}; do
@@ -183,9 +197,9 @@ for node in ${nodes[@]}; do
 
 	$DOCKER exec "$node" sh -c "mkdir /var/local/openebs/rawfile/default-pool; mount /var/local/openebs/rawfile/default-pool.img /var/local/openebs/rawfile/default-pool"
 
-	# Note: this will go away if the node restarts...
-	$DOCKER exec "$node" bash -c 'printf "'"$host_ip"' kvmhost\n" >> /etc/hosts'
-
+	if [ "$INS_SSH" = "false" ]; then
+		continue
+	fi
 	# SSH access is required by the e2e test disruptive storage tests
 	$DOCKER exec "$node" apt update
 	$DOCKER exec "$node" apt install -y -q openssh-server
@@ -194,3 +208,7 @@ for node in ${nodes[@]}; do
 	$DOCKER cp "$node":/etc/ssh/ssh_host_rsa_key "$SCRIPT_DIR/e2e-test/ssh_id"
 	$DOCKER exec "$node" systemctl restart sshd
 done
+
+echo
+echo "You can use the following command to restrict your KUBECONFIG to this cluster:"
+echo "export KUBECONFIG=\"$TMP_KIND/kubeconfig\""

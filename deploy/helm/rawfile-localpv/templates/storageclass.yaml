@@ -6,7 +6,7 @@ kind: StorageClass
 metadata:
   name: {{ $class.name }}
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "-5"
     {{ if $class.isDefault }}storageclass.kubernetes.io/is-default-class: "true"{{ end }}
 provisioner: {{ $vals.provisionerName }}
@@ -19,7 +19,7 @@ parameters:
   csi.storage.k8s.io/fstype: {{ $class.fsType | default "ext4" }}
   thinProvision: {{ $class.thinProvision | default "false" | toString | quote }}
   formatOptions: {{ ($class.formatOptions | default (list)) | join " " | quote }}
-  copyOnWrite: {{ $class.copyOnWrite | default "false" | toString | quote }}
+  copyOnWrite: {{ $class.copyOnWrite | toString | quote }}
   freezeFs: {{ $class.freezeFs | default "false" | toString | quote }}
   {{- with $class.storagePool }}
   storagePool: {{ . }}
