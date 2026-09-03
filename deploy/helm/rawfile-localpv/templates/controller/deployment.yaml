@@ -1,5 +1,5 @@
 {{- $cap := .Values.capabilities | default dict }}
-{{- if or ($cap.resize.enabled) ($cap.apiServer) }}
+{{- if or ($cap.resize.enabled) ($cap.apiServer.enabled) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
