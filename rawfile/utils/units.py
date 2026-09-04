@@ -1,7 +1,6 @@
 import re
 from collections.abc import Mapping
 from datetime import timedelta
-from typing import Any
 
 
 def pretty_size_to_bytes(pretty_size: str):
@@ -38,13 +37,25 @@ def pretty_size_to_bytes(pretty_size: str):
 
 
 def str_to_bool(value: str | None) -> bool:
-    if value:
-        return value.lower() in ("1", "t", "true", "yes", "y", "on")
-    return False
+    if value is None:
+        return False
+    return value.lower().strip() in ("1", "t", "true", "yes", "y", "on")
 
 
-def normalize_parameters(parameters: Mapping[str, Any]) -> Mapping[str, Any]:
-    return {k.lower(): v for k, v in parameters.items()}
+def normalize_value(value: str) -> str | None:
+    _value = value.strip()
+    if len(_value) == 0 or _value.lower() in ("none", "null", "nil"):
+        return None
+    return _value.strip()
+
+
+def normalize_parameters(parameters: Mapping[str, str]) -> Mapping[str, str]:
+    normalized: dict[str, str] = {}
+    for k, v in parameters.items():
+        normalized_value = normalize_value(v)
+        if normalized_value is not None:
+            normalized[k.lower()] = normalized_value
+    return normalized
 
 
 def parse_time_delta(time_str: str) -> timedelta:
