@@ -214,6 +214,9 @@ node:
   # -- Annotations for the node DaemonSet pods
   podAnnotations: {}
 
+  # -- Labels for the node DaemonSet pods
+  podLabels: {}
+
   # -- Number of gRPC workers for node component
   grpcWorkers: 10
 

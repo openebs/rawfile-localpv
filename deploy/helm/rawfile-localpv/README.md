@@ -96,6 +96,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | node.metrics.enabled | bool | `false` |  |
 | node.nodeSelector | string | `nil` | nodeSelector for node component |
 | node.podAnnotations | object | `{}` | Annotations for the node DaemonSet pods |
+| node.podLabels | object | `{}` | Labels for the node DaemonSet pods |
 | node.priorityClassName | string | `"system-node-critical"` | priorityClassName for node component since this part is critical for node `system-node-critical` is default |
 | node.resources | object | `{}` | Sets compute resources for node component |
 | node.snapshotController.enabled | bool | `true` | Runs the snapshot-controller container. There should only be one snapshot-controller per cluster, so disable this if the cluster already runs one. That controller must be started with `--enable-distributed-snapshotting=true`, or rawfile snapshots will never be provisioned. Requires `capabilities.snapshots.enabled`. |
