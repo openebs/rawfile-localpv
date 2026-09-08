@@ -33,6 +33,12 @@ def load_config(func):
                 k8s_config.load_incluster_config()
             else:
                 k8s_config.load_config()
+
+            if config.tls_insecure_skip_verify:
+                configuration = k8s_client.Configuration.get_default_copy()
+                configuration.verify_ssl = False
+                k8s_client.Configuration.set_default(configuration)
+
             __config_loaded = True
         return func(*args, **kwargs)
 

@@ -245,6 +245,10 @@ class RawFileCmd(
         default=LoggingFormats.JSON,
         description="Logging format set it to pretty for a human-readable format",
     )
+    tls_insecure_skip_verify: bool = Field(
+        default=False,
+        description="Disables strict x509 TLS verification when talking to the Kubernetes API server if true. Dangerous: do not enable unless you understand the implications",
+    )
     ga_enabled: bool = Field(
         default=False,
         description="Enable Google Analytics metrics",

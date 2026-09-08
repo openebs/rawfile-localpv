@@ -165,6 +165,8 @@ spec:
               value: "{{ .Values.capabilities.snapshots.enabled }}"
             - name: CSI_DRIVER__CAPABILITIES__RESIZE__ENABLED
               value: "{{ .Values.capabilities.resize.enabled }}"
+            - name: TLS_INSECURE_SKIP_VERIFY
+              value: "{{ .Values.tls.insecureSkipVerify }}"
           ports:
             - name: metrics
               containerPort: {{ .Values.metrics.port }}
