@@ -12,10 +12,11 @@ spec:
       component: node
   template:
     metadata:
-      labels: *selectorLabels
-      {{- with .Values.node.podLabels }}
+      labels:
+        <<: *selectorLabels
+        {{- with .Values.node.podLabels }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       {{- with .Values.node.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}

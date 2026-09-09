@@ -108,6 +108,9 @@ controller:
   # -- Number of gRPC workers for controller component
   grpcWorkers: 10
 
+  # -- Labels for the controller pods
+  podLabels: {}
+
 node:
   # -- Enables hostNetwork for node component
   hostNetwork: false

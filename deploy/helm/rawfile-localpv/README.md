@@ -43,6 +43,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | controller.externalResizer.resources | object | `{}` | Sets compute resources for external-resizer container |
 | controller.grpcWorkers | int | `10` | Number of gRPC workers for controller component |
 | controller.nodeSelector | string | `nil` | nodeSelector for controller component |
+| controller.podLabels | object | `{}` | Labels for the controller pods |
 | controller.priorityClassName | string | `"system-cluster-critical"` | priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default |
 | controller.resources | object | `{}` | Sets compute resources for controller component |
 | controller.tolerations | list | `[{"effect":"NoSchedule","key":"node-role.kubernetes.io/control-plane","operator":"Exists"},{"effect":"NoSchedule","key":"node-role.kubernetes.io/master","operator":"Exists"}]` | Tolerations for controller component |
