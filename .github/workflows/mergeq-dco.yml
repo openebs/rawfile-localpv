@@ -1,0 +1,10 @@
+name: Staging DCO
+on:
+  merge_group:
+
+jobs:
+  DCO:
+    runs-on: ubuntu-latest
+    steps:
+      - name: DCO
+        run: echo "DCO"

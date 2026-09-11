@@ -1,0 +1,202 @@
+# MIT License
+#
+# Copyright (c) 2024 CARIAD SE
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+name: 'Merge Queue CI Check Skipper'
+description: 'Outputs `skip-check` as `true` if this is running as part of merge queue checks and the same checks have already been executed in the PR itself.'
+inputs:
+  secret:
+    description: 'Optional GitHub token used to read branch protection and check runs. Defaults to github.token, which is sufficient.'
+    required: false
+outputs:
+  skip-check:
+    description: "Skip Check (boolean)"
+    value: ${{ steps.passed-checks.outputs.can-skip-checks }}
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Extract PR Number and Commit ID
+      id: extract-pr-info
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const githubRef = process.env.GITHUB_REF;
+          const regex = /^refs\/heads\/gh-readonly-queue\/([a-zA-Z0-9.\-_\/]+)\/pr-(\d+)-([a-f0-9]+)$/;
+
+          if (regex.test(githubRef)) {
+            const [, targetBranchName, prNumber, commitId] = githubRef.match(regex);
+            core.setOutput('targetBranchName', targetBranchName);
+            core.setOutput('prNumber', prNumber);
+            core.setOutput('commitId', commitId);
+            core.exportVariable('CAN_SKIP_CHECKS', 'true');
+          } else {
+            console.log(`GITHUB_REF is not a merge queue ref, setting CAN_SKIP_CHECKS to false: ${githubRef}`);
+            core.exportVariable('CAN_SKIP_CHECKS', 'false');
+          }
+
+    - name: Print PR Number and Target Commit ID
+      if: env.CAN_SKIP_CHECKS != 'false'
+      shell: bash
+      env:
+        TARGET_BRANCH: ${{ steps.extract-pr-info.outputs.targetBranchName }}
+        PR_NUMBER: ${{ steps.extract-pr-info.outputs.prNumber }}
+        COMMIT_ID: ${{ steps.extract-pr-info.outputs.commitId }}
+      run: |
+        echo "Target Branch Name: $TARGET_BRANCH"
+        echo "PR Number: $PR_NUMBER"
+        echo "Target Commit ID: $COMMIT_ID"
+
+    - name: Check if merge queue entry was enqueued as head of the queue
+      if: env.CAN_SKIP_CHECKS != 'false'
+      shell: bash
+      env:
+        TARGET_BRANCH: ${{ steps.extract-pr-info.outputs.targetBranchName }}
+        COMMIT_ID: ${{ steps.extract-pr-info.outputs.commitId }}
+      run: |
+        targetBranchHead=$(git rev-parse "origin/$TARGET_BRANCH")
+        if [[ "$targetBranchHead" != "$COMMIT_ID" ]]; then
+          echo "'$TARGET_BRANCH' branch commit ID does not match PR commit ID. This Merge Queue run was not head of the queue when it was enqueued. Setting CAN_SKIP_CHECKS to false."
+          echo "CAN_SKIP_CHECKS=false" >> "$GITHUB_ENV"
+        else
+          echo "This merge queue entry is targeting '$TARGET_BRANCH' directly."
+        fi
+
+    # The PR head is identified by SHA rather than branch name so that PRs from forks
+    # (whose branch does not exist in this repository) are handled too.
+    - name: Get PR Head
+      id: get-pr-head
+      if: env.CAN_SKIP_CHECKS != 'false'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ steps.extract-pr-info.outputs.prNumber }}
+      run: |
+        prHead=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid')
+        echo "prHead=$prHead" >> "$GITHUB_OUTPUT"
+
+    - name: Print PR Head
+      if: env.CAN_SKIP_CHECKS != 'false'
+      shell: bash
+      env:
+        PR_HEAD: ${{ steps.get-pr-head.outputs.prHead }}
+      run: |
+        echo "PR Head: $PR_HEAD"
+
+    - name: Check if PR head contains the Merge Queue target commit ID
+      if: env.CAN_SKIP_CHECKS != 'false'
+      shell: bash
+      env:
+        TARGET_BRANCH: ${{ steps.extract-pr-info.outputs.targetBranchName }}
+        COMMIT_ID: ${{ steps.extract-pr-info.outputs.commitId }}
+        PR_HEAD: ${{ steps.get-pr-head.outputs.prHead }}
+      run: |
+        # The PR head commit is reachable from the merge queue commit (its second parent).
+        if git merge-base --is-ancestor "$COMMIT_ID" "$PR_HEAD"; then
+          echo "PR head '$PR_HEAD' contains commit '$COMMIT_ID'. It is up to date with $TARGET_BRANCH."
+        else
+          echo "PR head '$PR_HEAD' does not contain commit '$COMMIT_ID'. It is outdated. Setting CAN_SKIP_CHECKS to false."
+          echo "CAN_SKIP_CHECKS=false" >> "$GITHUB_ENV"
+        fi
+
+    - name: Compare PR Head with Current Branch
+      if: env.CAN_SKIP_CHECKS != 'false'
+      shell: bash
+      env:
+        PR_HEAD: ${{ steps.get-pr-head.outputs.prHead }}
+      run: |
+        if git diff --quiet "$PR_HEAD"; then
+          echo "No differences found. PR head is identical with this merge queue branch."
+        else
+          echo "Differences detected. PR branch has been updated after PR was added to merge queue. Setting CAN_SKIP_CHECKS to false."
+          echo "CAN_SKIP_CHECKS=false" >> "$GITHUB_ENV"
+        fi
+
+    - name: Compute/publish skip result
+      id: passed-checks
+      uses: actions/github-script@v7
+      env:
+        TARGET_BRANCH: ${{ steps.extract-pr-info.outputs.targetBranchName }}
+        PR_HEAD: ${{ steps.get-pr-head.outputs.prHead }}
+      with:
+        github-token: ${{ inputs.secret != '' && inputs.secret || github.token }}
+        script: |
+          if (process.env.CAN_SKIP_CHECKS !== "true") {
+            console.log("Setting CAN_SKIP_CHECKS to false");
+            core.setOutput("can-skip-checks", false);
+            return;
+          }
+
+          const owner = context.repo.owner;
+          const repo = context.repo.repo;
+          const branch = process.env.TARGET_BRANCH;
+
+          // Required checks from classic branch protection and rulesets. Both endpoints are
+          // readable with the default token; no administration:read is needed.
+          const required = new Set();
+          const { data: branchInfo } = await github.rest.repos.getBranch({ owner, repo, branch });
+          for (const c of branchInfo.protection?.required_status_checks?.checks ?? []) required.add(c.context);
+          for (const c of branchInfo.protection?.required_status_checks?.contexts ?? []) required.add(c);
+          const { data: rules } = await github.request('GET /repos/{owner}/{repo}/rules/branches/{branch}', { owner, repo, branch });
+          for (const rule of rules) {
+            if (rule.type !== 'required_status_checks') continue;
+            for (const c of rule.parameters?.required_status_checks ?? []) required.add(c.context);
+          }
+
+          const requiredCheckNames = [...required];
+          console.log(`requiredCheckNames = ${requiredCheckNames}`);
+
+          if (requiredCheckNames.length === 0) {
+            console.log(`No required status checks configured for '${branch}'. Cannot confirm the PR checks passed. Setting CAN_SKIP_CHECKS to false.`);
+            core.setOutput("can-skip-checks", false);
+            return;
+          }
+
+          const checkRuns = await github.paginate(github.rest.checks.listForRef, {
+            owner,
+            repo,
+            ref: process.env.PR_HEAD,
+            per_page: 100,
+          });
+
+          console.log(`checks.check_runs = ${checkRuns.map(check => `${check.status},${check.conclusion},${check.name};`)}`);
+          // Mergify reports its merge protections as `neutral`, which GitHub branch
+          // protection treats as passing. Accept that for this check only.
+          const neutralOk = new Set(["Mergify Merge Protections"]);
+          const successfulCheckNames = new Set(checkRuns
+            .filter(check => check.status === "completed" &&
+              (check.conclusion === "success" || (check.conclusion === "neutral" && neutralOk.has(check.name))))
+            .map(check => check.name));
+          console.log(`successfulCheckNames = ${[...successfulCheckNames]}`);
+
+          const missingChecks = requiredCheckNames.filter(checkName => !successfulCheckNames.has(checkName));
+
+          if (missingChecks.length > 0) {
+            console.log(`Required checks not passed, cannot skip merge queue checks. Setting CAN_SKIP_CHECKS to false. Missing checks: ${missingChecks.join(', ')}`);
+            core.setOutput("can-skip-checks", false);
+          } else {
+            console.log("No missing checks. Setting CAN_SKIP_CHECKS to true.");
+            core.setOutput("can-skip-checks", true);
+          }

@@ -2,6 +2,7 @@ name: CI
 on:
   workflow_call:
   pull_request:
+  merge_group:
   push:
     branches:
       - develop
@@ -10,31 +11,60 @@ on:
 jobs:
   changes:
     uses: ./.github/workflows/docs-only.yml
+  # In the merge queue, skip CI when the PR head is identical to the queued
+  # merge commit and all required checks already passed on the PR.
+  skip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+    outputs:
+      skip-check: ${{ steps.skipper.outputs.skip-check }}
+    steps:
+      - uses: actions/checkout@v6
+        if: github.event_name == 'merge_group'
+      - id: skipper
+        if: github.event_name == 'merge_group'
+        uses: ./.github/actions/merge-q-skip
   helm-ci:
-    needs: changes
-    if: ${{ github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false' }}
+    needs:
+      - changes
+      - skip
+    if: ${{ needs.skip.outputs.skip-check != 'true' && (github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false') }}
     uses: ./.github/workflows/helm-chart.yml
   trivy:
-    needs: changes
+    needs:
+      - changes
+      - skip
     permissions:
       security-events: write
       actions: read
       contents: read
-    if: ${{ needs.changes.outputs.docs-only == 'false' }}
+    if: ${{ needs.skip.outputs.skip-check != 'true' && needs.changes.outputs.docs-only == 'false' }}
     uses: ./.github/workflows/trivy.yml
   k8s-ci:
     permissions:
       checks: write
       pull-requests: write
-    needs: changes
-    if: ${{ github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false' }}
+    needs:
+      - changes
+      - skip
+    if: ${{ needs.skip.outputs.skip-check != 'true' && (github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false') }}
     uses: ./.github/workflows/k8s.yml
   ci:
-    if: ${{ success() || needs.changes.outputs.docs-only == 'true' }}
+    # Always run so this check reports an explicit success/failure: GitHub treats
+    # a skipped required check as passing, so this must never be skipped.
+    if: ${{ always() }}
     needs:
+      - skip
       - helm-ci
       - k8s-ci
     runs-on: ubuntu-latest
     steps:
       - name: CI succeeded
-        run: exit 0
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            exit 1
+          fi
+          exit 0
