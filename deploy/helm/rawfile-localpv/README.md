@@ -30,7 +30,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | analytics.gaDnsNameservers | string | `"8.8.8.8:53"` | Comma-separated DNS nameservers (each optionally `ip:port`) used to resolve the analytics endpoint. Leave empty to use the cluster's default resolver (CoreDNS). |
 | auth.enabled | bool | `true` | Enables authentication for internal gRPC server |
 | auth.secretName | string | `""` | If managing secrets outside the chart, use this to reference the secret name; otherwise, leave empty. |
-| auth.token | string | `""` | Sets authentication token for internal gRPC server, will generate one if nothing provided |
+| auth.token | string | `""` | Sets authentication token for internal gRPC server, will generate one if nothing provided. Must be base64-encoded if provided |
 | capabilities.apiServer.enabled | bool | `true` | Sets whether API Server has been enabled or not |
 | capabilities.resize.enabled | bool | `true` | Sets whether volume resizing is enabled. If disabled, don't deploy controller component |
 | capabilities.snapshots.enabled | bool | `true` | Sets whether taking volume snapshots is enabled. Required for volume cloning. Runs externalSnapshotter and snapshotController containers. |
@@ -124,3 +124,4 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | storageClasses[0].storagePool | string | `""` | Sets storage pool used for volumes |
 | storageClasses[0].thinProvision | string | `""` | Enables thin provisioning of volumes |
 | storageClasses[0].volumeBindingMode | string | `"WaitForFirstConsumer"` | Sets volumeBindingMode for StorageClass |
+| tls.insecureSkipVerify | bool | `false` | Skips strict x509 TLS verification when the driver's Kubernetes client talks to the API server if true. Dangerous: do not set to true if you are not sure of the implications |

@@ -45,6 +45,8 @@ spec:
               value: {{ .Values.logLevel }}
             - name: LOG_FORMAT
               value: {{ .Values.logFormat }}
+            - name: TLS_INSECURE_SKIP_VERIFY
+              value: "{{ .Values.tls.insecureSkipVerify }}"
             - name: GA_ENABLED
               {{- if kindIs "bool" .Values.global.analytics.enabled }}
               value: "{{ .Values.global.analytics.enabled }}"
@@ -104,6 +106,8 @@ spec:
               value: {{ .Values.logLevel }}
             - name: LOG_FORMAT
               value: {{ .Values.logFormat }}
+            - name: TLS_INSECURE_SKIP_VERIFY
+              value: "{{ .Values.tls.insecureSkipVerify }}"
             - name: CSI_DRIVER__PLUGIN_TYPE
               value: controller
             - name: CSI_DRIVER__GRPC_WORKERS
