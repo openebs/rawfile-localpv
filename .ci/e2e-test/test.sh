@@ -31,19 +31,41 @@ if [ -z "$KUBECONFIG" ]; then
 fi
 
 # Taken from: https://kubernetes.io/blog/2020/01/08/testing-of-csi-drivers/
-./ginkgo -p -v \
-	-focus='External.Storage' \
-	-skip='\[Feature:|\[Disruptive\]|\[Serial\]' \
-	--fail-fast \
-	--junit-report="${JUNIT_REPORT_DIR}/basic.xml" \
-	./e2e.test \
-	-- \
-	-storage.testdriver=rawfile-driver.yaml
+run_basic() {
+	./ginkgo -p -v \
+		-focus='External.Storage' \
+		-skip='\[Feature:|\[Disruptive\]|\[Serial\]' \
+		--fail-fast \
+		--junit-report="${JUNIT_REPORT_DIR}/basic.xml" \
+		./e2e.test \
+		-- \
+		-storage.testdriver=rawfile-driver.yaml
+}
 
-./ginkgo -v \
-	-focus='External.Storage.*(\[Feature:|\[Disruptive\]|\[Serial\])' \
-	--fail-fast \
-	--junit-report="${JUNIT_REPORT_DIR}/advanced.xml" \
-	./e2e.test \
-	-- \
-	-storage.testdriver=rawfile-driver.yaml
+run_advanced() {
+	./ginkgo -v \
+		-focus='External.Storage.*(\[Feature:|\[Disruptive\]|\[Serial\])' \
+		--fail-fast \
+		--junit-report="${JUNIT_REPORT_DIR}/advanced.xml" \
+		./e2e.test \
+		-- \
+		-storage.testdriver=rawfile-driver.yaml
+}
+
+# Usage: test.sh [basic|advanced]
+# Without arguments both suites are run.
+case "${1:-all}" in
+basic)
+	run_basic
+	;;
+advanced)
+	run_advanced
+	;;
+all)
+	run_basic
+	run_advanced
+	;;
+*)
+	die "Unknown e2e suite: $1 (expected basic or advanced)"
+	;;
+esac

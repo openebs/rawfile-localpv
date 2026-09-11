@@ -180,6 +180,10 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     if: ${{ !inputs.release-check }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [basic, advanced]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -240,13 +244,13 @@ jobs:
           CI_IMAGE_NS: "${{ inputs.namespace }}"
         run: nix-shell --run ".ci/e2e-test/setup.sh"
       - name: Run K8s tests
-        run: nix-shell --run ".ci/e2e-test/test.sh"
+        run: nix-shell --run ".ci/e2e-test/test.sh ${{ matrix.suite }}"
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v6
         if: success() || failure()
         with:
           include_passed: "true"
-          check_name: "E2E Test Report"
+          check_name: "E2E Test Report (${{ matrix.suite }})"
           report_paths: "/tmp/ginkgo-junit/*.xml"
           comment: "false"
           pr_id: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || '' }}
@@ -267,7 +271,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: k8s-dump
+          name: k8s-dump-${{ matrix.suite }}
           path: dump
       # - name: Setup tmate session
       #   if: ${{ failure() }}
