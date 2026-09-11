@@ -182,8 +182,12 @@ runs:
           });
 
           console.log(`checks.check_runs = ${checkRuns.map(check => `${check.status},${check.conclusion},${check.name};`)}`);
+          // Mergify reports its merge protections as `neutral`, which GitHub branch
+          // protection treats as passing. Accept that for this check only.
+          const neutralOk = new Set(["Mergify Merge Protections"]);
           const successfulCheckNames = new Set(checkRuns
-            .filter(check => check.status === "completed" && check.conclusion === "success")
+            .filter(check => check.status === "completed" &&
+              (check.conclusion === "success" || (check.conclusion === "neutral" && neutralOk.has(check.name))))
             .map(check => check.name));
           console.log(`successfulCheckNames = ${[...successfulCheckNames]}`);
 

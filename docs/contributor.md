@@ -25,6 +25,7 @@ Rawfile is a sub-project of [OpenEBS][github-openebs], so don't forget to checko
   - [CI](#ci)
     - [GitHub Actions](#github-actions)
     - [🚀 Mergify IO Commands](#-mergify-io-commands)
+    - [Merge Queue](#merge-queue)
 
 ## Prerequisites
 
@@ -558,6 +559,16 @@ Use these commands directly in your GitHub pull request comments to automate act
 > We're still getting familiar with mergify ourselves, so if you have any improvements or suggestion
 > on how we can leverage it better, we'd be delighted to hear about it!
 
+### Merge Queue
+
+Mergify cannot rebase PRs from forks on behalf of a user, so those are merged through the
+[GitHub merge queue][merge-queue] instead, which rebuilds the PR on top of the target branch and re-runs CI
+before merging.
+
+To avoid running the full test suite twice, the queue run is skipped when the PR is at the head of the queue,
+its tree is identical to the queued merge commit and all required checks already passed on the PR itself
+(see `.github/actions/merge-q-skip`). Otherwise, for example when another PR is queued ahead, CI runs again.
+
 [nix]: https://nixos.org/
 [kind]: https://kind.sigs.k8s.io/
 [nix-shell]: https://nixos.org/manual/nix/unstable/command-ref/new-cli/nix3-shell.html
@@ -568,6 +579,7 @@ Use these commands directly in your GitHub pull request comments to automate act
 [github-openebs]: https://github.com/openebs
 [github-actions]: https://docs.github.com/en/actions
 [mergify]: https://mergify.com/
+[merge-queue]: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue
 [pre-commit]: https://pre-commit.com/
 [minikube]: https://minikube.sigs.k8s.io/docs/
 [K3d]: https://k3d.io/stable/
