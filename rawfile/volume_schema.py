@@ -62,7 +62,7 @@ def migrate_7_to_8(data: dict) -> dict:
         data.get("storage_pool", config.csi_driver.default_pool), data["volume_id"]
     )
     img_file = data.get("img_file", None)
-    if img_file.startswith("/data"):
+    if img_file and img_file.startswith("/data"):
         img_file = vol_path / "disk.img"
         if not img_file.exists():
             logger.warning(
@@ -72,9 +72,9 @@ def migrate_7_to_8(data: dict) -> dict:
                 volume_id=data["volume_id"],
             )
             return data
-        data["img_file"] = img_file
+        data["img_file"] = img_file.as_posix()
         snapshots_dir = Path(vol_path.joinpath("snapshots"))
-        data["snapshots_dir"] = snapshots_dir
+        data["snapshots_dir"] = snapshots_dir.as_posix()
         snapshots_dir.mkdir(exist_ok=True, parents=True)
         snapshots_dir.joinpath("temp").mkdir(exist_ok=True, parents=True)
     return data
