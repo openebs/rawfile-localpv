@@ -76,13 +76,13 @@ class VolumeManager:
             },
         )
         try:
-            if source_type == VolumeSource.snapshot:
+            if source_type == VolumeSource.snapshot and source_id:
                 source_volume_id, snapshot_name = source_id.rsplit("/", 1)
-            elif source_type == VolumeSource.volume:
+            elif source_type == VolumeSource.volume and source_id:
                 source_volume_id = source_id
                 snapshot_name = f"{volume_id}-clone-source"
                 source_volume_id = source_id
-                source_meta = metadata(source_id)
+                source_meta = metadata_or(source_id)
                 if not source_meta.get("ready", False):
                     raise VolumeSourceIsNotReady(
                         volume_id, source_volume_id, snapshot_name
