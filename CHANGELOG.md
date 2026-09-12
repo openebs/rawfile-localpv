@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Remove stacktrace printing when test fails
     - Add debug logs to the test
     - Add new fields to log
+- Added migration for img_file to migrate volume paths in metadata from `/data` to newer layout
 
 ### Changed ♻️
 
