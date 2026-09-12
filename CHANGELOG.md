@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed 🐛
 
+- Added migration for img_file to migrate volume paths in metadata from `/data` to newer layout
+
 ### Changed ♻️
 
 ### Removed 🗑️ ⚠️

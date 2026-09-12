@@ -1,7 +1,7 @@
 import sys
 from typing import Final
 
-LATEST_SCHEMA_VERSION: Final[int] = 7
+LATEST_SCHEMA_VERSION: Final[int] = 8
 
 
 def migrate_0_to_1(data: dict) -> dict:
@@ -47,6 +47,36 @@ def migrate_5_to_6(data: dict) -> dict:
 def migrate_6_to_7(data: dict) -> dict:
     data["schema_version"] = 7
     data.pop("reflink_attached", None)
+    return data
+
+
+def migrate_7_to_8(data: dict) -> dict:
+    from pathlib import Path
+
+    from config import config
+    from utils.logs import logger
+    from utils.volume_manager import manager as volume_manager
+
+    data["schema_version"] = 8
+    vol_path = volume_manager.get_volume_path(
+        data.get("storage_pool", config.csi_driver.default_pool), data["volume_id"]
+    )
+    img_file = data.get("img_file", None)
+    if img_file.startswith("/data"):
+        img_file = vol_path / "disk.img"
+        if not img_file.exists():
+            logger.warning(
+                "img_file does not exist, requires manual checks, or already migrated",
+                img_file=img_file,
+                vol_path=vol_path,
+                volume_id=data["volume_id"],
+            )
+            return data
+        data["img_file"] = img_file
+        snapshots_dir = Path(vol_path.joinpath("snapshots"))
+        data["snapshots_dir"] = snapshots_dir
+        snapshots_dir.mkdir(exist_ok=True, parents=True)
+        snapshots_dir.joinpath("temp").mkdir(exist_ok=True, parents=True)
     return data
 
 
