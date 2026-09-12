@@ -56,10 +56,10 @@ def snapshots_dir(volume_id: str, temporary: bool = False):
     meta = metadata(volume_id)
     if temporary:
         return Path(
-            f"{volume_manager._get_volume_path(meta.get('storage_pool', config.csi_driver.default_pool), volume_id)}/snapshots/temp"
+            f"{volume_manager.get_volume_path(meta.get('storage_pool', config.csi_driver.default_pool), volume_id)}/snapshots/temp"
         )
     return Path(
-        f"{volume_manager._get_volume_path(meta.get('storage_pool', config.csi_driver.default_pool), volume_id)}/snapshots"
+        f"{volume_manager.get_volume_path(meta.get('storage_pool', config.csi_driver.default_pool), volume_id)}/snapshots"
     )
 
 
@@ -102,7 +102,7 @@ def update_permissions(volume_id: str, storage_pool: str) -> None:
 
     from utils.volume_manager import manager as volume_manager
 
-    _img_dir = volume_manager._get_volume_path(storage_pool, volume_id)
+    _img_dir = volume_manager.get_volume_path(storage_pool, volume_id)
     if not _img_dir.exists():
         return
     _img_dir.chmod(D_PERMS)

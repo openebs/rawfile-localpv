@@ -45,7 +45,7 @@ class VolumeStats(TypedDict):
 
 
 class VolumeManager:
-    def _get_volume_path(self, storage_pool: str, volume_id: str) -> Path:
+    def get_volume_path(self, storage_pool: str, volume_id: str) -> Path:
         return Path(f"{config.csi_driver.storage_pools[storage_pool].path}/{volume_id}")
 
     def create_volume(
@@ -63,7 +63,7 @@ class VolumeManager:
             raise SourceTypeRequired(source_id)
         snapshot_name = None
         source_volume_id = None
-        img_data_dir = self._get_volume_path(storage_pool, volume_id)
+        img_data_dir = self.get_volume_path(storage_pool, volume_id)
         img_data_dir.mkdir(mode=consts.D_PERMS, exist_ok=True)
         meta_dir(volume_id).mkdir(exist_ok=True, parents=True)
         patch_metadata(
@@ -200,7 +200,7 @@ class VolumeManager:
                 file.unlink(missing_ok=True)
             rmdir(meta_dir(volume_id))
             rmdir(
-                self._get_volume_path(
+                self.get_volume_path(
                     meta.get("storage_pool", config.csi_driver.default_pool), volume_id
                 )
             )
@@ -220,7 +220,7 @@ class VolumeManager:
 
     def delete_volume(self, volume_id):
         meta = metadata_or(volume_id)
-        img_data_dir = self._get_volume_path(
+        img_data_dir = self.get_volume_path(
             meta.get("storage_pool", config.csi_driver.default_pool), volume_id
         )
         if not img_data_dir.exists():
@@ -342,7 +342,7 @@ class VolumeManager:
 
     def is_attached(self, volume_id):
         meta = metadata_or(volume_id)
-        vol_img_dir = self._get_volume_path(meta["storage_pool"], volume_id)
+        vol_img_dir = self.get_volume_path(meta["storage_pool"], volume_id)
         if not vol_img_dir.exists():
             return False
 
