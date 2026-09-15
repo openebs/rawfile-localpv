@@ -114,6 +114,8 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Generate openapi spec
+        env:
+          PROVISIONER_VERSION: ${{ needs.needs-release.outputs.version }}
         run: poetry run rawfile/rawfile.py --namespace ci export-openapi --output openapi.json
 
       - name: Upload openapi spec
