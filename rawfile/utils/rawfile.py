@@ -227,15 +227,24 @@ def is_cow_supported(source_dir: Path, destination_dir: Path) -> bool:
     """
     test_file = source_dir / ".cow_test_file"
     clone_file = destination_dir / ".cow_test_clone"
+    logger.debug("testing COW support", source=source_dir, destination=destination_dir)
     try:
         with open(test_file, "wb") as f:
-            f.write(b"COW Support Test")
+            _ = f.write(b"COW Support Test")
             f.flush()
             os.fsync(f.fileno())
         run(f"cp --reflink=always {test_file} {clone_file}")
+        logger.debug(
+            "COW test succeeded", source=source_dir, destination=destination_dir
+        )
         return True
     except Exception as e:
-        logger.opt(exception=e).warning("COW test failed")
+        logger.warning(
+            "COW test failed",
+            error=str(e),
+            source=source_dir,
+            destination=destination_dir,
+        )
         return False
     finally:
         be_absent(test_file)

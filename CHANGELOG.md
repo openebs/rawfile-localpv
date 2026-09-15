@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed 🐛
 
+- Improved CoW test logs
+    - Remove stacktrace printing when test fails
+    - Add debug logs to the test
+    - Add new fields to log
+
 ### Changed ♻️
 
 - Refactored StorageClass Parameter normalizer to be more safe and reliable
