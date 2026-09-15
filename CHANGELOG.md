@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Remove stacktrace printing when test fails
     - Add debug logs to the test
     - Add new fields to log
+- Added migration for img_file to migrate volume paths in metadata from `/data` to newer layout
 
 ### Changed ♻️
 
@@ -265,6 +266,7 @@ Tests:
 
 ### Known Issues 🚫
 
+- Some operations may fail after switching to storage pools, It will be fixed after upgrade to v0.15.x
 - ReadOnly attribute in PVC template not fully handled
 - When using thin provisioning, user must specify the format options preventing `mkfs` from discarding blocks (`-K` for xfs/btrfs, `-E nodiscard` for ext4). Also see this [issue](https://github.com/openebs/rawfile-localpv/issues/295)
 - Prometheus metrics use capacity sum across all the pools, instead of values per pool. This may lead to confusing results. Also see this [issue](https://github.com/openebs/rawfile-localpv/issues/294)
