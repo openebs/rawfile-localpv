@@ -13,10 +13,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed 🐛
 
+### Changed ♻️
+
+### Removed 🗑️ ⚠️
+
+### Internal 🔧
+
+### Known Issues 🚫
+
+- ReadOnly attribute in PVC template not fully handled
+- When using thin provisioning, user must specify the format options preventing `mkfs` from discarding blocks (`-K` for xfs/btrfs, `-E nodiscard` for ext4). Also see this [issue](https://github.com/openebs/rawfile-localpv/issues/295)
+- For ext4, volumes available space might be smaller than intended due to defaulting to reserve 5% of the blocks for privileged users. This can be circumvented via format options (`-m 0`)
+
+---
+
+## [v0.15.3] - 2026-09-16
+
+### Added ✨
+
+- Allow for node.podLabels and controller.podLabels to be set in the Helm Chart's values.yaml file
+  - This will allow users to configure Pod Labels that do not necessarily need to be Selector Labels
+
+### Fixed 🐛
+
 - Improved CoW test logs
-    - Remove stacktrace printing when test fails
-    - Add debug logs to the test
-    - Add new fields to log
+  - Remove stacktrace printing when test fails
+  - Add debug logs to the test
+  - Add new fields to log
 - Added migration for img_file to migrate volume paths in metadata from `/data` to newer layout
 
 ### Changed ♻️

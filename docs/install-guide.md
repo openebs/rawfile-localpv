@@ -19,7 +19,8 @@ You can create one or more storage classes using chart, by default we have a sto
 
 ## Upgrade
 
-Before upgrading please read through the [Changelog](../CHANGELOG.md) as well as this document and follow any suggested recommendations to ensure a smooth upgrade
+Before upgrading please read through the [Changelog](../CHANGELOG.md) as well as this document and follow any suggested recommendations to ensure a smooth .
+We recommend you check the release nodes and the upgrade guide below for *all* releases between *and* including the version you want to upgrade to.
 
 > [!WARNING]
 Don't blind upgrade to a potentially breaking version as additional steps may be required
@@ -36,11 +37,14 @@ This version introduces the following breaking changes:
 - ⚠️ Removed deprecated `node.dataDirPath` and `reservedCapacity` in favor of storage pool specific values (See [Upgrade](#upgrading-to-v0130) for more details) to avoid data unavailability after upgrade \
   If you haven't switched to storage pools in v0.13.x, a default pool named "data-dir" has been already created for you, and you should define it in the values and make it default, to make sure your volumes are migrated correctly
   For example if you had:
+
   ```yaml
   node:
     dataDirPath: /var/csi/rawfile # This is the default value
   ```
+
   It should be changed to:
+
   ```yaml
   defaultPool: data-dir
   node:
@@ -48,6 +52,7 @@ This version introduces the following breaking changes:
       data-dir:
         path: /var/csi/rawfile
   ```
+
   After first start, you can change the default pool. \
   To migrate your volumes to the new pool, you can define a new storage class with the newer pool, then clone your volumes to the new pool and rename PVCs to use newer PVs (By removing PVCs while keeping PVs). \
   This will ensure your volumes are migrated correctly. After that, you can delete the old storage class and the default pool.
@@ -86,11 +91,14 @@ This version introduces the following breaking changes:
   Since the default storage pool path is different from the default `node.dataDirPath`, Before upgrading change your default pool path to the value of the `node.dataDirPath` (It's `/var/csi/rawfile` by default) \
   By default a pool named default will be created you can change its path to the value of `node.dataDirPath` or customize pool configurations, after upgrade all of the Volumes inside will point to the default pool \
   For example if you had:
+
   ```yaml
   node:
     dataDirPath: /var/csi/rawfile
   ```
+
   It should be changed to:
+
   ```yaml
   defaultPool: default
   node:
@@ -98,6 +106,7 @@ This version introduces the following breaking changes:
       default:
         path: /var/csi/rawfile
   ```
+
   This release has a known issue where after upgrade some operations may fail after switching to storage pools, And it will get fixed after upgrading to v0.15.x
 
 - Capacity calculations account only for actual allocated blocks as opposed to logical size of the files. This changes the calculations for thin (i.e. sparse) backing files and enables overprovisioning \
