@@ -22,7 +22,7 @@ jobs:
     outputs:
       skip-check: ${{ steps.skipper.outputs.skip-check }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: github.event_name == 'merge_group'
       - id: skipper
         if: github.event_name == 'merge_group'
