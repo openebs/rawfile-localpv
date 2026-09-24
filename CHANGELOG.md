@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal 🔧
 
+- Add Upgrade path inforcement infra for the Helm chart
+
 ### Known Issues 🚫
 
 - ReadOnly attribute in PVC template not fully handled
