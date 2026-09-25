@@ -45,3 +45,24 @@ build-image-tag() {
 build-image-uri() {
 	printf "%s:%s" "${CI_IMAGE_NAME}" "$(build-image-tag $1)"
 }
+
+# FIPS base image (Dockerfile.fips-base). Its tag is a content hash of the
+# inputs that affect it, so it only needs rebuilding when those change.
+export CI_FIPS_BASE_IMAGE_NAME="${CI_REGISTRY}/${CI_IMAGE_NS}/rawfile-localpv-base"
+
+fips-base-grpcio-version() {
+	awk '/^name = "grpcio"$/ { getline; sub(/^version = "/, ""); sub(/"$/, ""); print; exit }' \
+		"$(dirname "${BASH_SOURCE[0]}")/../poetry.lock"
+}
+
+fips-base-image-tag() {
+	local root
+	root="$(dirname "${BASH_SOURCE[0]}")/.."
+	local hash
+	hash="$( { cat "$root/Dockerfile.fips-base"; echo "grpcio=$(fips-base-grpcio-version)"; } | sha256sum | cut -c1-12)"
+	printf "fips-%s" "$hash"
+}
+
+fips-base-image-uri() {
+	printf "%s:%s" "${CI_FIPS_BASE_IMAGE_NAME}" "$(fips-base-image-tag)"
+}

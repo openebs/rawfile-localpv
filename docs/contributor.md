@@ -90,6 +90,14 @@ You can keep using your favorite shell by running it, example: `nix-shell --run 
 ## Building the images
 
 We have a `Dockerfile` containing the instructions required for building the rawfile container images.
+It builds on top of a separately published FIPS base image (`Dockerfile.fips-base`,
+`openebs/rawfile-localpv-base:fips-<hash>`) which carries the slow, rarely-changing pieces: the OpenSSL
+FIPS provider/config and a `grpcio` wheel built against the system OpenSSL. The application build simply
+pulls that image, so it pays none of the FIPS build cost. The base tag is a content hash of
+`Dockerfile.fips-base` and the locked `grpcio` version, pinned as `ARG BASE_IMAGE` in `Dockerfile`; CI
+fails if the pin is stale. When those inputs change, the `FIPS Base Image` workflow publishes the new tag
+on merge, and you bump the pin (`.ci/build-fips-base.sh tag` prints it; `.ci/build-fips-base.sh build`
+builds it locally if you need it before it is published).
 To make things easier, we provide a script which sets up any necessary environment variables, call out the
 docker commands, etc...
 

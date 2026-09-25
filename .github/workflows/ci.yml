@@ -33,6 +33,17 @@ jobs:
       - skip
     if: ${{ needs.skip.outputs.skip-check != 'true' && (github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false') }}
     uses: ./.github/workflows/helm-chart.yml
+  # The application Dockerfile pins a content-hashed tag of the FIPS base image.
+  # Fail fast if Dockerfile.fips-base / grpcio changed without bumping the pin.
+  fips-base-pin:
+    needs:
+      - changes
+      - skip
+    if: ${{ needs.skip.outputs.skip-check != 'true' && (github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: .ci/build-fips-base.sh check
   trivy:
     needs:
       - changes
@@ -59,6 +70,7 @@ jobs:
     needs:
       - skip
       - helm-ci
+      - fips-base-pin
       - k8s-ci
     runs-on: ubuntu-latest
     steps:

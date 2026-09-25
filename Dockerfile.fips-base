@@ -1,0 +1,131 @@
+# FIPS base image for rawfile-localpv.
+#
+# This image contains the slow, rarely-changing pieces of the FIPS build so the
+# application image can be rebuilt quickly:
+#   * the FIPS 140-3 validated OpenSSL FIPS provider (fips.so) + OpenSSL config
+#     that puts the system libcrypto into FIPS mode
+#   * a grpcio wheel built from source against the system OpenSSL (grpcio's
+#     upstream wheels bundle BoringSSL, which is not FIPS-validated)
+#
+# Published separately by .github/workflows/fips-base-image.yml (or manually via
+# `.ci/build-fips-base.sh build`). The tag is a hash of this file plus the locked
+# grpcio version, and the application Dockerfile pins it via `ARG BASE_IMAGE`.
+
+FROM python:3.14-slim-trixie AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y \
+    btrfs-progs \
+    libbtrfsutil-dev \
+    e2fsprogs \
+    xfsprogs \
+    openssl \
+    gcc
+
+# Build the FIPS 140-3 validated OpenSSL FIPS provider (fips.so).
+# OpenSSL 3.0.9 is the source of the validated module (CMVP cert. #4282). The
+# provider is loadable by any OpenSSL 3.x libcrypto, including the one shipped
+# in Debian trixie that the python image links against.
+FROM base AS fips-builder
+ARG OPENSSL_FIPS_VERSION=3.0.9
+ARG OPENSSL_FIPS_SHA256=eb1ab04781474360f77c318ab89d8c5a03abc38e63d65a603cabbf1b00a1dc90
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+    curl \
+    ca-certificates \
+    build-essential \
+    perl
+WORKDIR /build
+RUN curl -sSLo openssl.tar.gz \
+    "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_FIPS_VERSION}/openssl-${OPENSSL_FIPS_VERSION}.tar.gz" && \
+    echo "${OPENSSL_FIPS_SHA256}  openssl.tar.gz" | sha256sum -c - && \
+    tar -xzf openssl.tar.gz --strip-components=1 && \
+    ./Configure enable-fips && \
+    make -j"$(nproc)" build_modules && \
+    install -D -m 0644 providers/fips.so /out/fips.so
+
+# Build grpcio from source against the system OpenSSL so gRPC TLS goes through
+# the same FIPS-enforced libcrypto as everything else.
+FROM base AS grpcio-builder
+ARG GRPCIO_VERSION
+RUN test -n "$GRPCIO_VERSION" || { echo "GRPCIO_VERSION build-arg is required" >&2; exit 1; }
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev
+ENV GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1 \
+    GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on
+RUN pip wheel --no-binary grpcio --no-deps --wheel-dir /wheels "grpcio==${GRPCIO_VERSION}"
+# The source build keeps debug info (~190MB); strip it and repack the wheel so
+# RECORD hashes stay valid.
+RUN pip install wheel && \
+    cd /wheels && wheel unpack grpcio-*.whl -d unpacked && rm grpcio-*.whl && \
+    find unpacked -name '*.so' -exec strip --strip-debug {} + && \
+    wheel pack unpacked/grpcio-* -d /wheels && rm -rf unpacked
+
+FROM base AS fips-base
+
+# Install the FIPS provider into the system OpenSSL modules dir, run the
+# integrity/self-test step (fipsinstall) and switch OpenSSL to FIPS mode.
+# The default provider stays loaded but with `default_properties = fips=yes`,
+# so only FIPS-approved algorithms are used unless a caller explicitly opts out
+# (e.g. python hashlib(..., usedforsecurity=False) for non-security hashes).
+COPY --from=fips-builder /out/fips.so /tmp/fips.so
+RUN MODULESDIR="$(openssl version -m | sed -e 's/^MODULESDIR: "\(.*\)"$/\1/')" && \
+    install -D -m 0644 /tmp/fips.so "${MODULESDIR}/fips.so" && rm /tmp/fips.so && \
+    openssl fipsinstall -module "${MODULESDIR}/fips.so" -out /etc/ssl/fipsmodule.cnf && \
+    printf '%s\n' \
+    'config_diagnostics = 1' \
+    'openssl_conf = openssl_init' \
+    '' \
+    '.include /etc/ssl/fipsmodule.cnf' \
+    '' \
+    '[openssl_init]' \
+    'providers = provider_sect' \
+    'alg_section = algorithm_sect' \
+    '' \
+    '[provider_sect]' \
+    'fips = fips_sect' \
+    'base = base_sect' \
+    'default = default_sect' \
+    '' \
+    '[base_sect]' \
+    'activate = 1' \
+    '' \
+    '[default_sect]' \
+    'activate = 1' \
+    '' \
+    '[algorithm_sect]' \
+    'default_properties = fips=yes' \
+    > /etc/ssl/openssl-fips.cnf
+ENV OPENSSL_CONF=/etc/ssl/openssl-fips.cnf
+
+# Fail the build if FIPS mode is not actually active and enforced.
+RUN openssl list -providers | grep -q '^  fips$' && \
+    openssl fipsinstall \
+    -module "$(openssl version -m | sed -e 's/^MODULESDIR: "\(.*\)"$/\1/')/fips.so" \
+    -in /etc/ssl/fipsmodule.cnf -verify && \
+    printf '%s\n' \
+    'import hashlib, ssl, sys' \
+    'print(ssl.OPENSSL_VERSION)' \
+    'try:' \
+    '    hashlib.md5(b"x")' \
+    'except ValueError:' \
+    '    pass' \
+    'else:' \
+    '    sys.exit("MD5 usable for security: FIPS mode is NOT enforced")' \
+    'hashlib.md5(b"x", usedforsecurity=False)' \
+    'hashlib.sha256(b"x")' \
+    'ssl.create_default_context()' \
+    'print("FIPS mode enforced")' \
+    | python -
+
+# Pre-built grpcio wheel. The application image installs it into its venv
+# before running `poetry install`, so Poetry sees the locked version already
+# present and does not replace it with the BoringSSL wheel from PyPI.
+COPY --from=grpcio-builder /wheels /wheels

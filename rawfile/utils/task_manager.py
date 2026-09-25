@@ -108,7 +108,9 @@ class TaskManager:
 
     def hash_task_info(self, task: TaskName, *args, **kwargs):
         raw = json.dumps(kwargs) + json.dumps(args) + task.value
-        return hashlib.md5(raw.encode()).hexdigest()
+        # Non-cryptographic task identifier; MD5 is kept for stable IDs and
+        # flagged as not security-relevant so it works under OpenSSL FIPS mode.
+        return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()
 
     def get_tasks(
         self, state: TaskState | None = None, retriable: bool | None = None
