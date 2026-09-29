@@ -4,6 +4,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ include "rawfile-localpv.fullname" . }}-node
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "rawfile-localpv.labels" . | nindent 4 }}
 spec:
