@@ -4,6 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "rawfile-localpv.fullname" . }}-controller
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:

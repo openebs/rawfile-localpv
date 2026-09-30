@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "rawfile-localpv.fullname" . }}-node
+  namespace: {{ .Release.Namespace }}
 spec:
   updateStrategy:
     rollingUpdate:

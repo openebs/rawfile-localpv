@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ include "rawfile-localpv.fullname" . }}-driver
+  namespace: {{ .Release.Namespace }}
 {{- if or .Values.global.imagePullSecrets .Values.imagePullSecrets }}
 imagePullSecrets:
 {{- include "rawfile-localpv.common.pullSecrets" . }}
