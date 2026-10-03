@@ -1,0 +1,10 @@
+{{- $nodesDS := lookup "apps/v1" "DaemonSet" .Release.Namespace (printf "%s-node" (include "rawfile-localpv.fullname" .)) -}}
+{{- $currentVersion := "" -}}
+{{- $minVersion := "v0.0.0" -}}
+
+{{- if $nodesDS -}}
+  {{- $currentVersion = index $nodesDS.metadata.labels "app.kubernetes.io/version" -}}
+{{- end -}}
+{{- if and $currentVersion (semverCompare (printf "<%s" $minVersion) $currentVersion) -}}
+  {{- fail (printf "Unsupported upgrade path: installed version %s is lower than required %s" $currentVersion $minVersion) -}}
+{{- end -}}
