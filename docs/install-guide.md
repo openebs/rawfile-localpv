@@ -46,8 +46,8 @@ This version introduces the following breaking changes:
   It should be changed to:
 
   ```yaml
-  defaultPool: data-dir
   node:
+    defaultPool: data-dir
     storagePools:
       data-dir:
         path: /var/csi/rawfile
@@ -100,8 +100,8 @@ This version introduces the following breaking changes:
   It should be changed to:
 
   ```yaml
-  defaultPool: default
   node:
+    defaultPool: default
     storagePools:
       default:
         path: /var/csi/rawfile
