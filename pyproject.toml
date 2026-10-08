@@ -24,7 +24,7 @@ tldextract = "^5.3.1"
 humanize = "^4.15.0"
 setproctitle = "^1.3.7"
 ipaddress = "^1.0.23"
-fastapi = {extras = ["standard"], version = ">=0.128,<0.142"}
+fastapi = {extras = ["standard"], version = ">=0.128,<0.143"}
 uvicorn = ">=0.40,<0.55"
 
 [tool.poetry.scripts]
@@ -32,7 +32,7 @@ rawfile = "rawfile.rawfile:cli"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.3"
-pytest-bdd = "^8.1.0"
+pytest-bdd = ">=8.1,<10.0"
 retrying = "^1.4.2"
 kubernetes = ">=35,<37"
 
