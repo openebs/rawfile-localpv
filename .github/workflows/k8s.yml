@@ -103,10 +103,10 @@ jobs:
         with:
           name: smoke-k8s-dump
           path: dump
-      # - name: Setup tmate session
-      #   if: ${{ failure() }}
-      #   timeout-minutes: 120
-      #   uses: mxschmitt/action-tmate@v3
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        timeout-minutes: 120
+        uses: mxschmitt/action-tmate@v3
 
   release-check:
     if: ${{ inputs.release-check }}
