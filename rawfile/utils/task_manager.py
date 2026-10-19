@@ -135,8 +135,8 @@ class TaskManager:
                 data[k] = self.decode_task(v)
             return data
 
-    def get_task(self, task_id) -> None:
-        self.get_tasks().get(task_id)
+    def get_task(self, task_id) -> TaskInfo | None:
+        return self.get_tasks().get(task_id)
 
     def encode_task(self, task: TaskInfo) -> dict:
         out = dict(task)
@@ -201,6 +201,8 @@ class TaskManager:
                 else Exception("Task was cancelled")
             )
             state = TaskState.FAILED
+            # Count the failure so the task stops being retriable after max_retry
+            task_info["retry_count"] = task_info.get("retry_count", -1) + 1
             logger.opt(exception=exc).error(
                 "Tasky Failed", task_id=task_id, task=task_info, exception=exc
             )
