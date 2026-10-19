@@ -58,6 +58,8 @@ jobs:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
           restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
+      - name: Run unit tests
+        run: nix-shell --run ".ci/unit.sh"
       - run: sudo chown $USER /mnt
       - name: Erase /mnt
         run: |
