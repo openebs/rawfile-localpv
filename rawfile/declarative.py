@@ -1,3 +1,4 @@
+from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
 
@@ -56,9 +57,11 @@ def unmount(mountpoint: str, clear_mountpoint=True):
     if not device:
         # Nothing is mounted here (e.g. the mount was lost on a restart): treat it
         # as already unmounted, as CSI requires NodeUnpublish/NodeUnstage to be
-        # idempotent. rmdir fails on a non-empty dir, so no data is removed.
+        # idempotent. rmdir fails on a non-empty dir, so no data is removed; a
+        # concurrent teardown may have removed the dir since the exists() check.
         if clear_mountpoint:
-            path.rmdir()
+            with suppress(FileNotFoundError):
+                path.rmdir()
         return
     fs = from_device(device=device)
     if not fs:
