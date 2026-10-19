@@ -1,5 +1,4 @@
 import time
-from contextlib import nullcontext
 from pathlib import Path
 
 import consts
@@ -34,7 +33,7 @@ from utils.logs import GRPCLogger
 from utils.rawfile import (
     AccessType,
     be_absent,
-    meta_dir,
+    meta_file,
     metadata,
     metadata_or,
 )
@@ -45,12 +44,11 @@ from utils.volume_manager import manager as volume_manager
 log_grpc_request = GRPCLogger(server_name="Bd2FS")
 
 
-def teardown_lock(volume_id):
-    # kubelet may retry a teardown after the volume (and its metadata dir, which
-    # holds the lock file) was deleted: there's nothing left to lock then.
-    if meta_dir(volume_id).exists():
-        return VolLock(volume_id)
-    return nullcontext()
+def abort_if_volume_deleted(volume_id, context):
+    # kubelet may retry a teardown after the volume was deleted: CSI requires
+    # NOT_FOUND then, rather than failing on its missing metadata and lock file.
+    if not meta_file(volume_id).exists():
+        context.abort(grpc.StatusCode.NOT_FOUND, f"Volume {volume_id} not found")
 
 
 class Bd2FsIdentityServicer(csi_pb2_grpc.IdentityServicer):
@@ -102,7 +100,8 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeUnpublishVolume(self, request, context):
-        with teardown_lock(request.volume_id):
+        abort_if_volume_deleted(request.volume_id, context)
+        with VolLock(request.volume_id):
             unmount(request.target_path, clear_mountpoint=True)
             return csi_pb2.NodeUnpublishVolumeResponse()
 
@@ -163,7 +162,8 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeUnstageVolume(self, request, context):
-        with teardown_lock(request.volume_id):
+        abort_if_volume_deleted(request.volume_id, context)
+        with VolLock(request.volume_id):
             mount_path = f"{request.staging_target_path}/mount"
             device_path = f"{request.staging_target_path}/device"
             unmount(mount_path, clear_mountpoint=True)

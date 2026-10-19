@@ -1,11 +1,26 @@
 from types import SimpleNamespace
 
+import grpc
 import pytest
 from bd2fs import Bd2FsNodeServicer
 from config import config
 from csi import csi_pb2
 from csi.csi_pb2 import NodeUnpublishVolumeRequest, NodeUnstageVolumeRequest
-from rawfile_servicer import RawFileNodeServicer
+
+
+class Aborted(Exception):
+    pass
+
+
+class Context:
+    # Like grpc's servicer context: abort() records the status and raises
+    def __init__(self):
+        self._state = SimpleNamespace(code=None, details=None)
+
+    def abort(self, code, details):
+        self._state.code = code
+        self._state.details = details.encode()
+        raise Aborted(details)
 
 
 @pytest.fixture
@@ -18,7 +33,7 @@ def meta_dir(tmp_path, monkeypatch):
 
 @pytest.fixture
 def context():
-    return SimpleNamespace(_state=SimpleNamespace(code=None, details=None))
+    return Context()
 
 
 def unpublish(volume_id, target, context):
@@ -31,6 +46,7 @@ def unpublish(volume_id, target, context):
 
 def test_unpublish_unmounted_target_of_existing_volume(tmp_path, meta_dir, context):
     (meta_dir / "pvc-1").mkdir()
+    (meta_dir / "pvc-1" / "disk.meta").write_text("{}")
     target = tmp_path / "mount"
     target.mkdir()
 
@@ -41,30 +57,29 @@ def test_unpublish_unmounted_target_of_existing_volume(tmp_path, meta_dir, conte
 
 
 def test_unpublish_after_volume_was_deleted(tmp_path, meta_dir, context):
-    # The volume's metadata dir (holding its lock file) is already gone
     target = tmp_path / "mount"
     target.mkdir()
 
-    response = unpublish("pvc-deleted", target, context)
+    with pytest.raises(Aborted):
+        unpublish("pvc-deleted", target, context)
 
-    assert isinstance(response, csi_pb2.NodeUnpublishVolumeResponse)
-    assert not target.exists()
+    assert context._state.code == grpc.StatusCode.NOT_FOUND
+    # Nothing is touched for a volume that no longer exists
+    assert target.is_dir()
     assert not (meta_dir / "pvc-deleted").exists()
 
 
 def test_unstage_after_volume_was_deleted(tmp_path, meta_dir, context):
-    # What's left of a staged volume whose PV (and metadata) is already gone
     staging = tmp_path / "globalmount"
     (staging / "block").mkdir(parents=True)
     (staging / "block" / "dev").touch()
 
-    servicer = Bd2FsNodeServicer(
-        bds=RawFileNodeServicer(node_name="node-1"), task_manager=None
-    )
+    servicer = Bd2FsNodeServicer(bds=None, task_manager=None)
     request = NodeUnstageVolumeRequest(
         volume_id="pvc-deleted", staging_target_path=staging.as_posix()
     )
-    response = servicer.NodeUnstageVolume(request, context)
+    with pytest.raises(Aborted):
+        servicer.NodeUnstageVolume(request, context)
 
-    assert isinstance(response, csi_pb2.NodeUnstageVolumeResponse)
-    assert not (staging / "block").exists()
+    assert context._state.code == grpc.StatusCode.NOT_FOUND
+    assert (staging / "block" / "dev").exists()

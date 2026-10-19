@@ -142,13 +142,11 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeUnstageVolume(self, request, context):
+        img_file = utils.rawfile.img_file(request.volume_id)
         staging_path = request.staging_target_path
         staging_dev_path = Path(f"{staging_path}/dev")
         be_absent(staging_dev_path)
-        # kubelet may retry an unstage after the volume was deleted: without its
-        # metadata there's no image file left to look up loop devices for.
-        if utils.rawfile.meta_file(request.volume_id).exists():
-            detach_loops(utils.rawfile.img_file(request.volume_id))
+        detach_loops(img_file)
         return csi_pb2.NodeUnstageVolumeResponse()
 
     # @log_grpc_request
