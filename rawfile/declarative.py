@@ -5,10 +5,7 @@ from filesystem import from_device
 from filesystem.base import UnknownFileSystemError
 from filesystem.utils import get_device_for_mountpoint
 from utils.commands import run
-from utils.errors import (
-    InvalidDeviceForMountpointError,
-    UnknownDeviceForMountpointError,
-)
+from utils.errors import InvalidDeviceForMountpointError
 
 
 def mount(device, mountpoint, readonly=False, options: list[str] | None = None):
@@ -57,7 +54,12 @@ def unmount(mountpoint: str, clear_mountpoint=True):
         return
     device = get_device_for_mountpoint(mountpoint)
     if not device:
-        raise UnknownDeviceForMountpointError(mountpoint=mountpoint)
+        # Nothing is mounted here (e.g. the mount was lost on a restart): treat it
+        # as already unmounted, as CSI requires NodeUnpublish/NodeUnstage to be
+        # idempotent. rmdir fails on a non-empty dir, so no data is removed.
+        if clear_mountpoint:
+            path.rmdir()
+        return
     fs = from_device(device=device)
     if not fs:
         raise UnknownFileSystemError(device=device)
