@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import bd2fs
 import grpc
 import pytest
 from bd2fs import Bd2FsNodeServicer
@@ -56,30 +57,78 @@ def test_unpublish_unmounted_target_of_existing_volume(tmp_path, meta_dir, conte
     assert not target.exists()
 
 
+def still_mounted(*mountpoints):
+    def get_device(mountpoint):
+        return "/dev/loop0" if mountpoint in mountpoints else None
+
+    return get_device
+
+
 def test_unpublish_after_volume_was_deleted(tmp_path, meta_dir, context):
+    # The volume's metadata (and lock file) is already gone, its target unmounted
     target = tmp_path / "mount"
     target.mkdir()
+
+    response = unpublish("pvc-deleted", target, context)
+
+    assert isinstance(response, csi_pb2.NodeUnpublishVolumeResponse)
+    assert not target.exists()
+    assert not (meta_dir / "pvc-deleted").exists()
+
+
+def test_unpublish_deleted_volume_still_mounted(
+    tmp_path, meta_dir, context, monkeypatch
+):
+    target = tmp_path / "mount"
+    target.mkdir()
+    monkeypatch.setattr(
+        bd2fs, "get_device_for_mountpoint", still_mounted(target.as_posix())
+    )
 
     with pytest.raises(Aborted):
         unpublish("pvc-deleted", target, context)
 
     assert context._state.code == grpc.StatusCode.NOT_FOUND
-    # Nothing is touched for a volume that no longer exists
     assert target.is_dir()
-    assert not (meta_dir / "pvc-deleted").exists()
+
+
+def unstage(volume_id, staging, context):
+    servicer = Bd2FsNodeServicer(bds=None, task_manager=None)
+    request = NodeUnstageVolumeRequest(
+        volume_id=volume_id, staging_target_path=staging.as_posix()
+    )
+    return servicer.NodeUnstageVolume(request, context)
+
+
+def deleted_volume_staging(tmp_path):
+    # What's left of a staged volume whose PV (and metadata) is already gone
+    staging = tmp_path / "globalmount"
+    (staging / "mount").mkdir(parents=True)
+    (staging / "device").touch()
+    (staging / "block").mkdir()
+    (staging / "block" / "dev").symlink_to("/dev/loop0")
+    return staging
 
 
 def test_unstage_after_volume_was_deleted(tmp_path, meta_dir, context):
-    staging = tmp_path / "globalmount"
-    (staging / "block").mkdir(parents=True)
-    (staging / "block" / "dev").touch()
+    staging = deleted_volume_staging(tmp_path)
 
-    servicer = Bd2FsNodeServicer(bds=None, task_manager=None)
-    request = NodeUnstageVolumeRequest(
-        volume_id="pvc-deleted", staging_target_path=staging.as_posix()
+    response = unstage("pvc-deleted", staging, context)
+
+    assert isinstance(response, csi_pb2.NodeUnstageVolumeResponse)
+    assert list(staging.iterdir()) == []
+
+
+def test_unstage_deleted_volume_still_mounted(tmp_path, meta_dir, context, monkeypatch):
+    staging = deleted_volume_staging(tmp_path)
+    monkeypatch.setattr(
+        bd2fs,
+        "get_device_for_mountpoint",
+        still_mounted((staging / "mount").as_posix()),
     )
+
     with pytest.raises(Aborted):
-        servicer.NodeUnstageVolume(request, context)
+        unstage("pvc-deleted", staging, context)
 
     assert context._state.code == grpc.StatusCode.NOT_FOUND
-    assert (staging / "block" / "dev").exists()
+    assert sorted(p.name for p in staging.iterdir()) == ["block", "device", "mount"]
