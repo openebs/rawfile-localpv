@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import humanize
 from orchestrator.k8s import read_config_map, write_config_map
@@ -87,18 +87,18 @@ def time_to_str(tm) -> str:
 
 
 def now_to_str() -> str:
-    return datetime.now(timezone.utc).strftime(time_fmt)
+    return datetime.now(UTC).strftime(time_fmt)
 
 
 # start_ts_utc is a timestamp in the format returned by time_utc
 def wait_ping(last_ts: str, interval: timedelta):
     # parse the formatted ts string into a datetime
-    install_time = datetime.strptime(last_ts, time_fmt).replace(tzinfo=timezone.utc)
+    install_time = datetime.strptime(last_ts, time_fmt).replace(tzinfo=UTC)
 
     # Next ping is added on top of the last one
     target_time = install_time + interval
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     wait = target_time - now
     wait_seconds = wait.total_seconds()
     if wait_seconds > 0:
