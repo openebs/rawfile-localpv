@@ -1,6 +1,10 @@
 *
 !rawfile/
 rawfile/tests
+rawfile/**/__pycache__
+rawfile/**/*.pyc
+rawfile/**/*.o
+rawfile/**/*.so
 !pyproject.toml
 !docker-entrypoint.sh
 !poetry.lock

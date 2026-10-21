@@ -26,6 +26,13 @@ else
 	export NO_CACHE_OPTIONS="--pull --no-cache"
 fi
 
+# Build on the published base image (toolchain + grpcio compile) when one
+# exists for the current inputs; otherwise build it locally first.
+if ! base-image-published; then
+	echo "Base image ${CI_BASE_IMAGE} not published; building it locally." >&2
+	"$SCRIPT_DIR/build-base.sh"
+fi
+
 for t in ${IMAGE_TAGS}; do
 	TAGS_ARGS+=" -t $(build-image-uri ${t})"
 done
@@ -42,6 +49,7 @@ docker buildx build \
 	${NO_CACHE_OPTIONS} \
 	--output=type=${IMAGE_DESTINATION} \
 	--platform="${CI_IMAGE_PLATFORMS}" \
+	--build-arg "BASE_IMAGE=${CI_BASE_IMAGE}" \
 	--build-arg "IMAGE_REPOSITORY=${IMAGE}" \
 	--build-arg "IMAGE_TAG=${COMMIT}" \
 	--build-arg "PROVISIONER_VERSION=${PROVISIONER_VERSION}" \

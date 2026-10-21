@@ -1,0 +1,58 @@
+# rawfile-localpv build base: the Hummingbird FIPS builder image plus the
+# toolchain, Poetry and a grpcio wheel compiled against the system OpenSSL.
+#
+# Compiling grpcio dominates the image build time, so this is built separately
+# by .ci/build-base.sh and published as rawfile-localpv:base-<hash>, where the
+# hash covers this file and the grpcio version pinned in poetry.lock (passed in
+# as GRPCIO_VERSION by .ci/common). Dockerfile builds on top of it via
+# BASE_IMAGE; .ci/build.sh builds it locally first when no published image
+# matches the current inputs.
+#
+# FIPS: OpenSSL in these images runs with the FIPS provider active and
+# `default_properties = fips=yes` (crypto-policies state FIPS). Python's
+# ssl/hashlib and the source-built grpcio all go through that libcrypto.
+#
+# The upstream image is pinned by digest (bumped by Dependabot, together with
+# the pins in Dockerfile), so builds are reproducible from the commit and an
+# upstream rebuild is a reviewed PR rather than a silent change.
+
+# registry.access.redhat.com/hi/python:3.14-fips-builder
+FROM registry.access.redhat.com/hi/python:3.14-fips-builder@sha256:213fcccd4e86a663f5aa48099406b910ce95d60858968af1a0f97be7d4a9ab24
+USER 0
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    POETRY_HOME="/opt/poetry" \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_NO_INTERACTION=1 \
+    PYSETUP_PATH="/opt/pysetup" \
+    VENV_PATH="/opt/pysetup/.venv"
+ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+
+RUN dnf -q -y --setopt=install_weak_deps=0 install \
+    gcc gcc-c++ make \
+    python3-devel libffi-devel openssl-devel zlib-ng-compat-devel \
+    && dnf -q clean all
+
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# grpcio wheels bundle BoringSSL, which is not FIPS-validated and ignores the
+# OpenSSL provider config. Build grpcio from source against the system OpenSSL
+# so gRPC TLS goes through the same FIPS-enforced libcrypto as everything else.
+#
+# Hummingbird's OpenSSL is built without the deprecated ENGINE API (no
+# openssl/engine.h). grpc guards all ENGINE *usage* behind OPENSSL_NO_ENGINE but
+# includes the header unconditionally, so provide an empty one and define the
+# macro globally.
+ENV GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1 \
+    GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1 \
+    CPPFLAGS="-DOPENSSL_NO_ENGINE"
+RUN mkdir -p /usr/local/include/openssl && \
+    printf '#pragma once\n#define OPENSSL_NO_ENGINE 1\n' > /usr/local/include/openssl/engine.h
+
+# The grpcio version pinned in poetry.lock; see .ci/common.
+ARG GRPCIO_VERSION
+RUN test -n "${GRPCIO_VERSION}" && \
+    python3 -m pip wheel -q --no-deps --no-binary grpcio -w /wheels "grpcio==${GRPCIO_VERSION}"

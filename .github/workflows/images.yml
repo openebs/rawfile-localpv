@@ -48,6 +48,14 @@ jobs:
         with:
           driver-opts: |
             network=host
+      - name: Publish base image
+        env:
+          CI_TEST: "false"
+          CI_IMAGE_NS: ${{ inputs.namespace }}
+          DNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DPASS: ${{ secrets.DOCKERHUB_TOKEN }}
+          DREG: ${{ inputs.registry }}
+        run: nix-shell --run ".ci/build-base.sh"
       - name: Build
         env:
           CI_TEST: "false"
