@@ -35,11 +35,10 @@ jobs:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
           restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
-      - uses: docker/setup-qemu-action@v4
+      # docker driver: see k8s.yml; needed for the local base-image fallback.
       - uses: docker/setup-buildx-action@v4
         with:
-          driver-opts: |
-            network=host
+          driver: docker
       - uses: aquasecurity/setup-trivy@v0.3.1
       - name: Build and scan image
         env:
