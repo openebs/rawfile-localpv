@@ -65,3 +65,8 @@ export CI_BASE_IMAGE="$(base-image-uri)"
 base-image-published() {
 	docker manifest inspect "${CI_BASE_IMAGE}" >/dev/null 2>&1
 }
+
+# Attestations for pushed images: full SLSA provenance (build args, Dockerfile,
+# resolved base-image digests) and an SBOM of the final filesystem. Only
+# registry outputs can carry them; the docker driver drops them.
+export ATTEST_OPTIONS="--provenance=mode=max --sbom=true"
