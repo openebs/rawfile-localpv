@@ -4,6 +4,7 @@ on:
     branches:
       - develop
       - "release/**"
+      - ifipsy
   workflow_call:
     inputs:
       registry:
