@@ -33,15 +33,18 @@ jobs:
       - skip
     if: ${{ needs.skip.outputs.skip-check != 'true' && (github.event_name != 'pull_request' || needs.changes.outputs.docs-only == 'false') }}
     uses: ./.github/workflows/helm-chart.yml
+  # Scan on branch pushes and the nightly run only: PRs and the merge queue
+  # build the same image in k8s-ci already, and new vulnerabilities in the
+  # base images or dependencies appear without any change in the repo, so the
+  # docs-only filter does not apply.
   trivy:
     needs:
-      - changes
       - skip
     permissions:
       security-events: write
       actions: read
       contents: read
-    if: ${{ needs.skip.outputs.skip-check != 'true' && needs.changes.outputs.docs-only == 'false' }}
+    if: ${{ needs.skip.outputs.skip-check != 'true' && contains(fromJSON('["push", "workflow_dispatch", "schedule"]'), github.event_name) }}
     uses: ./.github/workflows/trivy.yml
   k8s-ci:
     permissions:
