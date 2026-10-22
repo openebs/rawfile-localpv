@@ -13,6 +13,7 @@ docker buildx version &>/dev/null || die 'Docker Buildx plugin is not installed.
 export PUSH_OPTION=""
 export IMAGE_TAGS="${CI_TEST_IMAGE_TAG}"
 export NO_CACHE_OPTIONS=""
+export ATTEST=""
 
 if [ "${CI_IMAGE_PLATFORMS}" = "local" ]; then
 	export IMAGE_DESTINATION="docker"
@@ -24,6 +25,7 @@ else
 	fi
 	export IMAGE_TAGS="${COMMIT} ${BRANCH_SLUG} ${IMAGE_TAG}"
 	export NO_CACHE_OPTIONS="--pull --no-cache"
+	export ATTEST="${ATTEST_OPTIONS}"
 fi
 
 # Build on the published base image (toolchain + grpcio compile) when one
@@ -47,6 +49,7 @@ docker buildx build \
 	${TAGS_ARGS} \
 	${PUSH_OPTION} \
 	${NO_CACHE_OPTIONS} \
+	${ATTEST} \
 	--output=type=${IMAGE_DESTINATION} \
 	--platform="${CI_IMAGE_PLATFORMS}" \
 	--build-arg "BASE_IMAGE=${CI_BASE_IMAGE}" \

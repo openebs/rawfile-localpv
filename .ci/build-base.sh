@@ -17,6 +17,7 @@ command -v docker &>/dev/null || die 'Docker is not installed. Aborting.'
 docker buildx version &>/dev/null || die 'Docker Buildx plugin is not installed. Aborting.'
 
 export PUSH_OPTION=""
+export ATTEST=""
 
 if [ "${CI_IMAGE_PLATFORMS}" = "local" ]; then
 	export IMAGE_DESTINATION="docker"
@@ -30,10 +31,12 @@ else
 		docker login -u "${DNAME}" -p "${DPASS}" "$CI_REGISTRY"
 		export PUSH_OPTION="--push"
 	fi
+	export ATTEST="${ATTEST_OPTIONS}"
 fi
 
 docker buildx build \
 	${PUSH_OPTION} \
+	${ATTEST} \
 	--pull \
 	--output=type=${IMAGE_DESTINATION} \
 	--platform="${CI_IMAGE_PLATFORMS}" \
