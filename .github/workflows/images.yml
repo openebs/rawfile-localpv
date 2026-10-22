@@ -19,8 +19,33 @@ env:
   CI: 1
 
 jobs:
-  image-publish:
+  # Pick the runner by whether the base image (grpcio compile) for the current
+  # inputs is already published: if so a standard runner is plenty, otherwise
+  # use the large CNCF runner so the cold compile does not take hours.
+  base-check:
     runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.check.outputs.runner }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: check
+        env:
+          CI_IMAGE_NS: ${{ inputs.namespace }}
+          CI_REGISTRY: ${{ inputs.registry }}
+        run: |
+          export SCRIPT_DIR=.ci
+          source .ci/common
+          if base-image-published; then
+            echo "Base image ${CI_BASE_IMAGE} is published; using a standard runner."
+            echo "runner=ubuntu-latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "Base image ${CI_BASE_IMAGE} is not published; using a large runner for the grpcio compile."
+            echo "runner=cncf-ubuntu-24-96-x86" >> "$GITHUB_OUTPUT"
+          fi
+
+  image-publish:
+    needs: base-check
+    runs-on: ${{ needs.base-check.outputs.runner }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -38,6 +63,9 @@ jobs:
             keep-env-derivations = true
             keep-outputs = true
       - name: Restore and save Nix store
+        # cache-nix-action hardcodes the GitHub-hosted `runner` user; the CNCF
+        # runners run as `ubuntu`, so there it fails.
+        if: runner.environment == 'github-hosted'
         uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
