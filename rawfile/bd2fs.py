@@ -1,4 +1,5 @@
 import time
+from contextlib import suppress
 from pathlib import Path
 
 import consts
@@ -33,6 +34,7 @@ from utils.logs import GRPCLogger
 from utils.rawfile import (
     AccessType,
     be_absent,
+    meta_file,
     metadata,
     metadata_or,
 )
@@ -41,6 +43,32 @@ from utils.task_manager import TaskManager
 from utils.volume_manager import manager as volume_manager
 
 log_grpc_request = GRPCLogger(server_name="Bd2FS")
+
+
+def volume_deleted(volume_id):
+    return not meta_file(volume_id).exists()
+
+
+def clear_deleted_volume(volume_id, context, mountpoints, paths):
+    # kubelet may retry a teardown after the volume was deleted. The CSI spec asks
+    # for NOT_FOUND then, but kubelet doesn't verify the volume and retries
+    # NOT_FOUND forever, leaving the pod stuck terminating:
+    # https://github.com/kubernetes/kubernetes/issues/90752
+    # As suggested there by sig-storage, and as the spec already allows for
+    # ControllerUnpublishVolume (container-storage-interface/spec#375), we deviate
+    # from it and return OK when nothing is mounted anymore: the volume is then
+    # effectively unpublished/unstaged. Loop devices need no check, DeleteVolume
+    # refuses to delete a volume while its image is still attached.
+    for mountpoint in mountpoints:
+        if get_device_for_mountpoint(mountpoint):
+            context.abort(
+                grpc.StatusCode.NOT_FOUND,
+                f"Volume {volume_id} not found, but {mountpoint} is still mounted",
+            )
+    for path in paths:
+        # rmdir fails on a non-empty dir, so no data is removed
+        with suppress(FileNotFoundError):
+            be_absent(path)
 
 
 class Bd2FsIdentityServicer(csi_pb2_grpc.IdentityServicer):
@@ -92,6 +120,12 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeUnpublishVolume(self, request, context):
+        if volume_deleted(request.volume_id):
+            target_path = request.target_path
+            clear_deleted_volume(
+                request.volume_id, context, [target_path], [target_path]
+            )
+            return csi_pb2.NodeUnpublishVolumeResponse()
         with VolLock(request.volume_id):
             unmount(request.target_path, clear_mountpoint=True)
             return csi_pb2.NodeUnpublishVolumeResponse()
@@ -153,9 +187,18 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeUnstageVolume(self, request, context):
+        mount_path = f"{request.staging_target_path}/mount"
+        device_path = f"{request.staging_target_path}/device"
+        block_path = f"{request.staging_target_path}/block"
+        if volume_deleted(request.volume_id):
+            clear_deleted_volume(
+                request.volume_id,
+                context,
+                [mount_path, device_path],
+                [mount_path, device_path, f"{block_path}/dev", block_path],
+            )
+            return csi_pb2.NodeUnstageVolumeResponse()
         with VolLock(request.volume_id):
-            mount_path = f"{request.staging_target_path}/mount"
-            device_path = f"{request.staging_target_path}/device"
             unmount(mount_path, clear_mountpoint=True)
 
             bd_unpublish_request = NodeUnpublishVolumeRequest()
@@ -165,7 +208,6 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
 
             bd_unstage_request = NodeUnstageVolumeRequest()
             bd_unstage_request.CopyFrom(request)
-            block_path = f"{request.staging_target_path}/block"
             bd_unstage_request.staging_target_path = block_path
             self.bds.NodeUnstageVolume(bd_unstage_request, context)
             be_absent(bd_unstage_request.staging_target_path)
