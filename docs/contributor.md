@@ -90,6 +90,24 @@ You can keep using your favorite shell by running it, example: `nix-shell --run 
 ## Building the images
 
 We have a `Dockerfile` containing the instructions required for building the rawfile container images.
+The image is built on Red Hat's Hummingbird FIPS Python images (`registry.access.redhat.com/hi/python:3.14-fips`
+and its `-builder` variant): OpenSSL runs with the FIPS provider enforced, and `grpcio` is compiled from source
+against the system OpenSSL (its PyPI wheels bundle a non-FIPS BoringSSL), which is the slow step on a cold cache.
+The runtime image has no shell or package manager, so the OS tools rawfile needs (bash, util-linux, e2fsprogs,
+btrfs-progs) are added with `dnf --installroot` in the builder stage, and `xfsprogs`, which Hummingbird does not
+package, is taken from Fedora. Because the image enforces FIPS, any non-security use of MD5/SHA1 in the code must
+pass `usedforsecurity=False`. Build-only Python dependencies (currently `grpcio-tools`, used to generate the
+protobuf stubs) live in the `build` Poetry group and are removed from the venv before it is copied into the image.
+
+Compiling `grpcio` is by far the slowest step, so it lives in a separate base image, `Dockerfile.base` (builder
+image, toolchain, Poetry and the compiled `grpcio` wheel), which `Dockerfile` builds on via `BASE_IMAGE`. The
+`Container Images` workflow publishes it as `openebs/rawfile-localpv:base-<hash>` (`.ci/build-base.sh`, a no-op
+when the tag exists), where the hash covers everything it depends on: `Dockerfile.base` (including the pinned
+builder image digest) and the `grpcio` version in `poetry.lock`. `.ci/build.sh` checks for that tag (anonymously,
+so pull requests, forks and local builds all benefit) and, when absent, builds the base locally first. Because the
+tag is derived from the inputs, branches with the same inputs share it, nothing is ever overwritten, and a `grpcio`
+or image-digest bump needs no manual step: the first build after it is slow, the next push to `develop` (or a
+release branch) publishes the new tag, and builds are fast again.
 To make things easier, we provide a script which sets up any necessary environment variables, call out the
 docker commands, etc...
 

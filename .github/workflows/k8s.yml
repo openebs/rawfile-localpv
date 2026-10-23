@@ -214,11 +214,12 @@ jobs:
           primary-key: nix-${{ hashFiles('shell.nix', 'nix/*') }}
           restore-prefixes-first-match: nix-
       - run: nix-build shell.nix
-      - uses: docker/setup-qemu-action@v4
+      # docker driver: test images are single-platform and loaded into the
+      # daemon, and when no published base image matches, .ci/build.sh builds
+      # it locally; only the docker driver can resolve FROM from the daemon.
       - uses: docker/setup-buildx-action@v4
         with:
-          driver-opts: |
-            network=host
+          driver: docker
       - name: Build test images
         if: ${{ !inputs.release }}
         run: nix-shell --run "CI_TEST=true .ci/build.sh"

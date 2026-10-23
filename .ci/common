@@ -45,3 +45,28 @@ build-image-tag() {
 build-image-uri() {
 	printf "%s:%s" "${CI_IMAGE_NAME}" "$(build-image-tag $1)"
 }
+
+# Build base (Dockerfile.base: toolchain + grpcio compiled against the FIPS
+# OpenSSL), published by .ci/build-base.sh from the Container Images workflow.
+# Its tag is a content hash of everything it depends on: Dockerfile.base (which
+# includes the pinned builder image digest) and the grpcio version in
+# poetry.lock. So the tag only changes when a rebuild is actually needed, is
+# the same across branches with identical inputs, and never needs updating by
+# hand.
+export GRPCIO_VERSION="$(sed -n '/^name = "grpcio"$/{n;s/^version = "\(.*\)"$/\1/p}' "$SCRIPT_DIR/../poetry.lock")"
+base-image-uri() {
+	local hash
+	hash="$( { cat "$SCRIPT_DIR/../Dockerfile.base"; echo "grpcio=${GRPCIO_VERSION}"; } | sha256sum | cut -c1-12)"
+	printf "%s:base-%s" "${CI_IMAGE_NAME}" "${hash}"
+}
+export CI_BASE_IMAGE="$(base-image-uri)"
+
+# True if the base image for the current inputs is published (anonymous read).
+base-image-published() {
+	docker manifest inspect "${CI_BASE_IMAGE}" >/dev/null 2>&1
+}
+
+# Attestations for pushed images: full SLSA provenance (build args, Dockerfile,
+# resolved base-image digests) and an SBOM of the final filesystem. Only
+# registry outputs can carry them; the docker driver drops them.
+export ATTEST_OPTIONS="--provenance=mode=max --sbom=true"
