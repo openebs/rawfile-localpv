@@ -23,6 +23,13 @@ namespace = "rawfile-test"
 provisioner = "rawfile.csi.openebs.io"
 attempt_counter = 0
 
+# Data written by the source writer pod: lines "1".."10".
+EXPECTED_DATA = "\n".join(str(i) for i in range(1, 11))
+
+# Different data written to the source volume *after* the snapshot is taken.
+# Used to prove the restored volume reflects the snapshot, not the live source.
+POST_SNAPSHOT_DATA = "\n".join(str(i) for i in range(11, 21))
+
 
 def short_pvc_name(binding_mode, access_mode, fs_type, volume_mode, mount_options):
     bm_map = {"Immediate": "im", "WaitForFirstConsumer": "wf"}
@@ -583,7 +590,7 @@ def _(source_pvc, source_writer_pod):
     exec_command = [
         "/bin/sh",
         "-c",
-        f"i=1; while [ $i != 11 ]; do echo $i >> /{pvc_name}/file; i=$((i+1)); done; sync",
+        f"printf '%s\\n' {EXPECTED_DATA.replace(chr(10), ' ')} > /{pvc_name}/file; sync",
     ]
     stream(
         client.CoreV1Api().connect_get_namespaced_pod_exec,
@@ -696,6 +703,60 @@ def _(snapshot):
     wait_snap_ready(snapshot["metadata"]["name"])
 
 
+@then("we overwrite the source volume with different data")
+def _(source_pvc, source_writer_pod):
+    """Overwrite the source volume after the snapshot, so the restore can be
+    verified against the snapshot data rather than the live source data."""
+    pvc_name = source_pvc.metadata.name
+    write_cmd = (
+        f"printf '%s\\n' {POST_SNAPSHOT_DATA.replace(chr(10), ' ')} "
+        f"> /{pvc_name}/file; sync"
+    )
+    clone_in_use = str_to_bool(
+        source_pvc.metadata.annotations.get("rawfile-test/clone-in-use", "false")
+    )
+    if clone_in_use:
+        # The writer pod is still running (clone of in-use volume is allowed).
+        pod_name = source_writer_pod.metadata.name
+        wait_pod_running(pod_name)
+        stream(
+            client.CoreV1Api().connect_get_namespaced_pod_exec,
+            pod_name,
+            namespace,
+            command=["/bin/sh", "-c", write_cmd],
+            stderr=True,
+            stdin=False,
+            stdout=True,
+            tty=False,
+        )
+    else:
+        # The writer pod was deleted before snapshotting; mount the source
+        # volume with a temporary pod to overwrite its data.
+        pod_name = f"overwriter-{pvc_name}"
+        create_pod(pod_name, source_pvc, True)
+        try:
+            wait_pod_running(pod_name)
+            stream(
+                client.CoreV1Api().connect_get_namespaced_pod_exec,
+                pod_name,
+                namespace,
+                command=["/bin/sh", "-c", write_cmd],
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+            )
+        finally:
+            logger.info(f"Deleting overwriter POD: {pod_name}")
+            try:
+                client.CoreV1Api().delete_namespaced_pod(pod_name, namespace)
+            except ApiException as e:
+                if e.status != 404:
+                    raise
+            wait_pod_deleted(pod_name)
+    logger.info(f"Overwrote source volume {pvc_name} with post-snapshot data")
+
+
 @when("we create a restore volume from the snapshot", target_fixture="restore_pvc")
 def _(source_pvc, snapshot):
     """we create a restore volume from the snapshot."""
@@ -770,8 +831,10 @@ def _(restore_pvc, restore_pod):
         stdout=True,
         tty=False,
     )
-    # todo: aren't we missing the check for correct data here!?
     logger.info(f"cat /{pvc_name}/file => {out}")
+    assert out.strip() == EXPECTED_DATA, (
+        f"Restored volume data mismatch: expected {EXPECTED_DATA!r}, got {out!r}"
+    )
 
 
 @when("we delete the snapshot")
@@ -869,7 +932,10 @@ def _(clone_pvc, clone_pod):
         stdout=True,
         tty=False,
     )
-    logger.error(f"C: {out}")
+    logger.info(f"cat /{pvc_name}/file => {out}")
+    assert out.strip() == EXPECTED_DATA, (
+        f"Cloned volume data mismatch: expected {EXPECTED_DATA!r}, got {out!r}"
+    )
 
 
 @when("we delete the source PVC")
