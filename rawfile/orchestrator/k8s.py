@@ -65,7 +65,7 @@ def volume_to_node(volume_id):
     )
     expected_affinity = k8s_client.V1VolumeNodeAffinity(
         required=k8s_client.V1NodeSelector(
-            [
+            node_selector_terms=[
                 k8s_client.V1NodeSelectorTerm(
                     match_expressions=[
                         k8s_client.V1NodeSelectorRequirement(

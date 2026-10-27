@@ -124,7 +124,9 @@ def _(binding_mode, access_mode, fs_type, volume_mode, mount_options):
         metadata=client.V1ObjectMeta(name=pvc_name),
         spec=client.V1PersistentVolumeClaimSpec(
             access_modes=[access_mode],
-            resources=client.V1ResourceRequirements(requests={"storage": "512Mi"}),
+            resources=client.V1VolumeResourceRequirements(
+                requests={"storage": "512Mi"}
+            ),
             volume_mode=volume_mode,
             storage_class_name=sc_name,
         ),
@@ -252,6 +254,7 @@ def _(expanded_pvc, expanded_pod):
         tty=False,
     )
     pvc_size = "1073741824"  # expanded_pvc.spec.resources.requests["storage"]
+    size_bytes = size_bytes.strip()
     assert size_bytes == pvc_size, f"Pod sees PVC as {size_bytes} but pvc is {pvc_size}"
 
 
@@ -540,7 +543,9 @@ def _(copy_on_write, fsfreeze):
         ),
         spec=client.V1PersistentVolumeClaimSpec(
             access_modes=["ReadWriteOnce"],
-            resources=client.V1ResourceRequirements(requests={"storage": "512Mi"}),
+            resources=client.V1VolumeResourceRequirements(
+                requests={"storage": "512Mi"}
+            ),
             volume_mode="Filesystem",
             storage_class_name=sc_name,
         ),
@@ -770,7 +775,9 @@ def _(source_pvc, snapshot):
         metadata=client.V1ObjectMeta(name=pvc_name),
         spec=client.V1PersistentVolumeClaimSpec(
             access_modes=["ReadWriteOnce"],
-            resources=client.V1ResourceRequirements(requests={"storage": "512Mi"}),
+            resources=client.V1VolumeResourceRequirements(
+                requests={"storage": "512Mi"}
+            ),
             storage_class_name=source_pvc.spec.storage_class_name,
             data_source=data_source,
         ),
@@ -871,7 +878,9 @@ def _(source_pvc):
         metadata=client.V1ObjectMeta(name=pvc_name),
         spec=client.V1PersistentVolumeClaimSpec(
             access_modes=["ReadWriteOnce"],
-            resources=client.V1ResourceRequirements(requests={"storage": "512Mi"}),
+            resources=client.V1VolumeResourceRequirements(
+                requests={"storage": "512Mi"}
+            ),
             storage_class_name=source_pvc.spec.storage_class_name,
             data_source=data_source,
         ),
