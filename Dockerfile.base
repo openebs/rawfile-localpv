@@ -17,7 +17,7 @@
 # upstream rebuild is a reviewed PR rather than a silent change.
 
 # registry.access.redhat.com/hi/python:3.14-fips-builder
-FROM registry.access.redhat.com/hi/python:3.14-fips-builder@sha256:213fcccd4e86a663f5aa48099406b910ce95d60858968af1a0f97be7d4a9ab24
+FROM registry.access.redhat.com/hi/python:3.15-fips-builder@sha256:3eaa6f0d2ec82ad3b71c45227228e698b60522b0763e284e5e16ab0957c4d160
 USER 0
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
