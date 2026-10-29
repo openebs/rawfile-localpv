@@ -428,18 +428,32 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
                 grpc.StatusCode.UNIMPLEMENTED,
                 "Snapshotting capabilities are disabled.",
             )
-        volume_id, name = None, None
+        volume_id, name = request.source_volume_id or None, None
         if request.snapshot_id:
-            snapshot_id = request.snapshot_id
-            volume_id, name = snapshot_id.rsplit("/", 1)
+            snapshot_volume_id, _, name = request.snapshot_id.rpartition("/")
+            if not (snapshot_volume_id and name):
+                # Not one of our "<volume_id>/<name>" snapshot ids
+                return csi_pb2.ListSnapshotsResponse()
+            if volume_id and volume_id != snapshot_volume_id:
+                # Not a snapshot of source_volume_id
+                return csi_pb2.ListSnapshotsResponse()
+            volume_id = snapshot_volume_id
+        if volume_id and volume_deleted(volume_id):
+            # Metadata is kept while a volume has snapshots, so it has none
+            return csi_pb2.ListSnapshotsResponse()
         offset = None
         try:
             offset = int(request.starting_token) if request.starting_token else None
         except ValueError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "invalid starting_token")
         limit = request.max_entries or None
+        # Snapshots still being copied haven't been cut yet, so they aren't listed
         snapshot_list = snapshot_manager.list_snapshots(
-            volume_id=volume_id, snapshot_name=name, offset=offset, limit=limit
+            volume_id=volume_id,
+            snapshot_name=name,
+            offset=offset,
+            limit=limit,
+            ready=True,
         )
         nano = 10**9
         return csi_pb2.ListSnapshotsResponse(
@@ -458,5 +472,7 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
                 )
                 for snapshot in snapshot_list.data
             ],
-            next_token=str(snapshot_list.next_token),
+            next_token=""
+            if snapshot_list.next_token is None
+            else str(snapshot_list.next_token),
         )

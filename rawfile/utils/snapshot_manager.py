@@ -152,7 +152,7 @@ class SnapshotManager:
             snapshot_files.extend(sorted(glob(pattern, recursive=True)))
 
         count = 0
-        idx = 0
+        next_token = None
         for idx, snap_filename in enumerate(snapshot_files):
             if offset and idx < offset:
                 continue
@@ -175,10 +175,10 @@ class SnapshotManager:
             )
             count += 1
             if limit and count >= limit:
+                # the token is the index of the first snapshot file left out
+                if idx + 1 < len(snapshot_files):
+                    next_token = idx + 1
                 break
-        next_token = None
-        if offset and snapshots and (idx + 1) < len(snapshot_files):
-            next_token = offset + len(snapshots)
 
         return SnapshotList(data=snapshots, next_token=next_token)
 
