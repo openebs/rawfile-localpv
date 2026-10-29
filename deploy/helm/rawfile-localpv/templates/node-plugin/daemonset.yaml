@@ -3,6 +3,9 @@ kind: DaemonSet
 metadata:
   name: {{ include "rawfile-localpv.fullname" . }}-node
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rawfile-localpv.labels" . | nindent 4 }}
+    component: node
 spec:
   updateStrategy:
     rollingUpdate:
