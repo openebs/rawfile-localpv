@@ -3,10 +3,14 @@ from types import SimpleNamespace
 import bd2fs
 import grpc
 import pytest
-from bd2fs import Bd2FsNodeServicer
+from bd2fs import Bd2FsControllerServicer, Bd2FsNodeServicer
 from config import config
 from csi import csi_pb2
-from csi.csi_pb2 import NodeUnpublishVolumeRequest, NodeUnstageVolumeRequest
+from csi.csi_pb2 import (
+    ListSnapshotsRequest,
+    NodeUnpublishVolumeRequest,
+    NodeUnstageVolumeRequest,
+)
 
 
 class Aborted(Exception):
@@ -132,3 +136,90 @@ def test_unstage_deleted_volume_still_mounted(tmp_path, meta_dir, context, monke
 
     assert context._state.code == grpc.StatusCode.NOT_FOUND
     assert sorted(p.name for p in staging.iterdir()) == ["block", "device", "mount"]
+
+
+VOLUME_SNAPSHOTS = {"pvc-1": ["snap-a", "snap-b"], "pvc-2": ["snap-c"]}
+
+
+@pytest.fixture
+def snapshots(tmp_path, monkeypatch):
+    meta = tmp_path / "meta"
+    pool = tmp_path / "pool"
+    for volume_id, names in VOLUME_SNAPSHOTS.items():
+        (meta / volume_id).mkdir(parents=True)
+        (meta / volume_id / "disk.meta").write_text('{"storage_pool": "default"}')
+        (pool / volume_id / "snapshots").mkdir(parents=True)
+        for name in names:
+            (pool / volume_id / "snapshots" / f"{name}.img").write_bytes(b"data")
+    monkeypatch.setattr(
+        config,
+        "csi_driver",
+        SimpleNamespace(
+            metadata_dir=meta,
+            storage_pools={"default": SimpleNamespace(path=pool)},
+            capabilities=SimpleNamespace(snapshots=SimpleNamespace(enabled=True)),
+        ),
+    )
+    return [f"{v}/{name}" for v, names in VOLUME_SNAPSHOTS.items() for name in names]
+
+
+def list_snapshots(context, **kwargs):
+    servicer = Bd2FsControllerServicer(bds=None, task_manager=None)
+    return servicer.ListSnapshots(ListSnapshotsRequest(**kwargs), context)
+
+
+def snapshot_ids(response):
+    return [entry.snapshot.snapshot_id for entry in response.entries]
+
+
+def test_list_snapshots_without_max_entries_returns_all(snapshots, context):
+    response = list_snapshots(context)
+
+    assert snapshot_ids(response) == snapshots
+    assert response.next_token == ""
+
+
+def test_list_snapshots_paginates_with_max_entries(snapshots, context):
+    first = list_snapshots(context, max_entries=2)
+
+    assert snapshot_ids(first) == snapshots[:2]
+    assert first.next_token
+
+    second = list_snapshots(context, max_entries=2, starting_token=first.next_token)
+
+    assert snapshot_ids(second) == snapshots[2:]
+    assert second.next_token == ""
+
+
+def test_list_snapshots_by_source_volume_id(snapshots, context):
+    response = list_snapshots(context, source_volume_id="pvc-2")
+
+    assert snapshot_ids(response) == ["pvc-2/snap-c"]
+    assert response.next_token == ""
+
+
+def test_list_snapshots_by_snapshot_id(snapshots, context):
+    response = list_snapshots(context, snapshot_id="pvc-1/snap-b")
+
+    assert snapshot_ids(response) == ["pvc-1/snap-b"]
+    assert response.next_token == ""
+
+
+@pytest.mark.parametrize(
+    "request_args",
+    [
+        {"snapshot_id": "pvc-1/snap-missing"},
+        {"snapshot_id": "pvc-deleted/snap-a"},
+        {"snapshot_id": "not-a-snapshot-id"},
+        {"snapshot_id": "pvc-1/"},
+        {"snapshot_id": "pvc-1/snap-a", "source_volume_id": "pvc-2"},
+        {"source_volume_id": "pvc-deleted"},
+    ],
+)
+def test_list_snapshots_returns_empty_list_for_unknown_snapshot(
+    snapshots, context, request_args
+):
+    response = list_snapshots(context, **request_args)
+
+    assert snapshot_ids(response) == []
+    assert response.next_token == ""
