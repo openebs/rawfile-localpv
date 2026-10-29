@@ -205,6 +205,15 @@ def test_list_snapshots_by_snapshot_id(snapshots, context):
     assert response.next_token == ""
 
 
+def test_list_snapshots_skips_snapshots_being_created(snapshots, tmp_path, context):
+    (tmp_path / "pool" / "pvc-1" / "snapshots" / "snap-a.img.creating").touch()
+
+    response = list_snapshots(context)
+
+    assert snapshot_ids(response) == ["pvc-1/snap-b", "pvc-2/snap-c"]
+    assert response.next_token == ""
+
+
 @pytest.mark.parametrize(
     "request_args",
     [

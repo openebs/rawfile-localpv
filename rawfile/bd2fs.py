@@ -447,8 +447,13 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
         except ValueError:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "invalid starting_token")
         limit = request.max_entries or None
+        # Snapshots still being copied haven't been cut yet, so they aren't listed
         snapshot_list = snapshot_manager.list_snapshots(
-            volume_id=volume_id, snapshot_name=name, offset=offset, limit=limit
+            volume_id=volume_id,
+            snapshot_name=name,
+            offset=offset,
+            limit=limit,
+            ready=True,
         )
         nano = 10**9
         return csi_pb2.ListSnapshotsResponse(
