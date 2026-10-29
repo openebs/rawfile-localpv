@@ -118,7 +118,7 @@ class SnapshotManager:
             else consts.COW_SUPPORT_MAP.get(
                 volume_meta.get("storage_pool", None), False
             )
-        ) and is_cow_supported(Path(os.path.dirname(snap_path)), destination)
+        ) and is_cow_supported(Path(os.path.dirname(snap_path)), destination.parent)
         reflink = "always" if copy_on_write else "never"
         cmd = (
             f"cp --sparse=auto --reflink={reflink} {snap_path} {destination.as_posix()}"
