@@ -35,7 +35,7 @@ class TaskInfo(TypedDict):
   - Tasks stored in JSON format at `{DATA_DIR}/tasks.json`
   - Thread-safe operations using Lock mechanism
   - Automatic state recovery after crashes
-  - Handles stuck tasks by marking them as failed
+  - Handles stuck tasks by marking them as failed when the Task Manager is started
 
 #### Task Execution
 
@@ -70,7 +70,15 @@ class TaskInfo(TypedDict):
 3. Automatic retry for failed tasks
 4. Cleanup of completed/non-retriable tasks
 
-### 3. Shutdown Process
+### 3. Startup Process
+
+- Creating the Task Manager neither runs nor retries any task
+- `start()` marks the tasks left running by a crash as failed and starts the retry worker
+- The driver calls it after its startup checks and migrations (which also move `tasks.json` into place), right before serving requests:
+  - the migrations rewrite volume metadata, so they must not race retried tasks
+  - a running retry worker keeps the process from exiting, so a failed startup would hang instead of being restarted
+
+### 4. Shutdown Process
 
 - Graceful shutdown with timeout
 - Marks running tasks as failed
@@ -87,6 +95,7 @@ class TaskInfo(TypedDict):
 ## Usage Example
 
 ```python
-task_manager = TaskManager(executor, retry_interval=5, max_retry=5)
+task_manager = TaskManager(executor, tasks_store_path, retry_interval=5, max_retry=5)
+task_manager.start()
 task_id = task_manager.run_task(TaskName.CREATE_SNAPSHOT, *args, **kwargs)
 ```
