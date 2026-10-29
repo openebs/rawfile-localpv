@@ -43,9 +43,18 @@ def test_json_log_serializes_exception_fields(records):
 
 
 def test_json_log_keeps_known_types(records):
-    logger.info("done", latency=timedelta(seconds=1), ids=("pvc-1",), size=16)
+    logger.info(
+        "done",
+        latency=timedelta(seconds=1),
+        ids=("pvc-1",),
+        size=16,
+        ratio=0.5,
+        success=True,
+    )
 
     out = serialized(records)
     assert out["latency"] == "1s"
     assert out["ids"] == ["pvc-1"]
     assert out["size"] == 16
+    assert out["ratio"] == 0.5
+    assert out["success"] is True
