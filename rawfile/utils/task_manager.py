@@ -67,6 +67,14 @@ class TaskManager:
         self._tasks_store_path.parent.mkdir(exist_ok=True, parents=True)
         self._tasks_store_path.touch(exist_ok=True)
         self._lock = Lock()
+
+    def start(self):
+        """Recover the tasks interrupted by a crash and start retrying failed tasks
+
+        Call it once the node is ready to run tasks, i.e. after the startup checks
+        and migrations: they would race the retried tasks, and a running retry
+        worker keeps the process from exiting if they fail.
+        """
         for task_id, task in self.get_tasks(state=TaskState.RUNNING).items():
             task["state"] = TaskState.FAILED
             logger.warning(

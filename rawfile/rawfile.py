@@ -186,6 +186,7 @@ def csi_driver(config: RawFileCmd):
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
+    _task_manager.start()
     server.start()
     if internal_server:
         internal_server.start()
