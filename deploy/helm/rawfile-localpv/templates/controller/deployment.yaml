@@ -5,6 +5,9 @@ kind: Deployment
 metadata:
   name: {{ include "rawfile-localpv.fullname" . }}-controller
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rawfile-localpv.labels" . | nindent 4 }}
+    component: controller
 spec:
   replicas: 1
   selector:

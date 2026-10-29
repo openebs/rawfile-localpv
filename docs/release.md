@@ -44,6 +44,7 @@ Please read the following steps carefully:
 - [ ] Freeze `develop` branches from any changes
 - [ ] Ensure the pyproject.yoml `version` is set to the release version
 - [ ] Ensure the Chart.yaml `version` and `appVersion` are set to the release version (the pre-commit hook will do this for you)
+- [ ] Update `$minVersion` in `deploy/helm/rawfile-localpv/templates/upgrade-check.yaml` if required
 - [ ] Fixup the helm chart docs (the pre-commit hook will do this for you)
 - [ ] Update `CHANGELOG.md` with the new version and changes
 - [ ] Raise PR to merge the changes above
