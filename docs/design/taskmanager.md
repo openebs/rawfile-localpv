@@ -74,7 +74,7 @@ class TaskInfo(TypedDict):
 
 - Creating the Task Manager neither runs nor retries any task
 - `start()` marks the tasks left running by a crash as failed and starts the retry worker
-- The driver calls it after its startup checks and migrations (which also move `tasks.json` into place), right before serving requests:
+- The node plugin calls it after its startup checks and migrations (which also move `tasks.json` into place), right before serving requests:
   - the migrations rewrite volume metadata, so they must not race retried tasks
   - a running retry worker keeps the process from exiting, so a failed startup would hang instead of being restarted
 
