@@ -36,6 +36,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | capabilities.snapshots.enabled | bool | `true` | Sets whether taking volume snapshots is enabled. Required for volume cloning. Runs externalSnapshotter and snapshotController containers. |
 | controller.affinity | string | `nil` | Affinities for controller component |
 | controller.apiServer.resources | object | `{}` | Sets compute resources for apiServer component |
+| controller.apiServer.workers | int | `4` | Number of uvicorn worker processes for the apiServer. Each worker is a separate Python process. |
 | controller.externalResizer.image.pullPolicy | string | `nil` | Image pull policy for `csi-resizer` |
 | controller.externalResizer.image.registry | string | `""` | Image registry for `csi-resizer` |
 | controller.externalResizer.image.repository | string | `"sig-storage/csi-resizer"` | Image Repository for `csi-resizer` |

@@ -52,6 +52,8 @@ spec:
               value: {{ .Values.logFormat }}
             - name: TLS_INSECURE_SKIP_VERIFY
               value: "{{ .Values.tls.insecureSkipVerify }}"
+            - name: API__WORKERS
+              value: {{ .Values.controller.apiServer.workers | toString | quote }}
             - name: GA_ENABLED
               {{- if kindIs "bool" .Values.global.analytics.enabled }}
               value: "{{ .Values.global.analytics.enabled }}"
