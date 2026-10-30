@@ -298,7 +298,7 @@ capabilities:
     enabled: true
   apiServer:
     # -- Sets whether API Server has been enabled or not
-    enabled: true
+    enabled: false
 
 tls:
   # -- Skips strict x509 TLS verification when the driver's Kubernetes client talks to the API server if true. Dangerous: do not set to true if you are not sure of the implications

@@ -31,7 +31,7 @@ Please follow the [install guide](https://github.com/openebs/rawfile-localpv/tre
 | auth.enabled | bool | `true` | Enables authentication for internal gRPC server |
 | auth.secretName | string | `""` | If managing secrets outside the chart, use this to reference the secret name; otherwise, leave empty. |
 | auth.token | string | `""` | Sets authentication token for internal gRPC server, will generate one if nothing provided. Must be base64-encoded if provided |
-| capabilities.apiServer.enabled | bool | `true` | Sets whether API Server has been enabled or not |
+| capabilities.apiServer.enabled | bool | `false` | Sets whether API Server has been enabled or not |
 | capabilities.resize.enabled | bool | `true` | Sets whether volume resizing is enabled. If disabled, don't deploy controller component |
 | capabilities.snapshots.enabled | bool | `true` | Sets whether taking volume snapshots is enabled. Required for volume cloning. Runs externalSnapshotter and snapshotController containers. |
 | controller.affinity | string | `nil` | Affinities for controller component |
