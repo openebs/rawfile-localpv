@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed 🐛
 
 - Snapshot restore and PVC clone no longer fall back to a full copy on CoW filesystems; the CoW probe now targets the destination directory ([#473](https://github.com/openebs/rawfile-localpv/issues/473))
+- Deleting the last snapshot of a deleted volume now removes the volume's directory and metadata, and `rawfile gc` no longer fails on such volumes ([#292](https://github.com/openebs/rawfile-localpv/issues/292))
 
 ### Changed ♻️
 
