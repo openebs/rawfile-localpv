@@ -86,10 +86,20 @@ RUN python -m \
 
 # Slim the venv: drop the stub generator (build group) and pip, and strip
 # debug symbols from the extension modules.
+# Then precompile bytecode: the runtime sets PYTHONDONTWRITEBYTECODE and Poetry
+# does not compile, so without this every process compiles all sources at
+# startup (e.g. kubernetes' 4MB core_v1_api.py) and the compiler's peak memory
+# stays resident (~55MiB RSS per process). checked-hash keeps the .pyc valid
+# regardless of the file mtimes after COPY.
+# kubernetes>=37 also ships a full asyncio client (kubernetes/aio, ~38MiB of
+# source, ~23MiB more once compiled); rawfile only uses the sync client and
+# nothing else imports it, so drop it.
 RUN cd $PYSETUP_PATH && \
     poetry sync --only main --no-root && \
     python -m pip uninstall -y pip setuptools wheel && \
-    find "$VENV_PATH" /rawfile -name '*.so*' -type f -exec strip --strip-unneeded '{}' +
+    rm -rf "$VENV_PATH"/lib/python3.*/site-packages/kubernetes/aio && \
+    find "$VENV_PATH" /rawfile -name '*.so*' -type f -exec strip --strip-unneeded '{}' + && \
+    python -m compileall -q -j0 --invalidation-mode checked-hash "$VENV_PATH" /rawfile
 
 # Assemble the runtime rootfs: the runtime image plus the OS tools rawfile
 # needs (sh/bash, mount/umount/losetup/blkid/findmnt/blockdev/fsfreeze, ext4

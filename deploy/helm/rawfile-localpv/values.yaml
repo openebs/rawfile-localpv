@@ -77,6 +77,8 @@ controller:
     #   memory: 100Mi
 
   apiServer:
+    # -- Number of uvicorn worker processes for the apiServer. Each worker is a separate Python process.
+    workers: 4
     # -- Sets compute resources for apiServer component
     resources:
       {}
