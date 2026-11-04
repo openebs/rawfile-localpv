@@ -19,9 +19,9 @@ class VersionSet:
         version_info = version_code()
         info = read_node_info(self.id)
 
-        self.k8s_version = version_info.git_version
+        self.k8s_version = version_info["gitVersion"]
         self.uid = namespace_uid("default")
-        self.node_os = info.os_image
-        self.node_kernel_version = info.kernel_version
-        self.platform = f"{info.operating_system}/{info.architecture}"
+        self.node_os = info.osImage
+        self.node_kernel_version = info.kernelVersion
+        self.platform = f"{info.operatingSystem}/{info.architecture}"
         self.node_count = node_count()
