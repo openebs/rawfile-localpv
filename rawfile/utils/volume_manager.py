@@ -177,9 +177,13 @@ class VolumeManager:
         logger.info("Destroying Volume", volume_id=volume_id, dry_run=dry_run)
         if dry_run:
             return
-        snapshots = list(snapshots_dir(volume_id).glob("*"))
-        # don't count the temporary dir!
-        snapshots.remove(snapshots_dir(volume_id, temporary=True))
+        # don't count the temporary dir! (already gone if a previous call kept
+        # the volume for its snapshots)
+        snapshots = [
+            path
+            for path in snapshots_dir(volume_id).glob("*")
+            if path != snapshots_dir(volume_id, temporary=True)
+        ]
         temp_snapshots = list(snapshots_dir(volume_id, temporary=True).glob("*"))
         total_snapshots = len(snapshots) + len(temp_snapshots)
         meta = metadata_or(volume_id)

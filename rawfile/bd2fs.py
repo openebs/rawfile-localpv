@@ -418,7 +418,8 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
         snapshot_id = request.snapshot_id
         volume_id, name = snapshot_id.rsplit("/", 1)
         snapshot_manager.delete_snapshot(volume_id, name)
-        volume_manager.gc_if_needed(volume_id)
+        # remove the volume if it was deleted while it still had snapshots
+        volume_manager.gc_if_needed(volume_id, dry_run=False)
         return csi_pb2.DeleteSnapshotResponse()
 
     @log_grpc_request
