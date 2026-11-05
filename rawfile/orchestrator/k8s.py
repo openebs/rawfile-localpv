@@ -1,16 +1,27 @@
 import functools
-import os
 import threading
-from collections.abc import Callable
 from datetime import UTC, datetime
 from enum import StrEnum
 from time import sleep
 
+import msgspec
 from config import config
-from kubernetes import client as k8s_client
-from kubernetes import config as k8s_config
-from kubernetes import watch
-from kubernetes.client.rest import ApiException
+from lightkube import ApiError, Client, KubeConfig
+from lightkube.models.core_v1 import (
+    NodeSelector,
+    NodeSelectorRequirement,
+    NodeSelectorTerm,
+    VolumeNodeAffinity,
+)
+from lightkube.models.meta_v1 import ObjectMeta
+from lightkube.resources.apps_v1 import DaemonSet
+from lightkube.resources.core_v1 import (
+    ConfigMap,
+    Namespace,
+    Node,
+    PersistentVolume,
+    Pod,
+)
 from utils.errors import NodeDaemonSetNotDefined
 from utils.logs import logger
 
@@ -21,28 +32,15 @@ class NodeUnavailableError(Exception):
         super().__init__(f"Node {self.node_name} is not available")
 
 
-__config_loaded = False
-
-
-def load_config(func):
-    @functools.wraps(func)
-    def wrap(*args, **kwargs):
-        global __config_loaded
-        if not __config_loaded:
-            if os.getenv("KUBERNETES_SERVICE_HOST"):
-                k8s_config.load_incluster_config()
-            else:
-                k8s_config.load_config()
-
-            if config.tls_insecure_skip_verify:
-                configuration = k8s_client.Configuration.get_default_copy()
-                configuration.verify_ssl = False
-                k8s_client.Configuration.set_default(configuration)
-
-            __config_loaded = True
-        return func(*args, **kwargs)
-
-    return wrap
+@functools.cache
+def k8s() -> Client:
+    # in-cluster service account, else KUBECONFIG / ~/.kube/config
+    kube_config = KubeConfig.from_env().get()
+    if config.tls_insecure_skip_verify:
+        kube_config = kube_config._replace(
+            cluster=msgspec.structs.replace(kube_config.cluster, insecure=True)
+        )
+    return Client(kube_config)
 
 
 class K8sEventType(StrEnum):
@@ -53,22 +51,18 @@ class K8sEventType(StrEnum):
     ERROR = "ERROR"
 
 
-@load_config
 def volume_to_node(volume_id):
-    api = k8s_client.CoreV1Api()
-    pv: k8s_client.V1PersistentVolume = api.read_persistent_volume(name=volume_id)
-    curr_node_affinity: k8s_client.V1VolumeNodeAffinity = pv.spec.node_affinity
+    pv = k8s().get(PersistentVolume, volume_id)
+    curr_node_affinity = pv.spec.nodeAffinity
     node_name = (
-        curr_node_affinity.required.node_selector_terms[0]
-        .match_expressions[0]
-        .values[0]
+        curr_node_affinity.required.nodeSelectorTerms[0].matchExpressions[0].values[0]
     )
-    expected_affinity = k8s_client.V1VolumeNodeAffinity(
-        required=k8s_client.V1NodeSelector(
-            node_selector_terms=[
-                k8s_client.V1NodeSelectorTerm(
-                    match_expressions=[
-                        k8s_client.V1NodeSelectorRequirement(
+    expected_affinity = VolumeNodeAffinity(
+        required=NodeSelector(
+            nodeSelectorTerms=[
+                NodeSelectorTerm(
+                    matchExpressions=[
+                        NodeSelectorRequirement(
                             key="hostname", operator="In", values=[node_name]
                         )
                     ]
@@ -90,64 +84,51 @@ def wait_for(pred, desc=""):
     )
 
 
-@load_config
 def namespace_uid(namespace: str) -> str:
-    v1 = k8s_client.CoreV1Api()
-    namespace = v1.read_namespace(name=namespace)
-    return namespace.metadata.uid
+    return k8s().get(Namespace, namespace).metadata.uid
 
 
-@load_config
-def version_code():
-    version_api = k8s_client.VersionApi()
-    return version_api.get_code()
+def version_code() -> dict:
+    # lightkube has no wrapper for /version; use its (authenticated) httpx client
+    response = k8s()._client._client.get("/version")
+    response.raise_for_status()
+    return response.json()
 
 
-@load_config
 def read_node_info(nodeid):
-    v1 = k8s_client.CoreV1Api()
-    node = v1.read_node(name=nodeid)
-    info = node.status.node_info
-    return info
+    return k8s().get(Node, nodeid).status.nodeInfo
 
 
-@load_config
 def node_count() -> int:
-    v1 = k8s_client.CoreV1Api()
-    node_count = len(v1.list_node().items)
-    return node_count
+    return sum(1 for _ in k8s().list(Node))
 
 
-@load_config
 def read_config_map(name: str):
-    v1 = k8s_client.CoreV1Api()
     try:
-        config_map = v1.read_namespaced_config_map(name, namespace=config.namespace)
+        config_map = k8s().get(ConfigMap, name, namespace=config.namespace)
         return config_map.data or {}
-    except ApiException as e:
-        if e.status == 404:
+    except ApiError as e:
+        if e.status.code == 404:
             return {}
         raise
 
 
-@load_config
 def write_config_map(name: str, key: str, value: str, overwrite=False):
-    v1 = k8s_client.CoreV1Api()
     namespace = config.namespace
 
     try:
-        config_map = v1.read_namespaced_config_map(name, namespace)
+        config_map = k8s().get(ConfigMap, name, namespace=namespace)
         data = config_map.data or {}
 
         if key not in data:
             data[key] = value
             config_map.data = data
-            v1.replace_namespaced_config_map(name, namespace, body=config_map)
+            k8s().replace(config_map)
             logger.trace("Added key", name=name, key=key, value=value)
         elif overwrite:
             data[key] = value
             config_map.data = data
-            v1.replace_namespaced_config_map(name, namespace, body=config_map)
+            k8s().replace(config_map)
             logger.trace("Modified key", name=name, key=key, value=value, old=data[key])
         else:
             logger.trace(
@@ -158,14 +139,14 @@ def write_config_map(name: str, key: str, value: str, overwrite=False):
                 old=data[key],
             )
 
-    except ApiException as e:
-        if e.status == 404:
+    except ApiError as e:
+        if e.status.code == 404:
             logger.trace("Creating new configmap", name=name, key=key, value=value)
-            config_map = k8s_client.V1ConfigMap(
-                metadata=k8s_client.V1ObjectMeta(name=name, namespace=namespace),
+            config_map = ConfigMap(
+                metadata=ObjectMeta(name=name, namespace=namespace),
                 data={key: value},
             )
-            v1.create_namespaced_config_map(namespace, body=config_map)
+            k8s().create(config_map)
             logger.trace("Created configmap with key", name=name, key=key, value=value)
         else:
             raise
@@ -176,32 +157,45 @@ class NodeIPMapping:
         self._stop_event = threading.Event()
         self._thread = None
 
-    @load_config
     def start(self):
         if not config.node_ds:
             raise NodeDaemonSetNotDefined()
-        self.apps_v1 = k8s_client.AppsV1Api()
-        self.core_v1 = k8s_client.CoreV1Api()
-        ds = self.apps_v1.read_namespaced_daemon_set(
-            namespace=config.namespace, name=config.node_ds
-        )
-        self.selector = ds.spec.selector.match_labels
-        self.label_selector = ",".join(f"{k}={v}" for k, v in self.selector.items())
+        ds = k8s().get(DaemonSet, config.node_ds, namespace=config.namespace)
+        self.selector = ds.spec.selector.matchLabels
 
-        self._mapping = {}
-        self.reload_mapping()
-        self._thread = threading.Thread(target=self.watch_daemonset_pods, daemon=True)
+        # pod name -> (node name, pod ip), for the running pods with an ip
+        self._pods: dict[str, tuple[str, str]] = {}
+        self._mapping: dict[str, str] = {}
+        resource_version = self.reload_mapping()
+        self._thread = threading.Thread(
+            target=self.watch_daemonset_pods, args=(resource_version,), daemon=True
+        )
         self._thread.start()
 
-    def reload_mapping(self):
-        pods = self.core_v1.list_namespaced_pod(
-            namespace=config.namespace, label_selector=self.label_selector
-        )
-        mapping = {}
-        for pod in pods.items:
-            if pod.status.phase == "Running" and pod.status.pod_ip:
-                mapping[pod.spec.node_name] = pod.status.pod_ip
-        self._mapping = mapping
+    def reload_mapping(self) -> str:
+        """Rebuild the mapping from a fresh list, returning its resourceVersion."""
+        pods = k8s().list(Pod, namespace=config.namespace, labels=self.selector)
+        self._pods = {}
+        for pod in pods:
+            self._track(K8sEventType.ADDED, pod)
+        self._publish()
+        return pods.resourceVersion
+
+    def _track(self, op: str, pod: Pod):
+        name = pod.metadata.name
+        node = pod.spec.nodeName if pod.spec else None
+        ip = pod.status.podIP if pod.status else None
+        running = pod.status is not None and pod.status.phase == "Running"
+        if op != K8sEventType.DELETED and running and node and ip:
+            self._pods[name] = (node, ip)
+        else:
+            self._pods.pop(name, None)
+
+    def _publish(self):
+        # Replace (rather than mutate) the dict so readers on other threads
+        # never iterate over it while it changes. During a rolling update the
+        # newer pod on a node wins, and deleting the old one cannot drop it.
+        self._mapping = {node: ip for node, ip in self._pods.values()}
 
     def get_all_nodes(self):
         return self._mapping
@@ -212,51 +206,39 @@ class NodeIPMapping:
             raise NodeUnavailableError(node_name)
         return ip
 
-    def _reload_and_raise(self, exc: Exception):
-        self.reload_mapping()
-        raise exc
-
-    def watch_daemonset_pods(self):
-        w = watch.Watch()
+    def watch_daemonset_pods(self, resource_version: str | None = None):
+        backoff = 1
         while not self._stop_event.is_set():
-            retrying = False
             try:
-                for event in w.stream(
-                    self.core_v1.list_namespaced_pod,
+                if resource_version is None:
+                    # (re)list so pods deleted while we weren't watching are dropped
+                    resource_version = self.reload_mapping()
+                # Watch from the listed version: no replayed ADDED events, no gap.
+                # lightkube reconnects every server_timeout from the last seen
+                # version; errors (incl. ERROR events, e.g. 410 Gone) are raised.
+                for op, pod in k8s().watch(
+                    Pod,
                     namespace=config.namespace,
-                    label_selector=self.label_selector,
-                    timeout_seconds=60,  # give it a heartbeat
+                    labels=self.selector,
+                    server_timeout=60,
+                    resource_version=resource_version,
                 ):
                     if self._stop_event.is_set():
-                        w.stop()
-                        break
-                    actions: dict[K8sEventType, Callable] = {
-                        K8sEventType.DELETED: lambda event=event: self._mapping.pop(
-                            event["object"].spec.node_name
-                        ),
-                        K8sEventType.ADDED: lambda event=event: (
-                            self._mapping.__setitem__(
-                                event["object"].spec.node_name,
-                                event["object"].status.pod_ip,
-                            )
-                        ),
-                        K8sEventType.MODIFIED: lambda event=event: (
-                            self._mapping.__setitem__(
-                                event["object"].spec.node_name,
-                                event["object"].status.pod_ip,
-                            )
-                        ),
-                        K8sEventType.ERROR: lambda: self._reload_and_raise(
-                            Exception("Got Error Event on wather")
-                        ),
-                        K8sEventType.BOOKMARK: lambda: None,
-                    }
-                    actions[event["type"]]()
-                    retrying = False
-            except Exception:
-                if not retrying:
-                    logger.exception("DS Watcher Error, retrying...")
-                retrying = True
+                        return
+                    if op == K8sEventType.BOOKMARK:
+                        continue
+                    self._track(op, pod)
+                    self._publish()
+                    backoff = 1
+            except Exception as e:
+                resource_version = None
+                if isinstance(e, ApiError) and e.status.code == 410:
+                    # the watched resourceVersion expired: routine, just relist
+                    logger.info("DS watch expired, relisting")
+                    continue
+                logger.exception("DS Watcher Error, relisting", backoff=backoff)
+                self._stop_event.wait(backoff)
+                backoff = min(backoff * 2, 30)
 
     def stop(self):
         if self._thread:
