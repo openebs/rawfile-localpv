@@ -56,7 +56,10 @@ class _JSONEncoder(json.JSONEncoder):
             return o.isoformat()
         elif isinstance(o, timedelta):
             return _format_timedelta(o)
-        return super().default(o)
+        elif isinstance(o, BaseException):
+            return fmt_exception(o)
+        # Never fail on a log field (e.g. a Path): the whole record would be dropped
+        return str(o)
 
 
 class LoggingFormats(StrEnum):
