@@ -7,6 +7,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "rawfile-localpv.labels" . | nindent 4 }}
+    component: node
 spec:
   endpoints:
   - port: metrics
