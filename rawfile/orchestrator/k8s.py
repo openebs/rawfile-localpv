@@ -24,6 +24,7 @@ from lightkube.resources.core_v1 import (
 )
 from utils.errors import NodeDaemonSetNotDefined
 from utils.logs import logger
+from utils.remote import prune_stale_stubs
 
 
 class NodeUnavailableError(Exception):
@@ -229,6 +230,7 @@ class NodeIPMapping:
                         continue
                     self._track(op, pod)
                     self._publish()
+                    prune_stale_stubs(self._mapping.values())
                     backoff = 1
             except Exception as e:
                 resource_version = None
