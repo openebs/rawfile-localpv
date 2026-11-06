@@ -82,9 +82,6 @@ def csi_driver(config: RawFileCmd):
     if driver_config.enable_metrics:
         expose_metrics(driver_config.nodeid, driver_config.metrics_port)
 
-    if driver_config.plugin_type == "controller":
-        run_ping()
-
     logger.debug(
         "Starting gRPC server",
         endpoint=driver_config.endpoint,
@@ -117,6 +114,7 @@ def csi_driver(config: RawFileCmd):
             server,
         )
         run_event_worker()
+        run_ping()
         internal_server = grpc.server(
             futures.ThreadPoolExecutor(
                 max_workers=int(driver_config.internal_grpc_workers)

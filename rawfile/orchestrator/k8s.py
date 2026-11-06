@@ -1,12 +1,13 @@
 import functools
 import threading
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from time import sleep
+from time import monotonic, sleep
 
 import msgspec
 from config import config
 from lightkube import ApiError, Client, KubeConfig
+from lightkube.models.coordination_v1 import LeaseSpec
 from lightkube.models.core_v1 import (
     NodeSelector,
     NodeSelectorRequirement,
@@ -15,6 +16,7 @@ from lightkube.models.core_v1 import (
 )
 from lightkube.models.meta_v1 import ObjectMeta
 from lightkube.resources.apps_v1 import DaemonSet
+from lightkube.resources.coordination_v1 import Lease
 from lightkube.resources.core_v1 import (
     ConfigMap,
     Namespace,
@@ -247,3 +249,88 @@ class NodeIPMapping:
 
 
 node_ip_mapping = NodeIPMapping()
+
+
+class LeaderElection:
+    """Lease based leader election, `leader` is set while we hold the lease.
+
+    Errors drop the leadership right away, so at most one candidate considers
+    itself the leader (given roughly synced clocks).
+    """
+
+    def __init__(self, name: str, identity: str, lease_duration=180, retry_period=60):
+        self.name = name
+        self.identity = identity
+        self.lease_duration = lease_duration
+        self.retry_period = retry_period
+        self.leader = threading.Event()
+        self._renewed = 0.0
+
+    def start(self):
+        threading.Thread(target=self._run, daemon=True).start()
+
+    def is_leader(self) -> bool:
+        """Like `leader`, but also false if the lease wasn't renewed recently,
+        eg: the process was paused and the lease may have been taken over
+        before our election thread got to notice it."""
+        stale = monotonic() - self._renewed > self.lease_duration - self.retry_period
+        return self.leader.is_set() and not stale
+
+    def _run(self):
+        while True:
+            started = monotonic()
+            try:
+                acquired = self._try_acquire_or_renew()
+            except ApiError as e:
+                # 409: another candidate updated the lease first
+                if e.status.code != 409:
+                    logger.exception("Leader election error", lease=self.name)
+                acquired = False
+            except Exception:
+                logger.exception("Leader election error", lease=self.name)
+                acquired = False
+            if acquired:
+                self._renewed = started
+            if acquired != self.leader.is_set():
+                logger.info(
+                    "Lease acquired" if acquired else "Lease lost",
+                    lease=self.name,
+                    identity=self.identity,
+                )
+                if acquired:
+                    self.leader.set()
+                else:
+                    self.leader.clear()
+            sleep(self.retry_period)
+
+    def _try_acquire_or_renew(self) -> bool:
+        now = datetime.now(UTC)
+        try:
+            lease = k8s().get(Lease, self.name, namespace=config.namespace)
+        except ApiError as e:
+            if e.status.code != 404:
+                raise
+            lease = Lease(
+                metadata=ObjectMeta(name=self.name, namespace=config.namespace),
+                spec=LeaseSpec(leaseTransitions=0),
+            )
+        spec = lease.spec or LeaseSpec(leaseTransitions=0)
+        holder = spec.holderIdentity
+        if holder and holder != self.identity:
+            renewed = spec.renewTime or spec.acquireTime
+            duration = timedelta(seconds=spec.leaseDurationSeconds or 0)
+            if renewed and now < renewed + duration:
+                return False
+            spec.leaseTransitions = (spec.leaseTransitions or 0) + 1
+        if holder != self.identity:
+            spec.acquireTime = now
+        spec.holderIdentity = self.identity
+        spec.leaseDurationSeconds = self.lease_duration
+        spec.renewTime = now
+        lease.spec = spec
+        # the resourceVersion makes concurrent acquires conflict (409)
+        if lease.metadata.resourceVersion:
+            k8s().replace(lease)
+        else:
+            k8s().create(lease)
+        return True
