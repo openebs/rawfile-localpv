@@ -3,6 +3,7 @@ import threading
 import time
 
 from config import config
+from orchestrator.k8s import LeaderElection
 from utils.logs import fmt_exception, logger
 
 from .client import GA4Client
@@ -82,10 +83,13 @@ def enabled() -> bool:
 
 
 def run_ping():
+    """Run the install/ping events from the node plugins: they run on every
+    node, so only the holder of the analytics lease sends them."""
     if enabled():
-        ping_hours = config.ga_ping
+        election = LeaderElection("rawfile-analytics", config.csi_driver.nodeid)
+        election.start()
         background_thread = threading.Thread(
-            daemon=True, target=Ping(get_usage(), ping_hours).run
+            daemon=True, target=Ping(get_usage, config.ga_ping, election).run
         )
         background_thread.start()
 
