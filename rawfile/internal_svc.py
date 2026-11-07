@@ -6,6 +6,7 @@ import grpc
 from config import config
 from consts import COW_SUPPORT_MAP
 from internal import internal_pb2, internal_pb2_grpc
+from utils.devices import stat
 from utils.lock import VolLock
 from utils.logs import GRPCLogger, logger
 from utils.rawfile import (
@@ -68,12 +69,21 @@ class InternalServicer(internal_pb2_grpc.InternalServicer):
                     status=internal_pb2.ExpandRawFileStatus.OK,
                 )
             meta = metadata(request.volume_id)
-            if get_capacity(meta["storage_pool"]) < request.new_size:
+            thin_provision = meta.get("thin_provision", False)
+            # The pool's capacity already excludes what this volume holds on disk, so
+            # only the blocks the expansion adds have to fit. fallocate also allocates
+            # any holes in a thick volume's image, truncate only grows a thin one.
+            required_space = (
+                size_inc
+                if thin_provision
+                else request.new_size - stat(img_file_path)["physical_size"]
+            )
+            if get_capacity(meta["storage_pool"]) < required_space:
                 return internal_pb2.ExpandRawFileResponse(
                     is_attached=volume_manager.is_attached(request.volume_id),
                     status=internal_pb2.ExpandRawFileStatus.RESOURCE_EXHAUSTED,
                 )
-            if meta.get("thin_provision", False):
+            if thin_provision:
                 truncate(img_file_path, request.new_size)
             else:
                 fallocate(img_file_path, request.new_size)

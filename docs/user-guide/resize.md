@@ -24,7 +24,7 @@ parameters:
 ```
 
 - Online filesystem growth works for `ext4`, `xfs` and `btrfs` (all supported fsTypes).
-- Enough free capacity must exist in the volume's storage pool on its node.
+- Enough free capacity for the added space must exist in the volume's storage pool on its node.
 
 ## Step 1 — Increase the PVC size
 

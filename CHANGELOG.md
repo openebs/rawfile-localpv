@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Leak on cached gRPC connections between nodes ([#490](https://github.com/openebs/rawfile-localpv/pull/490))
 - Snapshot restore and PVC clone no longer fall back to a full copy on CoW filesystems; the CoW probe now targets the destination directory ([#473](https://github.com/openebs/rawfile-localpv/issues/473))
 - Deleting the last snapshot of a deleted volume now removes the volume's directory and metadata, and `rawfile gc` no longer fails on such volumes ([#292](https://github.com/openebs/rawfile-localpv/issues/292))
+- Expanding a volume now only requires free capacity for the space it adds, not for the volume's whole new size ([#494](https://github.com/openebs/rawfile-localpv/issues/494))
 
 ### Changed ♻️
 
