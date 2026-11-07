@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$(dirname "$0")"
-source "$SCRIPT_DIR/common"
+source "$SCRIPT_DIR/../common"
 set -ex
 
 K8S_VERSION=$(cat "$SCRIPT_DIR/../../.kube-version")

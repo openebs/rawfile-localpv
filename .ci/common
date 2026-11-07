@@ -53,10 +53,12 @@ build-image-uri() {
 # poetry.lock. So the tag only changes when a rebuild is actually needed, is
 # the same across branches with identical inputs, and never needs updating by
 # hand.
-export GRPCIO_VERSION="$(sed -n '/^name = "grpcio"$/{n;s/^version = "\(.*\)"$/\1/p}' "$SCRIPT_DIR/../poetry.lock")"
+# Relative to this file, as it's sourced from scripts in different directories.
+CI_ROOT_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
+export GRPCIO_VERSION="$(sed -n '/^name = "grpcio"$/{n;s/^version = "\(.*\)"$/\1/p}' "$CI_ROOT_DIR/poetry.lock")"
 base-image-uri() {
 	local hash
-	hash="$( { cat "$SCRIPT_DIR/../Dockerfile.base"; echo "grpcio=${GRPCIO_VERSION}"; } | sha256sum | cut -c1-12)"
+	hash="$( { cat "$CI_ROOT_DIR/Dockerfile.base"; echo "grpcio=${GRPCIO_VERSION}"; } | sha256sum | cut -c1-12)"
 	printf "%s:base-%s" "${CI_IMAGE_NAME}" "${hash}"
 }
 export CI_BASE_IMAGE="$(base-image-uri)"
