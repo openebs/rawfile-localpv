@@ -1,3 +1,4 @@
+import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -28,6 +29,7 @@ def manager(tmp_path):
         retry_interval=0.01,
         max_retry=MAX_RETRY,
     )
+    manager.start()
     yield manager
     manager.shutdown(timeout=1)
 
@@ -85,6 +87,7 @@ def test_duplicate_request_does_not_rerun_pending_task(tmp_path, monkeypatch):
         tasks_store_path=tmp_path / "tasks.json",
         retry_interval=0.01,
     )
+    manager.start()
     try:
         first = manager.run_task(TaskName.CREATE_VOLUME, "pvc-1")
         second = manager.run_task(TaskName.CREATE_VOLUME, "pvc-1")
@@ -93,5 +96,56 @@ def test_duplicate_request_does_not_rerun_pending_task(tmp_path, monkeypatch):
         assert wait_for(lambda: first not in manager.get_tasks())
         assert len(calls) == 1
         assert manager.get_tasks(state=TaskState.FAILED) == {}
+    finally:
+        manager.shutdown(timeout=1)
+
+
+def write_task(tasks_store_path, state):
+    task = {
+        "task": TaskName.CREATE_VOLUME,
+        "args": ["pvc-1"],
+        "kwargs": {},
+        "retry_count": 0,
+        "state": state,
+    }
+    tasks_store_path.write_text(json.dumps({"task-1": task}))
+
+
+def unstarted_manager(tasks_store_path):
+    return TaskManager(
+        ThreadPoolExecutor(max_workers=2),
+        tasks_store_path=tasks_store_path,
+        retry_interval=0.01,
+        max_retry=MAX_RETRY,
+    )
+
+
+def test_failed_tasks_are_not_retried_before_start(tmp_path, calls):
+    # The startup checks and migrations run before start() and must not race
+    # task retries
+    write_task(tmp_path / "tasks.json", TaskState.FAILED)
+    manager = unstarted_manager(tmp_path / "tasks.json")
+    try:
+        time.sleep(0.1)
+        assert calls == []
+
+        manager.start()
+
+        assert wait_for(lambda: len(calls) > 0)
+        assert calls[0] == ("pvc-1",)
+    finally:
+        manager.shutdown(timeout=1)
+
+
+def test_start_recovers_tasks_interrupted_by_a_crash(tmp_path, calls):
+    manager = unstarted_manager(tmp_path / "tasks.json")
+    try:
+        # e.g. the tasks file was moved in place by the startup migrations
+        write_task(tmp_path / "tasks.json", TaskState.RUNNING)
+
+        manager.start()
+
+        assert wait_for(lambda: len(calls) > 0)
+        assert calls[0] == ("pvc-1",)
     finally:
         manager.shutdown(timeout=1)
