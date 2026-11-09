@@ -162,6 +162,10 @@ class SnapshotManager:
             vol_id = snap_file.parent.parent.name
             if ready is not None and ready == creating:
                 continue
+            if limit and count >= limit:
+                # more snapshots remain, the next page starts at this one
+                next_token = idx
+                break
             snapshots.append(
                 Snapshot(
                     name=snap_name,
@@ -174,11 +178,6 @@ class SnapshotManager:
                 )
             )
             count += 1
-            if limit and count >= limit:
-                # the token is the index of the first snapshot file left out
-                if idx + 1 < len(snapshot_files):
-                    next_token = idx + 1
-                break
 
         return SnapshotList(data=snapshots, next_token=next_token)
 

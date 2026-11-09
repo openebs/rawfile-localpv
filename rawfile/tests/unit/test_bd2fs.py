@@ -214,6 +214,31 @@ def test_list_snapshots_skips_snapshots_being_created(snapshots, tmp_path, conte
     assert response.next_token == ""
 
 
+def test_list_snapshots_ends_pagination_when_only_unready_snapshots_remain(
+    snapshots, tmp_path, context
+):
+    (tmp_path / "pool" / "pvc-2" / "snapshots" / "snap-c.img.creating").touch()
+
+    response = list_snapshots(context, max_entries=2)
+
+    assert snapshot_ids(response) == ["pvc-1/snap-a", "pvc-1/snap-b"]
+    assert response.next_token == ""
+
+
+def test_list_snapshots_next_page_skips_unready_snapshots(snapshots, tmp_path, context):
+    (tmp_path / "pool" / "pvc-1" / "snapshots" / "snap-b.img.creating").touch()
+
+    first = list_snapshots(context, max_entries=1)
+
+    assert snapshot_ids(first) == ["pvc-1/snap-a"]
+    assert first.next_token
+
+    second = list_snapshots(context, max_entries=1, starting_token=first.next_token)
+
+    assert snapshot_ids(second) == ["pvc-2/snap-c"]
+    assert second.next_token == ""
+
+
 @pytest.mark.parametrize(
     "request_args",
     [
