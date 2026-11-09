@@ -175,8 +175,9 @@ def attach_loop(file) -> str:
             next_loop()
             run(f"losetup --direct-io=on -b {block_size} -f {file}")
         except Exception as e:
-            if ( "losetup --direct-io=on -b" in str(e.cmd) and
-                 "Invalid argument" in str(e.stderr) ):
+            if "losetup --direct-io=on -b" in str(e.cmd) and "Invalid argument" in str(
+                e.stderr
+            ):
                 block_size = 4096
             # todo: add some jitter here?
             last_exception = e
