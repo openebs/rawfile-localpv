@@ -22,7 +22,8 @@ RawFile LocalPV volume.
 
 > [!NOTE]
 > Volumes are **node-local**. A pod using a RawFile PV is always scheduled onto the node
-> that holds the volume's data. Only `ReadWriteOnce` access mode is supported.
+> that holds the volume's data. Only the `ReadWriteOnce` and `ReadWriteOncePod` access
+> modes are supported.
 
 ## Step 1 — Install the driver
 

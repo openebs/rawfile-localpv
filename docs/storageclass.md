@@ -169,7 +169,7 @@ There are no driver-specific snapshot-class parameters; snapshot behavior
 
 | PVC field | Support |
 |---|---|
-| `accessModes` | `ReadWriteOnce` only |
+| `accessModes` | `ReadWriteOnce` or `ReadWriteOncePod` |
 | `volumeMode: Filesystem` | ✅ default |
 | `volumeMode: Block` | ✅ raw loop device exposed to the pod (the `readOnly` attribute is not currently honored) |
 | `dataSource` (snapshot) | ✅ same-node restore |
