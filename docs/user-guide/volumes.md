@@ -69,7 +69,7 @@ metadata:
 spec:
   storageClassName: rawfile-custom
   accessModes:
-    - ReadWriteOnce            # the only supported access mode
+    - ReadWriteOnce            # or ReadWriteOncePod, see below
   resources:
     requests:
       storage: 10Gi
@@ -82,6 +82,22 @@ kubectl get pvc app-data
 
 The PVC stays **`Pending`** — that's normal. With `WaitForFirstConsumer`, provisioning
 starts only when a pod that uses the PVC is scheduled.
+
+### Access modes
+
+| Access mode | Who can use the volume |
+|---|---|
+| `ReadWriteOnce` | Any number of pods, all on the node that holds the volume |
+| `ReadWriteOncePod` | A single pod in the whole cluster, at any given time |
+
+Volumes are node-local, so `ReadOnlyMany` and `ReadWriteMany` aren't supported.
+
+`ReadWriteOncePod` needs Kubernetes v1.27 or later, where it's enabled by default.
+Kubernetes keeps a second pod that uses the volume from starting: the scheduler leaves
+it `Pending` (or preempts the current pod if the new one has a higher priority), and the
+kubelet keeps a pod that is bound to the node directly stuck in `ContainerCreating`. The
+node plugin also refuses to publish such a volume to a second target path with
+`FAILED_PRECONDITION`.
 
 ## Step 3 — Consume the volume in a workload
 

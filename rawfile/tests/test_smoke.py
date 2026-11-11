@@ -33,7 +33,12 @@ POST_SNAPSHOT_DATA = "\n".join(str(i) for i in range(11, 21))
 
 def short_pvc_name(binding_mode, access_mode, fs_type, volume_mode, mount_options):
     bm_map = {"Immediate": "im", "WaitForFirstConsumer": "wf"}
-    am_map = {"ReadWriteOnce": "rwo", "ReadOnlyMany": "rom", "ReadWriteMany": "rwm"}
+    am_map = {
+        "ReadWriteOnce": "rwo",
+        "ReadWriteOncePod": "rwop",
+        "ReadOnlyMany": "rom",
+        "ReadWriteMany": "rwm",
+    }
     vm_map = {"Filesystem": "fs", "Block": "blk"}
 
     bm = bm_map.get(binding_mode, "u")
