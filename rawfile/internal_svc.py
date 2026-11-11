@@ -15,6 +15,7 @@ from utils.rawfile import (
     metadata,
     metadata_or,
     patch_metadata,
+    round_up_to_block_size,
     snapshots_dir,
     truncate,
 )
@@ -62,13 +63,14 @@ class InternalServicer(internal_pb2_grpc.InternalServicer):
     ) -> internal_pb2.ExpandRawFileResponse:
         with VolLock(request.volume_id):
             img_file_path = img_file(request.volume_id)
-            size_inc = request.new_size - metadata(request.volume_id)["size"]
+            meta = metadata(request.volume_id)
+            new_size = round_up_to_block_size(request.new_size, meta.get("block_size"))
+            size_inc = new_size - meta["size"]
             if size_inc <= 0:
                 return internal_pb2.ExpandRawFileResponse(
                     is_attached=volume_manager.is_attached(request.volume_id),
                     status=internal_pb2.ExpandRawFileStatus.OK,
                 )
-            meta = metadata(request.volume_id)
             thin_provision = meta.get("thin_provision", False)
             # The pool's capacity already excludes what this volume holds on disk, so
             # only the blocks the expansion adds have to fit. fallocate also allocates
@@ -76,7 +78,7 @@ class InternalServicer(internal_pb2_grpc.InternalServicer):
             required_space = (
                 size_inc
                 if thin_provision
-                else request.new_size - stat(img_file_path)["physical_size"]
+                else new_size - stat(img_file_path)["physical_size"]
             )
             if get_capacity(meta["storage_pool"]) < required_space:
                 return internal_pb2.ExpandRawFileResponse(
@@ -84,13 +86,13 @@ class InternalServicer(internal_pb2_grpc.InternalServicer):
                     status=internal_pb2.ExpandRawFileStatus.RESOURCE_EXHAUSTED,
                 )
             if thin_provision:
-                truncate(img_file_path, request.new_size)
+                truncate(img_file_path, new_size)
             else:
-                fallocate(img_file_path, request.new_size)
+                fallocate(img_file_path, new_size)
             patch_metadata(
                 request.volume_id,
                 meta["storage_pool"],
-                {"size": request.new_size},
+                {"size": new_size},
             )
             return internal_pb2.ExpandRawFileResponse(
                 is_attached=volume_manager.is_attached(request.volume_id),

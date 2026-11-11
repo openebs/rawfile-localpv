@@ -131,10 +131,11 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
 
     @log_grpc_request
     def NodeStageVolume(self, request, context):
-        if not metadata_or(volume_id=request.volume_id).get("ready", False):
+        meta = metadata_or(volume_id=request.volume_id)
+        if not meta.get("ready", False):
             raise VolumeNotReadyError(request.volume_id)
         img_file = utils.rawfile.img_file(request.volume_id)
-        loop_file = attach_loop(img_file)
+        loop_file = attach_loop(img_file, block_size=meta.get("block_size"))
         staging_path = request.staging_target_path
         staging_dev_path = Path(f"{staging_path}/dev")
         be_symlink(path=staging_dev_path, to=loop_file)

@@ -21,7 +21,7 @@ A detailed look at what RawFile LocalPV supports today. See the
 | Online/offline shrinking | ❌ | Not supported |
 | Volume snapshots | ✅ | Block-level, node-local (distributed snapshotting); btrfs FS-level snapshots deprecated |
 | Volume cloning | ✅ / 🚧 | Same-node cloning supported; cross-node in progress |
-| Storage pools | ✅ | Multiple named pools per node, capacity reservation, per-SC pool selection |
+| Storage pools | ✅ | Multiple named pools per node, capacity reservation, per-SC pool selection, loop device block size |
 | Volume metrics | ✅ | Prometheus, per node / pool / volume — see [Monitoring](./monitoring.md) |
 | REST API | ✅ (optional) | Nodes/pools/volumes/tasks introspection |
 | Capacity tracking | ✅ | `CSIStorageCapacity` published per node/pool |
@@ -83,7 +83,10 @@ free pool capacity during the copy.
 Multiple independent pools per node (e.g. an NVMe pool and an HDD pool), each on its own
 backing filesystem, each with its own capacity reservation policy. StorageClasses select
 a pool via the `storagePool` parameter, enabling storage tiering. See
-[StorageClass Configuration](./storageclass.md#storagepool).
+[StorageClass Configuration](./storageclass.md#storagepool). Pools on backing storage
+that can't do Direct I/O with 512-byte blocks (4Kn disks, ZFS with `ashift=12`) can set
+the [block size](./user-guide/storage-pools.md#loop-device-block-size) of their volumes'
+loop devices.
 
 ### Observability
 

@@ -65,6 +65,42 @@ Example on a 1TiB disk with `reservedCapacity: 100GiB`:
 | `plain` | grows until 100GiB is left free (≈ 924GiB usable) |
 | `subtract-from-total` | capped at 1TiB − 100GiB = 924GiB… but expressed as "up to 100GiB less than the disk" |
 
+### Loop device block size
+
+Volumes are attached to loop devices with Direct I/O, which only works when the loop
+device's logical block (sector) size is at least the block size the pool's backing storage
+requires for Direct I/O. When it's smaller, the volume can't be staged, and pods using it
+stay in `ContainerCreating` with a `FailedMount` event like:
+
+```text
+MountVolume.MountDevice failed for volume "<pv-name>" : rpc error: code = Unknown desc = Exception calling application: Failed to attach loop device for <pool-path>/<pv-name>/disk.img after 20 attempts: Command 'losetup --direct-io=on -f <pool-path>/<pv-name>/disk.img' returned non-zero exit status 1.
+```
+
+Running `losetup --direct-io=on -f <file>` by hand on the node shows
+`failed to set up loop device: Invalid argument`. This happens for example on disks with
+4KiB logical sectors (4Kn) or on ZFS pools created with `ashift=12`. Set the pool's
+`blockSize` to fix it:
+
+```yaml
+node:
+  storagePools:
+    zfs:
+      path: /tank/rawfile/
+      blockSize: 4096
+```
+
+`blockSize` may be `512`, `1024`, `2048` or `4096`. When unset, the block size is left to
+`losetup` and the kernel (usually 512 bytes). Check the block size of an attached volume
+with `losetup -l -O NAME,BACK-FILE,LOG-SEC`. The backing file of a volume with a block size
+is rounded up to a multiple of it, as `mkfs.xfs` refuses a device that ends with a partial
+block: a `1G` (10⁹ bytes) volume in a pool with `blockSize: 4096` takes 1000001536 bytes.
+
+A filesystem may not mount on a device with a larger block size than the one it was
+created on, so a volume keeps the block size it was created with, which is stored in its
+metadata. Changing `blockSize` only applies to new volumes, and volumes cloned or restored
+from a snapshot take the block size of their source volume, whatever their pool's
+`blockSize` is.
+
 ## Copy-on-write (CoW) capable pools
 
 Snapshots and clones are **cheap and consistent** when the pool's **backing
@@ -174,6 +210,8 @@ sidecar logs), so pods consuming such a PVC stay `Pending` with
   pick it up on restart.
 - **Changing `reservedCapacity`**: safe; only affects capacity accounting for new
   provisioning.
+- **Changing `blockSize`**: safe; only applies to new volumes (see
+  [Loop device block size](#loop-device-block-size)).
 - **Moving/renaming a pool**: not supported in place — existing volumes reference their
   pool. Drain volumes first (delete/migrate PVCs), then change the configuration.
 - **Removing a pool**: ensure no volumes remain in it before removing it from values.

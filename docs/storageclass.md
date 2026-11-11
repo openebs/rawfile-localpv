@@ -138,6 +138,10 @@ Pool notes:
     until `reservedCapacity` is left free ("reserve for everything but this pool").
   - `subtract-from-total`: the pool may use at most `total - reservedCapacity`…
     effectively "this pool may grow up to `reservedCapacity` less than the disk".
+- `blockSize` (`512`, `1024`, `2048` or `4096`) sets the logical block size of the loop
+  devices of new volumes in the pool, for backing storage that can't do Direct I/O with
+  512-byte blocks (see
+  [Loop device block size](./user-guide/storage-pools.md#loop-device-block-size)).
 
 ## Standard StorageClass fields
 
