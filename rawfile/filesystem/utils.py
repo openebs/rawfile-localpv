@@ -6,7 +6,14 @@ from utils.commands import run
 
 
 def get_device_fs(device: str) -> str | None:
-    res = run(f"blkid -o value -s TYPE {device}", capture_output=True, check=False)
+    # Bypass blkid's cache (-c /dev/null): it trusts an entry for 2s after probing a
+    # device, so a loop device re-attached to another volume's image right after an
+    # unstage would still report the filesystem of the previous one.
+    res = run(
+        f"blkid -c /dev/null -o value -s TYPE {device}",
+        capture_output=True,
+        check=False,
+    )
     if res.returncode == 2:  # specified token was not found
         return None
 
