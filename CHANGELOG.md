@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting the last snapshot of a deleted volume now removes the volume's directory and metadata, and `rawfile gc` no longer fails on such volumes ([#292](https://github.com/openebs/rawfile-localpv/issues/292))
 - Expanding a volume now only requires free capacity for the space it adds, not for the volume's whole new size ([#494](https://github.com/openebs/rawfile-localpv/issues/494))
 - Publishing a `Block` volume again at the same target (e.g. after a kubelet restart) no longer fails with `InvalidDeviceForMountpointError` ([#504](https://github.com/openebs/rawfile-localpv/issues/504))
+- Staging a volume no longer fails with "wrong fs type" right after another volume was unstaged on the node: filesystems are detected without blkid's cache, which could report the previous volume's filesystem on the re-used loop device ([#507](https://github.com/openebs/rawfile-localpv/issues/507))
 
 ### Changed ♻️
 
