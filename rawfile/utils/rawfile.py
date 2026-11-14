@@ -160,6 +160,7 @@ def attach_loop(file) -> str:
     # could clash on the creation, thus leading into losetup -f failures...
     last_exception = None
     max_attempts = 20
+    block_size = 512
     for _ in range(max_attempts):
         try:
             devs = attached_loops(file)
@@ -172,8 +173,12 @@ def attach_loop(file) -> str:
                 run(f"blockdev --setrw {dev}")
                 return dev
             next_loop()
-            run(f"losetup --direct-io=on -f {file}")
+            run(f"losetup --direct-io=on -b {block_size} -f {file}")
         except Exception as e:
+            if "losetup --direct-io=on -b" in str(e.cmd) and "Invalid argument" in str(
+                e.stderr
+            ):
+                block_size = 4096
             # todo: add some jitter here?
             last_exception = e
     if last_exception:
