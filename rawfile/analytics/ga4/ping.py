@@ -1,8 +1,9 @@
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import humanize
-from orchestrator.k8s import read_config_map, write_config_map
+from orchestrator.k8s import LeaderElection, read_config_map, write_config_map
 from utils.logs import fmt_exception, logger
 
 from .usage import Usage
@@ -11,7 +12,12 @@ time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 class Ping:
-    def __init__(self, usage: Usage, ping_delta: timedelta):
+    def __init__(
+        self,
+        get_usage: Callable[[], Usage],
+        ping_delta: timedelta,
+        election: LeaderElection,
+    ):
         self.configmap = "rawfile-config"
         self.install_ts_key = "install-ts"
         self.ping_ts_key = "last-ping-ts"
@@ -19,19 +25,15 @@ class Ping:
         self.install_ts = None
         self.ping_ts = None
         self.ping_delta = ping_delta
-        self.usage = usage
-
-    def refresh(self):
-        self.usage.refresh()
+        self.get_usage = get_usage
+        self.usage: Usage | None = None
+        self.election = election
 
     def run(self):
         record_ping = False
 
         while True:
             try:
-                # becomes a no-op after the install
-                self.ping_ts = self.send_install_once()
-
                 if record_ping:
                     # write last ping ts to configmap, allowing us to stay accurate even across restarts
                     write_config_map(
@@ -39,8 +41,30 @@ class Ping:
                     )
                     record_ping = False
 
+                # only the lease holder sends events, otherwise every node would
+                self.election.leader.wait()
+                if self.usage is None:
+                    self.usage = self.get_usage()
+
+                # becomes a no-op after the install
+                self.ping_ts = self.send_install_once()
+
                 self.usage.refresh()
-                self.ping_ts = wait_ping(self.ping_ts, self.ping_delta)
+                due_ts = wait_ping(self.ping_ts, self.ping_delta)
+                if not self.election.is_leader():
+                    # lost (or may have lost) the lease meanwhile, the new leader
+                    # pings instead: reload the last ping ts from the configmap
+                    # once the election confirms we're (still) the leader
+                    self.ping_ts = None
+                    time.sleep(self.election.retry_period)
+                    continue
+                # another leader may have pinged while we waited (eg: we were
+                # paused and regained the lease), so the configmap has the final say
+                last_ts = read_config_map(self.configmap).get(self.ping_ts_key)
+                if last_ts and last_ts > self.ping_ts:
+                    self.ping_ts = last_ts
+                    continue
+                self.ping_ts = due_ts
                 self.usage.send_ping()
                 record_ping = True
             except Exception as e:
