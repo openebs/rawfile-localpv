@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added ✨
 
+- Storage pools can set the logical block size of their volumes' loop devices (`blockSize`), so volumes can be attached with Direct I/O on backing storage that requires 4KiB blocks, such as 4Kn disks or ZFS with `ashift=12` ([#500](https://github.com/openebs/rawfile-localpv/issues/500))
+
 ### Fixed 🐛
 
 - Leak on cached gRPC connections between nodes ([#490](https://github.com/openebs/rawfile-localpv/pull/490))

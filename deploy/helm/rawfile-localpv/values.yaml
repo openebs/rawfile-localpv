@@ -192,6 +192,8 @@ node:
   #     reservedCapacity: ""
   # -- Reserved capacity mode. `Plain` means it's taken as-is, `subtract-from-total` means it's subtracted from underlying device capacity. Example: if reservedCapacity is 100GiB, then `plain` means the pool can grow until 100GiB is left, and `subtract-from-total` means it can grow up to 100GiB. Default: `plain`
   #     reservedCapacityMode: "plain" | "subtract-from-total"
+  # -- Logical block size of the loop devices of the volumes created in the pool, one of 512, 1024, 2048 or 4096. Set it to 4096 when Direct I/O fails on the pool's backing storage (for example 4Kn disks or ZFS with `ashift=12`). Existing volumes, and the volumes cloned or restored from them, keep their block size. Default: unset, left to losetup (usually 512)
+  #     blockSize: 4096
 
   # -- Metadata dir path for rawfile volumes metadata and tasks store file
   metadataDirPath: /var/local/openebs/rawfile/{{ .Release.Name }}/meta

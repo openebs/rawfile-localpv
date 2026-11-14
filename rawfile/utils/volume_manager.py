@@ -23,6 +23,7 @@ from utils.rawfile import (
     metadata,
     metadata_or,
     patch_metadata,
+    round_up_to_block_size,
     snapshots_dir,
     truncate,
     update_metadata,
@@ -113,6 +114,11 @@ class VolumeManager:
                 snapshots_dir = Path(img_data_dir.joinpath("snapshots"))
                 snapshots_dir.mkdir(exist_ok=True, parents=True)
                 snapshots_dir.joinpath("temp").mkdir(exist_ok=True, parents=True)
+                block_size = config.csi_driver.storage_pools[storage_pool].block_size
+                if source_volume_id:
+                    # The cloned filesystem may not mount with another block size
+                    block_size = metadata(source_volume_id).get("block_size")
+                size = round_up_to_block_size(size, block_size)
                 patch_metadata(
                     volume_id,
                     storage_pool,
@@ -126,6 +132,7 @@ class VolumeManager:
                         "freezefs": freezefs,
                         "copy_on_write": copy_on_write,
                         "storage_pool": storage_pool,
+                        "block_size": block_size,
                     },
                 )
                 img_file.touch()
