@@ -161,6 +161,9 @@ spec:
                     {{- with (index $.Values.node.storagePools $name).reservedCapacityMode }}
                     , "reserved_capacity_mode": "{{ . | toString }}"
                     {{- end }}
+                    {{- with (index $.Values.node.storagePools $name).blockSize }}
+                    , "block_size": {{ . | int }}
+                    {{- end }}
                     {{- with (index $.Values.node.storagePools $name) }}
                     {{- if hasKey . "accountVolumesFreeSpace" }}
                     , "account_volumes_free_space": {{ .accountVolumesFreeSpace }}
