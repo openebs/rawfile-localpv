@@ -30,7 +30,6 @@ from utils.rawfile import (
     be_absent,
     be_symlink,
     detach_loops,
-    metadata,
     metadata_or,
 )
 from utils.remote import get_capacity, get_internal_grpc_stub, internal_auth_metadata
@@ -270,15 +269,19 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
                 "Snapshotting capabilities are disabled.",
             )
 
-        if utils.storage_pool.get_capacity(storage_pool) < required_space:
+        meta = metadata_or(request.name)
+        # Only a new volume has to fit: on a retry, the pool's capacity already excludes
+        # the space this volume took so far.
+        if not meta and utils.storage_pool.get_capacity(storage_pool) < required_space:
             context.abort(
                 grpc.StatusCode.RESOURCE_EXHAUSTED,
                 "Insufficient disk space (Cloning a volume requires at least 3× the volume size).",
             )
-        is_ready = False
-        try:
-            is_ready = metadata(request.name).get("ready", False)
-        except FileNotFoundError:
+        is_ready = meta.get("ready", False)
+        # Restart the task of a volume left not ready, in case it ran out of retries
+        # (a no-op while it's still pending). A deleted volume kept for its snapshots
+        # stays as it is: the GC would remove a volume created over it.
+        if not is_ready and "deleted_at" not in meta:
             self._task_manager.run_task(
                 TaskName.CREATE_VOLUME,
                 request.name,

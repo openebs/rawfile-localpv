@@ -109,6 +109,8 @@ class VolumeManager:
             with VolLock(volume_id):
                 img_file = img_data_dir / "disk.img"
                 if img_file.exists() and getsize(img_file) >= size:
+                    # A previous attempt may have stopped before marking it ready
+                    patch_metadata(volume_id, storage_pool, {"ready": True})
                     return
                 snapshots_dir = Path(img_data_dir.joinpath("snapshots"))
                 snapshots_dir.mkdir(exist_ok=True, parents=True)
