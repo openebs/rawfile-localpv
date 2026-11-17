@@ -17,6 +17,7 @@ DriverInfo:
     pvcDataSource: false
     multipods: true
     RWX: false
+    readWriteOncePod: true
     controllerExpansion: true
     nodeExpansion: true
     onlineExpansion: true

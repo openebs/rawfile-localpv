@@ -11,7 +11,8 @@ A detailed look at what RawFile LocalPV supports today. See the
 | Dynamic provisioning | ✅ | `WaitForFirstConsumer`, strict topology, storage-capacity-aware scheduling |
 | Direct I/O | ✅ | Loop devices opened with Direct I/O — near-zero overhead vs. the raw disk |
 | Enforced size limits | ✅ | Enforced by the kernel via the backing file / filesystem size |
-| Access mode `ReadWriteOnce` | ✅ | Only supported mode (`ReadWriteOncePod` planned) |
+| Access mode `ReadWriteOnce` | ✅ | Pods on the volume's node may share it |
+| Access mode `ReadWriteOncePod` | ✅ | A single pod at a time; needs Kubernetes v1.27+ |
 | `ReadOnlyMany` / `ReadWriteMany` | ❌ | Not possible for node-local volumes |
 | Volume mode `Filesystem` | ✅ | ext4 / xfs / btrfs |
 | Volume mode `Block` | ✅ | Raw loop device handed to the pod (`readOnly` attribute not yet honored) |
@@ -116,7 +117,7 @@ a pool via the `storagePool` parameter, enabling storage tiering. See
   volumes on that node. For cross-node/cross-cluster async replication, see
   [Async Replication with VolSync](./user-guide/replication.md) (`Filesystem`-mode
   volumes only — `Block` mode isn't replicable end-to-end by any VolSync mover today).
-- `ReadWriteOnce` only; `readOnly` attribute of block PVCs not honored.
+- `ReadWriteOnce` / `ReadWriteOncePod` only; `readOnly` attribute of block PVCs not honored.
 - No shrinking.
 - Cross-node cloning not yet available.
 - Pre-v1: Helm API and StorageClass parameters may still see breaking changes — read the

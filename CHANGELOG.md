@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added ✨
 
+- `ReadWriteOncePod` access mode support: the driver now has the CSI `SINGLE_NODE_MULTI_WRITER` capability, and the node plugin refuses to publish a `ReadWriteOncePod` volume to a second pod ([#502](https://github.com/openebs/rawfile-localpv/issues/502))
+
 ### Fixed 🐛
 
 - Leak on cached gRPC connections between nodes ([#490](https://github.com/openebs/rawfile-localpv/pull/490))

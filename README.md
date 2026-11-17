@@ -70,7 +70,7 @@ Full documentation lives in the [docs](./docs/README.md) directory:
 - [x] Enforced volume size limit
 - [x] Access Modes
   - [x] ReadWriteOnce
-  - [ ] ReadWriteOncePod
+  - [x] ReadWriteOncePod
   - ~~ReadOnlyMany~~
   - ~~ReadWriteMany~~
 - [ ] Volume modes

@@ -23,7 +23,7 @@ from declarative import (
 )
 from filesystem import from_device, get_from_device_or_fallback
 from filesystem.base import UnknownFileSystemError
-from filesystem.utils import get_device_for_mountpoint
+from filesystem.utils import get_device_for_mountpoint, get_mountpoints_for_device
 from google.protobuf.timestamp_pb2 import Timestamp
 from rawfile_servicer import check_access_type, get_access_type
 from utils import task_manager
@@ -43,6 +43,17 @@ from utils.task_manager import TaskManager
 from utils.volume_manager import manager as volume_manager
 
 log_grpc_request = GRPCLogger(server_name="Bd2FS")
+
+AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
+# With the SINGLE_NODE_MULTI_WRITER capability, Kubernetes asks for
+# SINGLE_NODE_SINGLE_WRITER for ReadWriteOncePod volumes and for
+# SINGLE_NODE_MULTI_WRITER for ReadWriteOnce ones. SINGLE_NODE_WRITER must still
+# be accepted for older COs.
+SUPPORTED_ACCESS_MODES = (
+    AccessModeEnum.SINGLE_NODE_WRITER,
+    AccessModeEnum.SINGLE_NODE_SINGLE_WRITER,
+    AccessModeEnum.SINGLE_NODE_MULTI_WRITER,
+)
 
 
 def volume_deleted(volume_id):
@@ -103,6 +114,25 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
             if not metadata_or(volume_id=request.volume_id).get("ready", False):
                 raise VolumeNotReadyError(request.volume_id)
             staging_dev = f"{request.staging_target_path}/device"
+            if (
+                request.volume_capability.access_mode.mode
+                == AccessModeEnum.SINGLE_NODE_SINGLE_WRITER
+            ):
+                ignored = {
+                    Path(request.target_path),
+                    Path(f"{request.staging_target_path}/mount"),
+                }
+                published = [
+                    mountpoint
+                    for mountpoint in get_mountpoints_for_device(staging_dev)
+                    if Path(mountpoint) not in ignored
+                ]
+                if published:
+                    context.abort(
+                        grpc.StatusCode.FAILED_PRECONDITION,
+                        f"Volume {request.volume_id} is SINGLE_NODE_SINGLE_WRITER"
+                        f" and already published at {', '.join(published)}",
+                    )
 
             path = Path(request.target_path)
             access_type_actions = {
@@ -298,10 +328,7 @@ class Bd2FsControllerServicer(csi_pb2_grpc.ControllerServicer):
 
         volume_capability = request.volume_capabilities[0]
 
-        AccessModeEnum = csi_pb2.VolumeCapability.AccessMode.Mode
-        if volume_capability.access_mode.mode not in (
-            AccessModeEnum.SINGLE_NODE_WRITER,
-        ):
+        if volume_capability.access_mode.mode not in SUPPORTED_ACCESS_MODES:
             access_mode = AccessModeEnum.Name(volume_capability.access_mode.mode)
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,

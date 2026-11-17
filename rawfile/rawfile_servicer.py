@@ -97,6 +97,7 @@ class RawFileNodeServicer(csi_pb2_grpc.NodeServicer):
         capabilities = [
             Cap(rpc=Cap.RPC(type=Cap.RPC.STAGE_UNSTAGE_VOLUME)),
             Cap(rpc=Cap.RPC(type=Cap.RPC.GET_VOLUME_STATS)),
+            Cap(rpc=Cap.RPC(type=Cap.RPC.SINGLE_NODE_MULTI_WRITER)),
         ]
         if config.csi_driver.capabilities.resize.enabled:
             capabilities.extend(
@@ -192,6 +193,7 @@ class RawFileControllerServicer(csi_pb2_grpc.ControllerServicer):
         capabilities = [
             Cap(rpc=Cap.RPC(type=Cap.RPC.CREATE_DELETE_VOLUME)),
             Cap(rpc=Cap.RPC(type=Cap.RPC.GET_CAPACITY)),
+            Cap(rpc=Cap.RPC(type=Cap.RPC.SINGLE_NODE_MULTI_WRITER)),
         ]
         if config.csi_driver.capabilities.snapshots.enabled:
             capabilities.extend(

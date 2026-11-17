@@ -17,13 +17,15 @@ Feature: Basic Functionality
     And the POD sees the expanded size
 
     Examples:
-      | binding_mode         | access_mode   | fs_type | volume_mode | mount_options |
-      | Immediate            | ReadWriteOnce | ext4    | Filesystem  | noatime       |
-      | Immediate            | ReadWriteOnce | xfs     | Filesystem  | inode64       |
-      | Immediate            | ReadWriteOnce | btrfs   | Filesystem  | null          |
-      | Immediate            | ReadWriteOnce | null    | Block       | null          |
-      | WaitForFirstConsumer | ReadWriteOnce | ext4    | Filesystem  | null          |
-      | WaitForFirstConsumer | ReadWriteOnce | null    | Block       | null          |
+      | binding_mode         | access_mode      | fs_type | volume_mode | mount_options |
+      | Immediate            | ReadWriteOnce    | ext4    | Filesystem  | noatime       |
+      | Immediate            | ReadWriteOnce    | xfs     | Filesystem  | inode64       |
+      | Immediate            | ReadWriteOnce    | btrfs   | Filesystem  | null          |
+      | Immediate            | ReadWriteOnce    | null    | Block       | null          |
+      | WaitForFirstConsumer | ReadWriteOnce    | ext4    | Filesystem  | null          |
+      | WaitForFirstConsumer | ReadWriteOnce    | null    | Block       | null          |
+      | WaitForFirstConsumer | ReadWriteOncePod | ext4    | Filesystem  | null          |
+      | WaitForFirstConsumer | ReadWriteOncePod | null    | Block       | null          |
 
   Scenario Outline: Snapshot creates and restores with different parameters and successfully remove it
     When I create a Persistent Volume Claim with <copy_on_write> <fsfreeze> as source PVC
