@@ -13,7 +13,7 @@ A detailed look at what RawFile LocalPV supports today. See the
 | Enforced size limits | ✅ | Enforced by the kernel via the backing file / filesystem size |
 | Access mode `ReadWriteOnce` | ✅ | Only supported mode (`ReadWriteOncePod` planned) |
 | `ReadOnlyMany` / `ReadWriteMany` | ❌ | Not possible for node-local volumes |
-| Volume mode `Filesystem` | ✅ | ext4 / xfs / btrfs |
+| Volume mode `Filesystem` | ✅ | ext4 / xfs / btrfs; `readOnly` attribute honored |
 | Volume mode `Block` | ✅ | Raw loop device handed to the pod (`readOnly` attribute not yet honored) |
 | Thick provisioning | ✅ | Default; full preallocation, no overprovisioning |
 | Thin provisioning | ✅ | Sparse backing files; enables overprovisioning |
