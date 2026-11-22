@@ -93,6 +93,10 @@ with `plain` or `subtract-from-total` semantics — see the
 **physical (allocated) blocks** of backing files, which allows overprovisioning with
 thin volumes.
 
+A pool may also set the logical block size of its volumes' loop devices (`blockSize`),
+for backing storage that can't do Direct I/O with 512-byte blocks. Each volume records it
+in its metadata, and clones and restores inherit it from their source volume.
+
 Volume **metadata** (JSON schema per volume, plus the task store `tasks.json`) lives in a
 separate metadata directory (`node.metadataDirPath`, default
 `/var/local/openebs/rawfile/<release>/meta`).

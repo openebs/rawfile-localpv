@@ -30,7 +30,7 @@ def volume(tmp_path, monkeypatch):
     monkeypatch.setattr(volume_manager_module, "attached_loops", lambda _: [])
     monkeypatch.setattr(rawfile, "update_permissions", lambda *_: None)
 
-    def create(thin_provision, physical_size=SIZE):
+    def create(thin_provision, physical_size=SIZE, block_size=None):
         volume_dir = tmp_path / "pool" / VOLUME_ID
         volume_dir.mkdir(parents=True)
         (volume_dir / "disk.img").touch()
@@ -43,6 +43,7 @@ def volume(tmp_path, monkeypatch):
                     "img_file": (volume_dir / "disk.img").as_posix(),
                     "size": SIZE,
                     "thin_provision": thin_provision,
+                    "block_size": block_size,
                 }
             )
         )
@@ -125,3 +126,24 @@ def test_expand_thick_volume_counts_holes_fallocate_would_allocate(
     assert response.status == RESOURCE_EXHAUSTED
     assert grown_to.fallocate is None
     assert json.loads(meta.read_text())["size"] == SIZE
+
+
+@pytest.mark.parametrize("thin_provision", [False, True])
+def test_expand_rounds_up_to_block_size(volume, grown_to, monkeypatch, thin_provision):
+    # mkfs.xfs refuses a loop device which ends with a partial block
+    meta = volume(thin_provision=thin_provision, block_size=4096)
+
+    response = expand(monkeypatch, new_size=5000, capacity=8192)
+
+    assert response.status == OK
+    assert (grown_to.truncate if thin_provision else grown_to.fallocate) == 8192
+    assert json.loads(meta.read_text())["size"] == 8192
+
+    # A retry of the same expansion has nothing left to do
+    grown_to.truncate = grown_to.fallocate = None
+
+    response = expand(monkeypatch, new_size=5000, capacity=0)
+
+    assert response.status == OK
+    assert grown_to.truncate is None
+    assert grown_to.fallocate is None

@@ -78,6 +78,14 @@ class StoragePool(BaseModel):
         is "reserve for everything else but this pool".""",
     )
 
+    block_size: Literal[512, 1024, 2048, 4096] | None = Field(
+        default=None,
+        description="""Logical block (sector) size, in bytes, of the loop devices of the volumes created in
+        this pool. Direct I/O fails when it is smaller than what the backing storage requires (for example
+        4096 on 4Kn disks or ZFS with ashift=12). Unset keeps the default of losetup. Only applies to new
+        volumes: existing ones, and the volumes cloned or restored from them, keep their block size.""",
+    )
+
 
 class ExportOpenApiCmd(BaseModel):
     output: Path = Field(

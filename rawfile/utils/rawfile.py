@@ -147,7 +147,22 @@ def attached_loops(file: str) -> list[str]:
     return devs
 
 
-def attach_loop(file) -> str:
+def round_up_to_block_size(size: int, block_size: int | None) -> int:
+    """Rounds size up to a multiple of block_size, so that the loop device of an
+    image of that size doesn't end with a partial block, which mkfs.xfs refuses."""
+    if not block_size:
+        return size
+    return (size + block_size - 1) // block_size * block_size
+
+
+def attach_loop(file, block_size: int | None = None) -> str:
+    """Attaches file to a loop device with direct I/O, and returns the device.
+
+    block_size is the logical block size of the device, the default of losetup
+    when None. A filesystem may not mount on a device with a larger block size
+    than the one it was created on, so it must not change during the volume's life.
+    """
+
     def next_loop():
         loop_file = run("losetup -f", capture_output=True).stdout.decode().strip()
         if not Path(loop_file).exists():
@@ -160,6 +175,9 @@ def attach_loop(file) -> str:
     # could clash on the creation, thus leading into losetup -f failures...
     last_exception = None
     max_attempts = 20
+    options = "--direct-io=on"
+    if block_size:
+        options += f" --sector-size {block_size}"
     for _ in range(max_attempts):
         try:
             devs = attached_loops(file)
@@ -172,7 +190,7 @@ def attach_loop(file) -> str:
                 run(f"blockdev --setrw {dev}")
                 return dev
             next_loop()
-            run(f"losetup --direct-io=on -f {file}")
+            run(f"losetup {options} -f {file}")
         except Exception as e:
             # todo: add some jitter here?
             last_exception = e
