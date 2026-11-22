@@ -71,3 +71,10 @@ Feature: Basic Functionality
       | false         | false    |
       | true          | false    |
       | false         | true     |
+
+  Scenario: Filesystem volumes are published read-only when requested
+    When I create a Persistent Volume Claim with false false as source PVC
+    Then we create a pod which mounts the PVC
+    And we write some data to the mount path
+    When we create a pod which mounts the PVC read-only
+    Then the read-only pod can read the data but not write to the volume
