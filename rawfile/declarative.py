@@ -1,3 +1,5 @@
+import os
+import stat
 from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
@@ -9,7 +11,27 @@ from utils.commands import run
 from utils.errors import InvalidDeviceForMountpointError
 
 
+def _block_device_number(path) -> int | None:
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return st.st_rdev if stat.S_ISBLK(st.st_mode) else None
+
+
 def mount(device, mountpoint, readonly=False, options: list[str] | None = None):
+    # A block volume is published by bind mounting its device node on a file.
+    # findmnt then shows the filesystem holding the node, e.g. "udev[/loop1]",
+    # not the device, so compare device numbers to keep the publish idempotent.
+    current_rdev = _block_device_number(mountpoint)
+    if current_rdev is not None:
+        if current_rdev == _block_device_number(device):
+            return
+        raise InvalidDeviceForMountpointError(
+            device=f"{os.major(current_rdev)}:{os.minor(current_rdev)}",
+            mountpoint=mountpoint,
+        )
+
     current_dev = get_device_for_mountpoint(mountpoint)
     device = Path(device).resolve().as_posix()
     _options = deepcopy(options)
