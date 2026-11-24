@@ -118,6 +118,10 @@ kubectl get pvc app-data                     # should be Bound
 kubectl exec app -- df -hT /data             # per-volume filesystem, exact size limit
 ```
 
+To mount the volume read-only, set `readOnly: true` on the pod's `persistentVolumeClaim`
+volume (or on the PV's `csi` source). The driver then publishes the volume read-only for
+that pod, while it stays writable for other pods that use it read-write on the node.
+
 ## Raw Block volumes
 
 To hand the pod a raw block device (no filesystem — useful for databases or systems

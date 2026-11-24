@@ -67,6 +67,11 @@ def test_create_pvcs_as_source_for_other_pvcs():
     """Create PVCs and use them as source for other PVCs."""
 
 
+@scenario("smoke.feature", "Filesystem volumes are published read-only when requested")
+def test_filesystem_volume_published_read_only():
+    """Filesystem volumes are published read-only when requested."""
+
+
 @pytest.fixture(scope="module")
 def cluster():
     # Start deployer
@@ -432,7 +437,7 @@ def wait_pod_deleted(name):
             raise
 
 
-def create_pod(name, pvc, infinite=False):
+def create_pod(name, pvc, infinite=False, read_only=False):
     pvc_name = pvc.metadata.name
 
     command = (
@@ -472,7 +477,7 @@ def create_pod(name, pvc, infinite=False):
                 client.V1Volume(
                     name=pvc_name,
                     persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                        claim_name=pvc_name
+                        claim_name=pvc_name, read_only=read_only
                     ),
                 )
             ],
@@ -584,6 +589,52 @@ def _(source_pvc):
         if e.status != 404:
             raise
     wait_pod_deleted(name)
+
+
+@when(
+    "we create a pod which mounts the PVC read-only",
+    target_fixture="read_only_pod",
+)
+def _(source_pvc):
+    """we create a pod which mounts the PVC read-only."""
+    pod = create_pod(
+        f"read-only-{source_pvc.metadata.name}", source_pvc, True, read_only=True
+    )
+    yield pod
+    if not fixture_cleanup():
+        return
+    name = pod.metadata.name
+    logger.info(f"Deleting read-only POD: {name}")
+    try:
+        client.CoreV1Api().delete_namespaced_pod(name, namespace)
+    except ApiException as e:
+        if e.status != 404:
+            raise
+    wait_pod_deleted(name)
+
+
+@then("the read-only pod can read the data but not write to the volume")
+def _(source_pvc, read_only_pod):
+    """the read-only pod can read the data but not write to the volume."""
+    pvc_name = source_pvc.metadata.name
+    pod_name = read_only_pod.metadata.name
+    wait_pod_running(pod_name)
+    exec_command = [
+        "/bin/sh",
+        "-c",
+        f"cat /{pvc_name}/file; touch /{pvc_name}/new-file 2>/dev/null && echo WRITABLE || echo READ_ONLY",
+    ]
+    output = stream(
+        client.CoreV1Api().connect_get_namespaced_pod_exec,
+        pod_name,
+        namespace,
+        command=exec_command,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+    )
+    assert output.split() == [*EXPECTED_DATA.split(), "READ_ONLY"], output
 
 
 @then("we write some data to the mount path")
