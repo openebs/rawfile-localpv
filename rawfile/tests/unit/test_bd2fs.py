@@ -205,6 +205,31 @@ def test_publish_single_writer_volume_again_at_same_target(
     assert isinstance(response, csi_pb2.NodePublishVolumeResponse)
 
 
+@pytest.mark.parametrize(
+    "derived_mount",
+    [
+        "pods/1/volume-subpaths/pvc-1/app/0",
+        "volumeDevices/pvc-1/dev/1",
+    ],
+    ids=["subpath", "block-device-map"],
+)
+def test_publish_single_writer_volume_again_with_derived_mount(
+    tmp_path, meta_dir, context, mounts, derived_mount
+):
+    ready_volume(meta_dir, "pvc-1")
+    staging = tmp_path / "globalmount"
+    target = tmp_path / "pod-1"
+    publish("pvc-1", staging, target, AccessMode.SINGLE_NODE_SINGLE_WRITER, context)
+    # The kubelet bind mounts what was published once more for the same pod
+    mounts.append((tmp_path / derived_mount).as_posix())
+
+    response = publish(
+        "pvc-1", staging, target, AccessMode.SINGLE_NODE_SINGLE_WRITER, context
+    )
+
+    assert isinstance(response, csi_pb2.NodePublishVolumeResponse)
+
+
 def test_publish_single_writer_volume_published_elsewhere(
     tmp_path, meta_dir, context, mounts
 ):

@@ -118,16 +118,20 @@ class Bd2FsNodeServicer(csi_pb2_grpc.NodeServicer):
                 request.volume_capability.access_mode.mode
                 == AccessModeEnum.SINGLE_NODE_SINGLE_WRITER
             ):
-                ignored = {
-                    Path(request.target_path),
-                    Path(f"{request.staging_target_path}/mount"),
-                }
-                published = [
-                    mountpoint
+                mountpoints = [
+                    Path(mountpoint)
                     for mountpoint in get_mountpoints_for_device(staging_dev)
-                    if Path(mountpoint) not in ignored
                 ]
-                if published:
+                staging_mount = Path(f"{request.staging_target_path}/mount")
+                published = [
+                    str(mountpoint)
+                    for mountpoint in mountpoints
+                    if mountpoint != staging_mount
+                ]
+                # If the volume is already at the target, this is a retry: the other
+                # mounts come from that publish, like the kubelet's subPath mounts
+                # or its bind mount of a published block device.
+                if published and Path(request.target_path) not in mountpoints:
                     context.abort(
                         grpc.StatusCode.FAILED_PRECONDITION,
                         f"Volume {request.volume_id} is SINGLE_NODE_SINGLE_WRITER"
