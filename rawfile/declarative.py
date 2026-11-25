@@ -9,6 +9,15 @@ from utils.commands import run
 from utils.errors import InvalidDeviceForMountpointError
 
 
+def remount_readonly(mountpoint: str, options: list[str] | None = None):
+    # The filesystem is already mounted read-write on the staging path, and a
+    # superblock can't be mounted both ways ("already mounted" error), so only
+    # flag this mount read-only. The volume's options are passed again so their
+    # per-mount flags (e.g. nosuid) aren't reset, with "ro" last to win over "rw".
+    opts_str = ",".join(["remount", "bind", *(options or []), "ro"])
+    run(f"mount -o {opts_str} {mountpoint}")
+
+
 def mount(device, mountpoint, readonly=False, options: list[str] | None = None):
     current_dev = get_device_for_mountpoint(mountpoint)
     device = Path(device).resolve().as_posix()
@@ -18,6 +27,9 @@ def mount(device, mountpoint, readonly=False, options: list[str] | None = None):
     if current_dev:
         current_dev = Path(current_dev).resolve().as_posix()
         if current_dev == device:
+            # A retry may follow a publish that failed before its remount
+            if readonly and Path(mountpoint).resolve().is_dir():
+                remount_readonly(mountpoint, _options)
             return  # TODO: LOG
         raise InvalidDeviceForMountpointError(device=current_dev, mountpoint=mountpoint)
 
@@ -34,10 +46,9 @@ def mount(device, mountpoint, readonly=False, options: list[str] | None = None):
     if not fs:
         raise UnknownFileSystemError(device=device)
     fs.mountpoint = mountpoint
-    # FIXME: RO mount for filesystems ignored (https://github.com/openebs/rawfile-localpv/pull/86#issuecomment-3000864823)
-    # if readonly:
-    #     _options.extend(["ro"])
     fs.mount(options=_options)
+    if readonly:
+        remount_readonly(mountpoint, _options)
 
 
 def unmount(mountpoint: str, clear_mountpoint=True):
