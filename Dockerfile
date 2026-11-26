@@ -44,7 +44,7 @@ RUN dnf -q -y --setopt=install_weak_deps=0 install xfsprogs && \
           /out/usr/lib64/
 
 # registry.access.redhat.com/hi/python:3.14-fips
-FROM registry.access.redhat.com/hi/python:3.14-fips@sha256:6440a8d7c7f8ac513a4c061950ea883c0157e9f9a36e7aca4c3b723782fa7e04 AS runtime
+FROM registry.access.redhat.com/hi/python:3.15-fips@sha256:d35d0ed78e0f858d34865f55c520464fa86195e0ad7e977dec75d9d3ec24058a AS runtime
 
 FROM ${BASE_IMAGE} AS builder
 WORKDIR $PYSETUP_PATH
