@@ -1,8 +1,9 @@
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import humanize
-from orchestrator.k8s import read_config_map, write_config_map
+from orchestrator.k8s import LeaderElection, read_config_map, write_config_map
 from utils.logs import fmt_exception, logger
 
 from .usage import Usage
@@ -11,42 +12,80 @@ time_fmt = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 class Ping:
-    def __init__(self, usage: Usage, ping_delta: timedelta):
+    def __init__(
+        self,
+        get_usage: Callable[[], Usage],
+        ping_delta: timedelta,
+        election: LeaderElection,
+    ):
         self.configmap = "rawfile-config"
         self.install_ts_key = "install-ts"
         self.ping_ts_key = "last-ping-ts"
         self.installed = False
         self.install_ts = None
         self.ping_ts = None
+        self.record_pending = False
         self.ping_delta = ping_delta
-        self.usage = usage
-
-    def refresh(self):
-        self.usage.refresh()
+        self.get_usage = get_usage
+        self.usage: Usage | None = None
+        self.election = election
 
     def run(self):
-        record_ping = False
-
         while True:
             try:
-                # becomes a no-op after the install
-                self.ping_ts = self.send_install_once()
-
-                if record_ping:
-                    # write last ping ts to configmap, allowing us to stay accurate even across restarts
-                    write_config_map(
-                        self.configmap, self.ping_ts_key, self.ping_ts, overwrite=True
-                    )
-                    record_ping = False
-
-                self.usage.refresh()
-                self.ping_ts = wait_ping(self.ping_ts, self.ping_delta)
-                self.usage.send_ping()
-                record_ping = True
+                if self.record_pending:
+                    # the last ping was sent, but recording it failed
+                    self._record_ping()
+                # only the lease holder sends events, otherwise every node would
+                self.election.leader.wait()
+                self._lead()
             except Exception as e:
                 logger.error("Analytics Error", exception=fmt_exception(e))
                 # todo: add backoff ramp up
                 time.sleep(60 * 60)
+
+    def _lead(self):
+        """Send the install and the periodic pings while holding the lease."""
+        if self.usage is None:
+            self.usage = self.get_usage()
+
+        # becomes a no-op after the install
+        self.ping_ts = self.send_install_once()
+
+        while self.election.is_leader():
+            self._ping_when_due()
+
+        # lost (or may have lost) the lease, the new leader pings instead:
+        # reload the last ping ts from the configmap once we lead again
+        self.ping_ts = None
+        time.sleep(self.election.retry_period)
+
+    def _ping_when_due(self):
+        self.usage.refresh()
+        due_ts = wait_ping(self.ping_ts, self.ping_delta)
+        if not self.election.is_leader():
+            return
+        # another leader may have pinged while we waited (eg: we were
+        # paused and regained the lease), so the configmap has the final say
+        last_ts = read_config_map(self.configmap).get(self.ping_ts_key)
+        if last_ts and last_ts > self.ping_ts:
+            self.ping_ts = last_ts
+            return
+        self.ping_ts = due_ts
+        self.usage.send_ping()
+        self.record_pending = True
+        self._record_ping()
+
+    def _record_ping(self):
+        # write last ping ts to configmap, allowing us to stay accurate even across restarts
+        last_ts = read_config_map(self.configmap).get(self.ping_ts_key)
+        # unless another leader pinged since (eg: we lost the lease while
+        # failing to record ours), as we'd make the next leader ping too early
+        if not last_ts or last_ts <= self.ping_ts:
+            write_config_map(
+                self.configmap, self.ping_ts_key, self.ping_ts, overwrite=True
+            )
+        self.record_pending = False
 
     def send_install_once(self):
         if self.ping_ts:
