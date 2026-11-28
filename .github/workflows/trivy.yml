@@ -21,7 +21,7 @@ jobs:
         id: nixpath
         run: |
           echo "nix_path=nixpkgs=$(jq -r '.nixpkgs.url' nix/sources.json)" >> $GITHUB_OUTPUT
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@v32
         with:
           nix_path: "${{ steps.nixpath.outputs.nix_path }}"
           install_options: --no-daemon
@@ -46,6 +46,6 @@ jobs:
         run: |
           nix-shell --run ".ci/trivy.sh"
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4.39.3
+        uses: github/codeql-action/upload-sarif@v4.39.4
         with:
           sarif_file: "trivy-report.sarif"
