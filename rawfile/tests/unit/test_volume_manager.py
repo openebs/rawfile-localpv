@@ -81,3 +81,15 @@ def test_gc_removes_deleted_volume_once_snapshots_are_gone(volume):
     assert volume_manager.gc_all_volumes(dry_run=False) == [True]
     assert not volume.dir.exists()
     assert not volume.meta.exists()
+
+
+def test_create_volume_marks_existing_image_ready(volume):
+    # A previous attempt allocated the image, but didn't get to mark the volume ready
+    meta_file = volume.meta / "disk.meta"
+    meta_file.write_text(
+        json.dumps({**json.loads(meta_file.read_text()), "ready": False})
+    )
+
+    volume_manager.create_volume(VOLUME_ID, 4, "default", thin_provision=True)
+
+    assert json.loads(meta_file.read_text())["ready"] is True
