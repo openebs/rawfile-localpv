@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added ✨
 
 - `Filesystem` volumes are now published read-only when requested (e.g. `readOnly: true` on the pod's `persistentVolumeClaim` volume or on the PV's `csi` source); the volume stays writable for its other publishes on the node ([#515](https://github.com/openebs/rawfile-localpv/issues/515))
+- `ReadWriteOncePod` access mode support: the driver now has the CSI `SINGLE_NODE_MULTI_WRITER` capability, and the node plugin refuses to publish a `ReadWriteOncePod` volume to a second pod ([#502](https://github.com/openebs/rawfile-localpv/issues/502))
 
 ### Fixed 🐛
 
